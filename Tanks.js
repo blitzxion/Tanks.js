@@ -19,12 +19,15 @@ var MISSLE_ACCELERATION = 0.3;
 var MISSLE_ROTATION = 1.5;
 var MAX_MISSLE_ROTATION = .4;
 var MIN_BASE_DISTANCE_SQUARE = 5000;
+var RANDOM_COLORS = true;
 
 /////////////////
 // New Globals //
 /////////////////
-var MAX_UNITS_ON_MAP = 100;
-var BASE_HEAL_RADIUS = 50;
+var MAX_UNITS_ON_MAP = 30;
+var MAX_BASE_UNITS = 4; // Not ready yet
+var BASE_HEAL_RADIUS = 65;
+var HEALTH_COOLDOWN = 200;
 
 var TankStateEnum = {
 	IDLE : 0,
@@ -62,15 +65,43 @@ var ctx = canvas.getContext("2d");
 //ctx.width = WIDTH;
 //ctx.height = HEIGHT;
 
+// FPS Related Vars
+var filterStrength = 20;
+var frameTime = 0, lastLoop = new Date, thisLoop;
+
 var Teams = [];
-Teams[0] = new Team(new Color(255, 0, 0),'Red');
-Teams[1] = new Team(new Color(0, 255, 0),'Green');
-Teams[2] = new Team(new Color(0, 0, 255),'Blue');
-Teams[3] = new Team(new Color(0, 255, 255),'Cyan');
-Teams[4] = new Team(new Color(255, 0, 255),'Purple');
-Teams[5] = new Team(new Color(255, 255, 0),'Yellow');
-Teams[6] = new Team(new Color(0, 0, 0),'Black');
-Teams[7] = new Team(new Color(255, 255, 255),'White');
+
+if(RANDOM_COLORS)
+{
+	for(i=0;i<=7;i++)
+	{
+		var rgb = hex2rgb(rainbow(8,i+1));
+		Teams[i] = new Team(new Color(rgb.red,rgb.green,rgb.blue),getName(4,7,null,null));
+		
+	}
+}
+else
+{
+	Teams[0] = new Team(new Color(255, 0, 0),'Red');
+	Teams[1] = new Team(new Color(0, 255, 0),'Green');
+	Teams[2] = new Team(new Color(0, 0, 255),'Blue');
+	Teams[3] = new Team(new Color(0, 255, 255),'Cyan');
+	Teams[4] = new Team(new Color(255, 0, 255),'Purple');
+	Teams[5] = new Team(new Color(255, 255, 0),'Yellow');
+	Teams[6] = new Team(new Color(0, 0, 0),'Black');
+	Teams[7] = new Team(new Color(255, 255, 255),'White');
+}
+
+var terrainColors = [
+	 [100, 70, 25], // Mud
+	 [70, 130, 56], // Tundra
+	 [191, 142, 76], // Desert
+	 [200, 200, 210], // Snow
+	 [181, 180, 178],  // Moon
+	 [0,0,0] // space
+];
+
+var tcIndex = Math.floor(Math.random()*terrainColors.length);
 
 var TankTypes = [];
 //Small Tank:
@@ -156,9 +187,9 @@ TankTypes[3] = {Kind : TankKindEnum.TANK,
 				HitPoints : 25, 
 				CooldownTime : 75, 
 				MinRange : 50, 
-				AttackDistance : 375,
-				AttackRange : 380,
-				SightDistance : 380, 
+				AttackDistance : 175,
+				AttackRange : 180,
+				SightDistance : 180, 
 				BulletType : ShotTypeEnum.SHELL,
 				BulletTime :  41, 
 				BulletSpeed : 4, 
@@ -256,13 +287,13 @@ TankTypes[7] = {Kind : TankKindEnum.TURRET,
 				HitPoints : 145, 
 				CooldownTime : 7,
 				MinRange : 10,
-				AttackDistance : 300, //130
-				AttackRange : 300, //130
-				SightDistance : 300, //130
+				AttackDistance : 130, //130
+				AttackRange : 130, //130
+				SightDistance : 130, //130
 				BulletType : ShotTypeEnum.BULLET,
 				BulletTime : 30, 
 				BulletSpeed : 10, 
-				BulletDamage : 10,
+				BulletDamage : 1,
 				TurretSize : 4,
 				BarrelLength : 6,
 				DoubleTurret : true,
@@ -459,7 +490,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	var TargetBaseAngle = 0;
 	var TurretAngle = 0;
 	var TargetTurretAngle = 0;
-	var Health = 10;
+	var HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN; // Random time the health regen will occur
 
 	var State = TankStateEnum.IDLE;
 	if(Type.Kind === TankKindEnum.PLANE || Type.Kind === TankKindEnum.BUILDER) {
@@ -478,7 +509,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			switch(State)
 			{
 				case TankStateEnum.IDLE:
-				
+					
+					findFriendlies();
+					
+					if(HealCooldown > 0)
+						HealCooldown--;
+					else
+					{
+						heal();
+						HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+					}
+					
 					if(Cooldown > 0)
 						Cooldown--;
 					else
@@ -487,21 +528,30 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						var TypeToMake;
 						var rand = Math.floor(Math.random() * TotalProb);
 						for(var i = 0; i < TankTypes.length; i++){
-							if(rand < TankTypes[i].Prob) {
+							if(rand < TankTypes[i].Prob){								
 								TypeToMake = TankTypes[i];
 								break;
 							} else {
 								rand -= TankTypes[i].Prob;
 							}						
 						}
-		
-						Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
-						Cooldown = Type.CooldownTime;
+											
+						/*if(TypeToMake.Kind == TankKindEnum.BUILDER)
+							console.log('A Base will be built. Team ' + this.getTeamnum() + " has " + this.getBaseCount() + " established bases.");
+						
+						if(TypeToMake.Kind == TankKindEnum.BUILDER && (this.getBaseCount() >= MAX_BASE_UNITS))
+						{
+							console.log('Max Base Count Reached.');
+							return;
+						}*/
+						
+						if(Team.getScore() < MAX_UNITS_ON_MAP)
+						{
+							Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
+							Cooldown = Type.CooldownTime;
+						}
 					}
-				
-					findFriendlies();
-					heal();
-					
+									
 					break;
 			}
 			
@@ -744,7 +794,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		return Teamnum;
 	}
-
+	
 	this.getDistanceSquaredFromPoint = function(x, y) {
 		return (X - x) * (X - x) + (Y - y) * (Y - y);
 	};
@@ -818,22 +868,57 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		
 	};
 	
-	this.recoverHitPoints = function(Health)
+	var healing = false;
+	this.recoverHitPoints = function(health, healer)
 	{
-		if(HitPoints == Type.HitPoints) return;
+		if(health == null)
+			health = Math.floor(Type.HitPoints * .1); // 10% of this unit's HP
 		
-		HitPoints += Health;
-		
-		if(HitPoints > Type.HitPoints)
-			HitPoints = Type.HitPoints; // Can't heal over the max HP of the unit.
+		if(healer !== null && healer.getTeam() == Team)
+		{
+			if(HitPoints == Type.HitPoints) return;	
+			//console.log(HitPoints+"/"+Type.HitPoints+" +["+health+"] = "+(HitPoints + health));
+			
+			if(!healing)
+			{
+				healing=true;
+				
+				//console.log(health + " gained ["+HitPoints+"/"+Type.HitPoints+"]");
+				HitPoints += health;
+								
+				// Slight indication of HP increase
+				ctx.fillStyle = (new Color(255, 0, 0)).getColorString();
+				ctx.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
+				
+				healing = false;
+			}
+						
+			if(HitPoints > Type.HitPoints)
+				HitPoints = Type.HitPoints; // Can't heal over the max HP of the unit.
+		}
 	};
 
 	if(Type.Kind === TankKindEnum.BASE) {
 		this.draw = function(canvasContext) {
 			canvasContext.fillStyle = Team.getColor().getColorString();
-			canvasContext.fillRect (X - 10, Y - 10, 20, 20);	
+			canvasContext.fillRect (X - 10, Y - 10, 20, 20);
 			canvasContext.fillStyle = (new Color(0, 130, 0)).getColorString();
 			canvasContext.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
+			
+			// Draw Healing Circle
+			{
+				var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
+				canvasContext.strokeStyle = "rgb(54,106,145)";
+				canvasContext.beginPath();
+				for(p = 0; p < pointArray.length; p++)
+				{
+					canvasContext.moveTo(pointArray[p].x, pointArray[p].y);
+					canvasContext.lineTo(pointArray[p].ex, pointArray[p].ey);
+					canvasContext.stroke();
+				}
+				canvasContext.closePath();
+			}
+						
 		};
 	} else if(Type.Kind === TankKindEnum.TANK || Type.Kind === TankKindEnum.BUILDER || Type.Kind === TankKindEnum.TURRET) {
 		this.draw = function(canvasContext) {
@@ -917,10 +1002,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			State = TankStateEnum.TARGET_AQUIRED;
 		}
 	}
+	
+	
 
 	//Private:
 	function heal() {
-		AreaHeal(X,Y, Health, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS);
+		AreaHeal(X,Y, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS, This);
 	};
 	
 	function die() {
@@ -935,7 +1022,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var speed = Math.random() * 4 + .2;
 			DebrisSet.add(new Debris(X, Y, Math.cos(angle) * speed + This.getDx(), Math.sin(angle) * speed + This.getDy(), Math.random() * 10 + 20));
 		}
-		console.log(Team.getScore());
+		//console.log(Team.getScore());
 		Team.setScore(Team.getScore() - 1);
 		Tanks.remove(This);
 	}
@@ -980,18 +1067,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	};
 
-	function chooseRandomDestination() {
-		DestX = DestX + Math.random() * (MOVE_RANGE * 2 + 1) - MOVE_RANGE;
-		DestY = DestY + Math.random() * (MOVE_RANGE * 2 + 1) - MOVE_RANGE;
-		if(DestX > WIDTH - 10)
-			DestX = WIDTH - 10;
-		else if(DestX < 10)
-			DestX = 10;
-		if(DestY > HEIGHT - 10)
-			DestY = HEIGHT - 10;
-		else if(DestY < 10)
-			DestY = 10;
-	};
+	function chooseRandomDestination() {c};
 
 	function moveForward(){
 		//Find heading towards destination:
@@ -1199,7 +1275,9 @@ function Bullet (x, y, dx, dy, time, team, damage, shooter, type, target, airAtt
 //----- Explosion Class -----
 function Explosion (x, y, preDisplayTime, size) {
 	var X = x, Y = y, PreDisplayTime = preDisplayTime, TargetSize = size, Size = 0, GrowMode = true;
-
+	
+	TargetSize = 5;
+	
 	this.update = function () {
 		if(PreDisplayTime > 0) {
 			PreDisplayTime--;
@@ -1345,23 +1423,21 @@ function AreaDamage(X, Y, Damage, RadiusSquared, Shooter) {
 	}
 }
 
-function AreaHeal(X, Y, Recover, RadiusSquared)
+function AreaHeal(X, Y, RadiusSquared, Healer)
 {
 	for(var n in Tanks)
 		if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) 
 			if(Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared)
-			{
-				Tanks[n].recoverHitPoints(Recover);
-				console.log("Tank " + n + " was healed " + Recover);
-			}
+				Tanks[n].recoverHitPoints(null,Healer);
 }
 
 function timer() {
-	var t = setTimeout(function() {timer();}, 15);
+	var t = setTimeout(function() {timer(); ctx.fillStyle = "rgb(255,255,255)"; ctx.fillText((1000/frameTime).toFixed(1) + " fps",10,140);}, 15);
 	var TankTeam = null;
 	var AllOneTeam = true;
-
-	clearArea(ctx, new Color(100, 70, 25));
+	
+	//clearArea(ctx, new Color(100, 70, 25));
+	clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
 
 	for (var n in Tanks) {
 		if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
@@ -1415,11 +1491,16 @@ function timer() {
 		ctx.fillText(mt + " : " + window.mTeams[mt].score,10,10+(12*mtextloop));
 		mtextloop += 1;
 	}*/
-	ctx.fillStyle = Teams[6].getColor().getColorString();
+	
+	ctx.fillStyle = "rgba(0,0,0,0.5)";
+	ctx.fillRect (0,0,250,150);
+	
+	ctx.fillStyle = "rgb(255,255,255)"; //Teams[6].getColor().getColorString();
 	ctx.fillText("Team",10,20);
 	ctx.fillText("Units",60,20);
 	ctx.fillText("Damage Given",95,20);
 	ctx.fillText("Damage Taken",170,20);
+
 	for ( teamnum in Teams )
 	{
 		var t = Teams[teamnum];
@@ -1431,6 +1512,11 @@ function timer() {
 		ctx.fillText(t.getGiven(),95,voff);
 		ctx.fillText(t.getTaken(),170,voff);
 	}
+		
+	var thisFrameTime = (thisLoop=new Date) - lastLoop;
+	frameTime+= (thisFrameTime - frameTime) / filterStrength;
+	lastLoop = thisLoop;
+		
 }
 
 function restart() {
@@ -1461,6 +1547,107 @@ function restart() {
 	
 	RESTARTING = false;
 
+}
+
+function calcPointsCirc( cx,cy, rad, dashLength)
+{
+    var n = rad/dashLength,
+        alpha = Math.PI * 2 / n,
+        pointObj = {},
+        points = [],
+        i = -1;
+        
+    while( i < n )
+    {
+        var theta = alpha * i,
+            theta2 = alpha * (i+1);
+        
+        points.push({x : (Math.cos(theta) * rad) + cx, y : (Math.sin(theta) * rad) + cy, ex : (Math.cos(theta2) * rad) + cx, ey : (Math.sin(theta2) * rad) + cy});
+   i+=2;
+    }              
+    return points;            
+}
+
+function rainbow(numOfSteps, step) {
+    // This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distiguishable vibrant markers in Google Maps and other apps.
+    // HSV to RBG adapted from: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
+    // Adam Cole, 2011-Sept-14
+    var r, g, b;
+    var h = step / numOfSteps;
+    var i = ~~(h * 6);
+    var f = h * 6 - i;
+    var q = 1 - f;
+    switch(i % 6){
+        case 0: r = 1, g = f, b = 0; break;
+        case 1: r = q, g = 1, b = 0; break;
+        case 2: r = 0, g = 1, b = f; break;
+        case 3: r = 0, g = q, b = 1; break;
+        case 4: r = f, g = 0, b = 1; break;
+        case 5: r = 1, g = 0, b = q; break;
+    }
+    var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
+    return (c);
+}
+
+function hex2rgb(hex) {
+  if (hex[0]=="#") hex=hex.substr(1);
+  if (hex.length==3) {
+    var temp=hex; hex='';
+    temp = /^([a-f0-9])([a-f0-9])([a-f0-9])$/i.exec(temp).slice(1);
+    for (var i=0;i<3;i++) hex+=temp[i]+temp[i];
+  }
+  var triplets = /^([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})$/i.exec(hex).slice(1);
+  return {
+    red:   parseInt(triplets[0],16),
+    green: parseInt(triplets[1],16),
+    blue:  parseInt(triplets[2],16)
+  }
+}
+
+function rnd(minv, maxv){
+	if (maxv < minv) return 0;
+	return Math.floor(Math.random()*(maxv-minv+1)) + minv;
+}
+
+function getName(minlength, maxlength, prefix, suffix)
+{
+	prefix = prefix || '';
+	suffix = suffix || '';
+	//these weird character sets are intended to cope with the nature of English (e.g. char 'x' pops up less frequently than char 's')
+	//note: 'h' appears as consonants and vocals
+	var vocals = 'aeiouyh' + 'aeiou' + 'aeiou';
+	var cons = 'bcdfghjklmnpqrstvwxz' + 'bcdfgjklmnprstvw' + 'bcdfgjklmnprst';
+	var allchars = vocals + cons;
+	var length = rnd(minlength, maxlength) - prefix.length - suffix.length;
+	if (length < 1) length = 1;
+	var consnum = 0;
+	if (prefix.length > 0) {
+		for (var i = 0; i < prefix.length; i++){
+			if (consnum == 2) consnum = 0;
+			if (cons.indexOf(prefix[i]) != -1) consnum++;
+		}
+	}
+	else
+		consnum = 1;
+		
+	var name = prefix;
+	
+	for (var i = 0; i < length; i++)
+	{
+		//if we have used 2 consonants, the next char must be vocal.
+		if (consnum == 2)
+		{
+			touse = vocals;
+			consnum = 0;
+		}
+		else touse = allchars;
+		//pick a random character from the set we are goin to use.
+		c = touse.charAt(rnd(0, touse.length - 1));
+		name = name + c;
+		if (cons.indexOf(c) != -1) consnum++;
+	}
+	name = name.charAt(0).toUpperCase() + name.substring(1, name.length) + suffix;
+	return name;
 }
 
 function countTotalProbability() {
