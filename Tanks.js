@@ -23,11 +23,13 @@ var MIN_BASE_DISTANCE_SQUARE = 5000;
 /////////////////
 // New Globals //
 /////////////////
+var NUM_TEAMS = 8; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
-var MAX_UNITS_ON_MAP = 10; // Makes the computer dumb. They build more bases and not enough units.
-var MAX_BASE_UNITS = (MAX_UNITS_ON_MAP * .1); // 10% can be bases
-var MAX_BASE_DEFENSES = (MAX_UNITS_ON_MAP * .3); // 30% can be defenses
-var MAX_SPECIAL_UNITS = (MAX_UNITS_ON_MAP * .01); // 1% can be bases
+var RANDOM_TERRAIN = false;
+var MAX_UNITS_PER_FACTION_ON_MAP = 30; // Max units per faction!
+var MAX_BASE_UNITS = (MAX_UNITS_PER_FACTION_ON_MAP * .1); // 10% can be bases 
+var MAX_BASE_DEFENSES = (MAX_UNITS_PER_FACTION_ON_MAP * .3); // 30% can be defenses
+var MAX_SPECIAL_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2); // 1% / 2 can be specails
 var BASE_HEAL_RADIUS = 65;
 var HEALTH_COOLDOWN = 50;
 
@@ -95,18 +97,19 @@ else
 
 var terrainColors = [
 	 [100, 70, 25], // Mud
-	 [70, 130, 56], // Tundra
+	 [0, 100, 0], // Tundra
 	 [191, 142, 76], // Desert
-	 [255, 255, 255], // Snow
-	 [181, 180, 178],  // Moon
+	 [255, 250, 250], // Snow
+	 [112, 128, 144],  // Moon
 	 [0,0,0] // space!
 ];
 
-var tcIndex = Math.floor(Math.random()*terrainColors.length);
+var tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // I like the space one.
 
 var TankTypes = [];
 //Small Tank:
 TankTypes[0] = {Kind : TankKindEnum.TANK, 
+				Special : false,
 				AttackingUnit :  true, 
 				Prob : 120, 
 				MoveSpeed : 1.4, 
@@ -131,6 +134,7 @@ TankTypes[0] = {Kind : TankKindEnum.TANK,
 				EvaProb : 50};
 //Medium Tank
 TankTypes[1] = {Kind : TankKindEnum.TANK, 
+				Special : false,
 				AttackingUnit :  true, 
 				Prob : 120, 
 				MoveSpeed : 1.0, 
@@ -155,6 +159,7 @@ TankTypes[1] = {Kind : TankKindEnum.TANK,
 				EvaProb : 50};
 //Large Tank
 TankTypes[2] = {Kind : TankKindEnum.TANK, 
+				Special : false,
 				AttackingUnit : true,
 				Prob : 120,
 				MoveSpeed : 0.8, 
@@ -179,6 +184,7 @@ TankTypes[2] = {Kind : TankKindEnum.TANK,
 				EvaProb : 50};
 //Artillery
 TankTypes[3] = {Kind : TankKindEnum.TANK, 
+				Special : false,
 				AttackingUnit : true, 
 				Prob : 60, 
 				MoveSpeed : 0.9, 
@@ -203,6 +209,7 @@ TankTypes[3] = {Kind : TankKindEnum.TANK,
 				EvaProb : 50};
 //Double Tank
 TankTypes[4] = {Kind : TankKindEnum.TANK,
+				Special : false,
 				AttackingUnit : true,
 				Prob : 80,
 				MoveSpeed : 0.7,
@@ -229,6 +236,7 @@ TankTypes[4] = {Kind : TankKindEnum.TANK,
 
 //Missle Launcher
 TankTypes[5] = {Kind : TankKindEnum.TANK,
+				Special : false,
 				AttackingUnit : true,
 				Prob : 90,
 				MoveSpeed : 1.0,
@@ -255,6 +263,7 @@ TankTypes[5] = {Kind : TankKindEnum.TANK,
 				};
 //Turret
 TankTypes[6] = {Kind : TankKindEnum.TURRET,
+				Special : false,
 				AttackingUnit : true,
 				Prob : 20,
 				MoveSpeed : 0,
@@ -279,6 +288,7 @@ TankTypes[6] = {Kind : TankKindEnum.TURRET,
 				EvaProb : 0};				
 //AA Turret
 TankTypes[7] = {Kind : TankKindEnum.TURRET,
+				Special : false,
 				AttackingUnit : true,
 				Prob : 50,
 				MoveSpeed : 0,
@@ -305,6 +315,7 @@ TankTypes[7] = {Kind : TankKindEnum.TURRET,
 
 //Constructor
 TankTypes[8] = {Kind : TankKindEnum.BUILDER, 
+				Special : false,
 				AttackingUnit : false, 
 				Prob : 30, 
 				MoveSpeed : 1.3, 
@@ -329,6 +340,7 @@ TankTypes[8] = {Kind : TankKindEnum.BUILDER,
 
 //Bomber
 TankTypes[9] = {Kind : TankKindEnum.PLANE, 
+				Special : false,
 				AttackingUnit : true, 
 				Prob : 20, 
 				MoveSpeed : 2.5, 
@@ -353,8 +365,9 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 
 //Fighter
 TankTypes[10] = {Kind : TankKindEnum.PLANE, 
+				Special : false,
 				AttackingUnit : true, 
-				Prob : 0, 
+				Prob : 20, 
 				MoveSpeed : 3.5, 
 				TurnSpeed : .12, 
 				TurretTurnSpeed : .15, 
@@ -376,8 +389,36 @@ TankTypes[10] = {Kind : TankKindEnum.PLANE,
 				CanGoEvasive : true,
 				EvaProb : 50};
 
+// Special
+TankTypes[11] = {Kind : TankKindEnum.TANK,
+				Special : true,
+				AttackingUnit : true,
+				Prob : 20,
+				MoveSpeed : 3.5, 
+				TurnSpeed : .12, 
+				TurretTurnSpeed : 0.27, 
+				Radius : 10, 
+				HitPoints : 500, 
+				CooldownTime : 30,
+				MinRange : 25,
+				AttackDistance : 130,
+				AttackRange : 155,
+				SightDistance : 300,
+				BulletType : ShotTypeEnum.MISSLE,
+				BulletTime : 30, 
+				BulletSpeed : 10, 
+				BulletDamage : 20,
+				TurretSize : 10,
+				BarrelLength : 20,
+				DoubleTurret : true,
+				TurretSeparation : 3.5,
+				AntiAircraft : true,
+				CanGoEvasive : true,
+				EvaProb : 80};
+
 //Base
 var BaseType = {Kind : TankKindEnum.BASE, 
+				Special : false,
 				AttackingUnit : false, 
 				Prob : 0, 
 				MoveSpeed : 0, 
@@ -399,6 +440,7 @@ var BaseType = {Kind : TankKindEnum.BASE,
 				DoubleTurret : false,
 				CanGoEvasive : false,
 				EvaProb : 0};
+
 
 var TotalProb;
 var TotalUnits;
@@ -484,6 +526,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	var HitPoints = Type.HitPoints;
 	var Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime;
 	var Target = null;
+	var Specail = false;
 
 	var BaseAngle = 0;
 	var TargetBaseAngle = 0;
@@ -531,39 +574,25 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					}	
 				}
 				
-
-				if(Team.getScore() < MAX_UNITS_ON_MAP) // _StopBuilding will prevent more of the builders from appearing
+				Special = TypeToMake.Special;
+				
+				if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
 				{
-					
 					var _TotalOfUnit = GetNumOfType(TypeToMake);
 					var _TotalBasesBuilt = GetNumOfType(BaseType);
-					var _ToatlTurretBuilt = GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7]);
+					var _TotalTurretBuilt = GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7]);
+					var _TotalSpecials = GetNumOfSpecials();
 					//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
 					
-					if(TypeToMake.Kind == TankKindEnum.BUILDER)
-					{
-						console.log('Team "' + this.getTeamnum() + '" is trying to build a base. They have ' + _TotalBasesBuilt + ' established base(s) our of ' + MAX_BASE_UNITS );				
-						if((_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS)
-						{
-							console.log('Max Base Count Reached.');
-							return;
-						}
-					}
-					
-					if(TypeToMake.Kind == TankKindEnum.TURRET)
-					{
-						console.log('Team "' + this.getTeamnum() + '" is trying to build a defense. They have ' + (_ToatlTurretBuilt+1) + ' established defenses(s) out of ' + MAX_BASE_DEFENSES);				
-						if(_ToatlTurretBuilt >= MAX_BASE_DEFENSES)
-						{
-							console.log('Max defenses Count Reached.');
-							return;
-						}
-					}
-				
+					if(TypeToMake.Kind == TankKindEnum.BUILDER && (_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS) return; // Maxed out Bases!					
+					if(TypeToMake.Kind == TankKindEnum.TURRET && _TotalTurretBuilt >= MAX_BASE_DEFENSES) return; // Maxed out defenses!			
+					if(TypeToMake.Kind == TankKindEnum.TANK && _TotalSpecials >= MAX_SPECIAL_UNITS) return;
 
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
 					Cooldown = Type.CooldownTime;
 				}
+				else
+					return; // Maxed out units!
 			}
 		}
 	}
@@ -800,6 +829,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.isBase = function() {
 		return Type.Kind == TankKindEnum.BASE;
 	}
+	
+	this.isSpecial = function (){ return Special; }
 	
 	this.getKind = function() { return Type.Kind; }
 
@@ -1088,6 +1119,18 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						count++;
 						
 		return count;	
+	}
+	
+	function GetNumOfSpecials()
+	{
+		var count = 0;
+		for(var n in Tanks)
+			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+				if(Tanks[n].getTeam() == Team)
+					if(Tanks[n].getKind() == TankKindEnum.TANK && Tanks[n].isSpecial())
+						count++;
+						
+		return count;
 	}
 	
 	function findFriendlies()
@@ -1564,7 +1607,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		ctx.fillText("Units",60,20);
 		ctx.fillText("Damage Given",95,20);
 		ctx.fillText("Damage Taken",170,20);
-	
+		
+		ctx.fillText("Max Units: " + MAX_UNITS_PER_FACTION_ON_MAP,60,140);
+		ctx.fillText("Max Special: " + MAX_SPECIAL_UNITS,140,140);
+		
 		for ( teamnum in Teams )
 		{
 			var t = Teams[teamnum];
