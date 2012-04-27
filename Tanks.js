@@ -80,9 +80,9 @@ var TankKindEnum = {
 var tcIndex;
 var terrainColors = [
 	 [100, 70, 25], // Mud
-	 [0, 100, 0], // Tundra
-	 [191, 142, 76], // Desert
-	 [255, 250, 250], // Snow
+	 //[0, 100, 0], // Tundra
+	 //[191, 142, 76], // Desert
+	 //[255, 250, 250], // Snow
 	 [112, 128, 144],  // Moon
 	 [0,0,0] // space!
 ];
@@ -106,11 +106,12 @@ var Teams = [];
 var TeamColors = [
 	new Color(255, 0, 0),
 	new Color(0, 255, 0),
-	new Color(0, 0, 255),
+	new Color(255, 255, 0),
 	new Color(0, 255, 255),
 	new Color(255, 0, 255),
 	new Color(255, 255, 0),
-	new Color(0, 0, 0),
+	//new Color(0, 0, 0),
+	new Color(0, 0, 255),
 	new Color(255, 255, 255)
 ];
 
@@ -1129,16 +1130,29 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			
 			// Draw Healing Circle
 			{
+				canvasContext.save();
 				var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
-				canvasContext.strokeStyle = Team.getColor().getColorString(); //"rgb(54,106,145)";
 				canvasContext.beginPath();
-				for(p = 0; p < pointArray.length; p++)
-				{
-					canvasContext.moveTo(pointArray[p].x, pointArray[p].y);
-					canvasContext.lineTo(pointArray[p].ex, pointArray[p].ey);
-					canvasContext.stroke();					
-				}
-				canvasContext.closePath();
+				
+				canvasContext.save();
+					canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
+					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.3);
+					canvasContext.lineWidth = 1;
+					canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.3);
+					canvasContext.stroke();	
+					canvasContext.fill();
+					/*
+					// Shows the healing circle as a dotted
+					canvasContext.strokeStyle = Team.getColor().getColorString(); //"rgb(54,106,145)";
+					for(p = 0; p < pointArray.length; p++)
+					{
+						canvasContext.moveTo(pointArray[p].x, pointArray[p].y);
+						canvasContext.lineTo(pointArray[p].ex, pointArray[p].ey);
+						canvasContext.stroke();					
+					}
+					*/
+					canvasContext.closePath();
+				canvasContext.restore();
 			}
 						
 		};
@@ -1169,6 +1183,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.rect (-14, -8, 28, 16);
 				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.5);
 				canvasContext.fill();
+				canvasContext.lineWidth = 1;
+        		canvasContext.strokeStyle = Team.getColor().getColorString();
+		        canvasContext.stroke();
 				
 				/*
 				// Original tank body builder!
