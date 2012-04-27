@@ -1136,10 +1136,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				
 				canvasContext.save();
 					canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
-					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.3);
-					canvasContext.lineWidth = 1;
-					canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.3);
-					canvasContext.stroke();	
+					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
 					canvasContext.fill();
 					/*
 					// Shows the healing circle as a dotted
