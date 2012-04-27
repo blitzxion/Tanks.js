@@ -26,16 +26,22 @@ var MIN_BASE_DISTANCE_SQUARE = 5000;
 var ROUND = 0; // func RESET() increases this on new rounds.
 var NUM_TEAMS = 4; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
-var RANDOM_TERRAIN = true;
+var RANDOM_TERRAIN = false;
 
 // Fun stuff!
 var DAMAGE_MULTIPLIER = 1; // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
 var HP_MULTIPLIER = 1;
-
-var HARD_MODE = true; // MUHAHAHAH, health regen is out and no special units! Damage is reduced and the max of units on map is reduced!
+var WORLD_WRAP = false; // Experimental!
+var HARD_MODE = false; // MUHAHAHAH, health regen is out and no special units! Damage is reduced and the max of units on map is reduced!
 var HARD_MODE_TICKETS = 100;
 var HARD_MODE_DAMAGE_REDUCTION = .10;
 var HARD_MODE_MAX_UNIT_REDUCTION = 2; // Max Units divided by this number
+var SPEED_ADJ = {
+	enabled : false,
+	speed : 1, // Reduction value (.5 * 8) = 4
+};
+var IN_SPACE = true;
+
 
 // Important (can be changed from above)
 var MAX_UNITS_PER_FACTION_ON_MAP = (HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * 10 * .5)); // Max units per faction!
@@ -70,6 +76,16 @@ var TankKindEnum = {
 	TURRET  : 3,
 	PLANE   : 4
 }
+
+var tcIndex;
+var terrainColors = [
+	 [100, 70, 25], // Mud
+	 [0, 100, 0], // Tundra
+	 [191, 142, 76], // Desert
+	 [255, 250, 250], // Snow
+	 [112, 128, 144],  // Moon
+	 [0,0,0] // space!
+];
 
 //////////
 // Init //
@@ -107,17 +123,6 @@ else
 	Teams[6] = new Team(new Color(0, 0, 0),'Black');
 	Teams[7] = new Team(new Color(255, 255, 255),'White');
 }
-
-var terrainColors = [
-	 [100, 70, 25], // Mud
-	 [0, 100, 0], // Tundra
-	 [191, 142, 76], // Desert
-	 [255, 250, 250], // Snow
-	 [112, 128, 144],  // Moon
-	 [0,0,0] // space!
-];
-
-var tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // I like the space one.
 
 var TankTypes = [];
 //Small Tank:
@@ -567,7 +572,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		TargetBaseAngle = 2 * Math.PI * Math.random();
 		BaseAngle = 2 * Math.PI * Math.random();
 	}
-
+	
+	if(Type.Kind === TankKindEnum.TANK || Type.Kind === TankKindEnum.BUILDER)
+	{
+		if(SPEED_ADJ.enabled)
+		{
+			Type.MoveSpeed = Math.floor(SPEED_ADJ.speed * Type.MoveSpeed);
+			Type.MoveSpeed = (Type.MoveSpeed <= 0) ? 1 : Type.MoveSpeed;
+		} 
+	}
+	
 	var This = this;
 			
 	//Privileged:
@@ -652,6 +666,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					TargetTurretAngle = TargetBaseAngle;
 					turnTurret();
 					findTargets();
+					if(IN_SPACE) moveForward();
 					break;
 				case TankStateEnum.MOVE:
 					moveForward();
@@ -685,7 +700,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								attack();
 						}
 					}
-
+					if(IN_SPACE) moveForward();
 					break;
 				case TankStateEnum.TARGET_IN_RANGE:
 					if(Target === null || !Tanks.contains(Target)) {
@@ -702,6 +717,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							attack();
 						}
 					}
+					if(IN_SPACE) moveForward();
 					break;
 			}
 			if(Cooldown > 0)
@@ -1248,13 +1264,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 			if(X > WIDTH - 10 || X < 10 || Y > HEIGHT - 10 || Y < 10)
 				BaseAngle += Math.PI;
-
-			if(X > WIDTH - 10)
-				X = WIDTH - 10;
+			
+			if(X > WIDTH - 10) // If the object reaches a wall...
+				X = (WORLD_WRAP) ? 10 : WIDTH - 10;
 			else if(X < 10)
 				X = 10;
 			if(Y > HEIGHT - 10)
-				Y = HEIGHT - 10;
+				Y = (WORLD_WRAP) ? 10 : HEIGHT - 10;
 			else if(Y < 10)
 				Y = 10;
 		}
@@ -1324,7 +1340,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var This = this;
 		var LastAngle;
 		
-		Damage = (HARD_MODE) ? (Damage * DAMAGE_MULTIPLIER) : ((Damage * DAMAGE_MULTIPLIER) * HARD_MODE_DAMAGE_REDUCTION);
+		Damage = (!HARD_MODE) ? (Damage * DAMAGE_MULTIPLIER) : ((Damage * DAMAGE_MULTIPLIER) * HARD_MODE_DAMAGE_REDUCTION);
+		Damage = Math.floor(Damage); // Ensure we are only using whole numbers
+		
+		if(Damage <= 0)
+			Damage = 1; // So the weak peeps can still attack
 		
 		if(Target != null && Tanks.contains(Target) && Type === ShotTypeEnum.MISSLE)
 			LastAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
@@ -1561,6 +1581,34 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	}
 
+// ----- Map Class -----
+function Map()
+{
+	var Name = "";
+	var Description = "";
+	var This = this;
+	
+	var Index;
+	var terrainColors = [
+		 [100, 70, 25], // Mud
+		 [0, 100, 0], // Tundra
+		 [191, 142, 76], // Desert
+		 [255, 250, 250], // Snow
+		 [112, 128, 144],  // Moon
+		 [0,0,0] // space!
+	];
+	
+	//Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
+	
+	this.getName = function(){return Name;}
+	this.getDescription = function(){return Description;}
+	this.inSpace = function(){return false;}
+	this.getColors = function(){
+		return Math.floor(Math.random()*terrainColors.length);
+	}
+	
+}
+
 //----- Color class -----
 	function Color (r, g, b)
 	{
@@ -1698,6 +1746,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
 		
+		//SetMapAdjustments();
 		countTotalProbability();
 		Tanks.clear();
 		Bullets.clear();
@@ -1844,3 +1893,39 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		canvasContext.fillStyle = color.getColorString();
 		canvasContext.fillRect (0, 0, WIDTH, HEIGHT);
 	}
+	
+	function SetMapAdjustments()
+	{
+		// Map Adjustments
+		switch(tcIndex.toString())
+		{
+			case "0": // Mudr
+				console.log('Map Loaded: Muddy!');
+				SPEED_ADJ.enabled = true; // Slow those suckers down!
+				SPEED_ADJ.speed = .5;
+				break;
+			case "1":
+				console.log('Map Loaded: The Tundra!');
+				break;
+			case "2":
+				console.log('Map Loaded: Arizona Desert!');
+				break;
+			case "3":
+				console.log('Map Loaded: Snowy Mountains!');
+				break;
+			case "4": // Moon
+				console.log('Map Loaded: We\'re Whalers On the Moon! We Carry a Harpoon!');
+				SPEED_ADJ.enabled = true;
+				SPEED_ADJ.speed = .6;
+				break;
+			case "5": //space
+				console.log('Map Loaded: ZOMG Space!');
+				SPEED_ADJ.enabled = true;
+				SPEED_ADJ.speed = 1.5;
+				break;
+			default:
+				console.log("Map Error: MapId: " + tcIndex);
+				break;
+		}
+	}
+	
