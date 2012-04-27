@@ -1,6 +1,7 @@
 /*
 	Original code from http://matt.stumpnet.net/
 	Modified by http://quickmind.co.uk/tank.html
+	Modified by Richard S.
 */
 
 /////////////
@@ -24,23 +25,19 @@ var MIN_BASE_DISTANCE_SQUARE = 5000;
 // New Globals //
 /////////////////
 var ROUND = 0; // func RESET() increases this on new rounds.
-var NUM_TEAMS = 4; // This is the max amount on the playing field.
+var NUM_TEAMS = 6; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
-var RANDOM_TERRAIN = false;
+var RANDOM_TERRAIN = true;
 
 // Fun stuff!
 var DAMAGE_MULTIPLIER = 1; // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
-var HP_MULTIPLIER = 1;
 var WORLD_WRAP = false; // Experimental!
-var HARD_MODE = false; // MUHAHAHAH, health regen is out and no special units! Damage is reduced and the max of units on map is reduced!
-var HARD_MODE_TICKETS = 100;
-var HARD_MODE_DAMAGE_REDUCTION = .10;
+var HARD_MODE = false; // MUHAHAHAH, health regen is out and no special units! Damage and the max of units on map is reduced!
+var HARD_MODE_TICKETS = 100; // Once this runs out for each faction, no more units can be built
+var HARD_MODE_DAMAGE_REDUCTION = .10; // Reduces damage output by this amount
 var HARD_MODE_MAX_UNIT_REDUCTION = 2; // Max Units divided by this number
-var SPEED_ADJ = {
-	enabled : false,
-	speed : 1, // Reduction value (.5 * 8) = 4
-};
-var IN_SPACE = true;
+//var SPEED_ADJ = {enabled : false,speed : 1,};
+var IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 
 // Important (can be changed from above)
@@ -555,7 +552,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	var Teamnum = teamnum;
 	var Type = type;
 	var Time = 60;
-	var HitPoints = (Type.HitPoints * HP_MULTIPLIER);
+	var HitPoints = Type.HitPoints;
 	var Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime;
 	var Target = null;
 	var Specail = false;
@@ -573,14 +570,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		BaseAngle = 2 * Math.PI * Math.random();
 	}
 	
-	if(Type.Kind === TankKindEnum.TANK || Type.Kind === TankKindEnum.BUILDER)
+	/*if(Type.Kind === TankKindEnum.TANK || Type.Kind === TankKindEnum.BUILDER)
 	{
 		if(SPEED_ADJ.enabled)
 		{
 			Type.MoveSpeed = Math.floor(SPEED_ADJ.speed * Type.MoveSpeed);
 			Type.MoveSpeed = (Type.MoveSpeed <= 0) ? 1 : Type.MoveSpeed;
 		} 
-	}
+	}*/
 	
 	var This = this;
 			
@@ -1020,7 +1017,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			// Draw Healing Circle
 			{
 				var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
-				canvasContext.strokeStyle = "rgb(54,106,145)";
+				canvasContext.strokeStyle = Team.getColor().getColorString(); //"rgb(54,106,145)";
 				canvasContext.beginPath();
 				for(p = 0; p < pointArray.length; p++)
 				{
@@ -1581,34 +1578,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	}
 
-// ----- Map Class -----
-function Map()
-{
-	var Name = "";
-	var Description = "";
-	var This = this;
-	
-	var Index;
-	var terrainColors = [
-		 [100, 70, 25], // Mud
-		 [0, 100, 0], // Tundra
-		 [191, 142, 76], // Desert
-		 [255, 250, 250], // Snow
-		 [112, 128, 144],  // Moon
-		 [0,0,0] // space!
-	];
-	
-	//Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
-	
-	this.getName = function(){return Name;}
-	this.getDescription = function(){return Description;}
-	this.inSpace = function(){return false;}
-	this.getColors = function(){
-		return Math.floor(Math.random()*terrainColors.length);
-	}
-	
-}
-
 //----- Color class -----
 	function Color (r, g, b)
 	{
@@ -1893,39 +1862,3 @@ function Map()
 		canvasContext.fillStyle = color.getColorString();
 		canvasContext.fillRect (0, 0, WIDTH, HEIGHT);
 	}
-	
-	function SetMapAdjustments()
-	{
-		// Map Adjustments
-		switch(tcIndex.toString())
-		{
-			case "0": // Mudr
-				console.log('Map Loaded: Muddy!');
-				SPEED_ADJ.enabled = true; // Slow those suckers down!
-				SPEED_ADJ.speed = .5;
-				break;
-			case "1":
-				console.log('Map Loaded: The Tundra!');
-				break;
-			case "2":
-				console.log('Map Loaded: Arizona Desert!');
-				break;
-			case "3":
-				console.log('Map Loaded: Snowy Mountains!');
-				break;
-			case "4": // Moon
-				console.log('Map Loaded: We\'re Whalers On the Moon! We Carry a Harpoon!');
-				SPEED_ADJ.enabled = true;
-				SPEED_ADJ.speed = .6;
-				break;
-			case "5": //space
-				console.log('Map Loaded: ZOMG Space!');
-				SPEED_ADJ.enabled = true;
-				SPEED_ADJ.speed = 1.5;
-				break;
-			default:
-				console.log("Map Error: MapId: " + tcIndex);
-				break;
-		}
-	}
-	
