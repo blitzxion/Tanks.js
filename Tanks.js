@@ -19,15 +19,17 @@ var MISSLE_ACCELERATION = 0.3;
 var MISSLE_ROTATION = 1.5;
 var MAX_MISSLE_ROTATION = .4;
 var MIN_BASE_DISTANCE_SQUARE = 5000;
-var RANDOM_COLORS = true;
 
 /////////////////
 // New Globals //
 /////////////////
-var MAX_UNITS_ON_MAP = 30;
-var MAX_BASE_UNITS = 4; // Not ready yet
+var RANDOM_COLORS = true;
+var MAX_UNITS_ON_MAP = 10; // Makes the computer dumb. They build more bases and not enough units.
+var MAX_BASE_UNITS = (MAX_UNITS_ON_MAP * .1); // 10% can be bases
+var MAX_BASE_DEFENSES = (MAX_UNITS_ON_MAP * .3); // 30% can be defenses
+var MAX_SPECIAL_UNITS = (MAX_UNITS_ON_MAP * .01); // 1% can be bases
 var BASE_HEAL_RADIUS = 65;
-var HEALTH_COOLDOWN = 200;
+var HEALTH_COOLDOWN = 50;
 
 var TankStateEnum = {
 	IDLE : 0,
@@ -70,7 +72,6 @@ var filterStrength = 20;
 var frameTime = 0, lastLoop = new Date, thisLoop;
 
 var Teams = [];
-
 if(RANDOM_COLORS)
 {
 	for(i=0;i<=7;i++)
@@ -96,9 +97,9 @@ var terrainColors = [
 	 [100, 70, 25], // Mud
 	 [70, 130, 56], // Tundra
 	 [191, 142, 76], // Desert
-	 [200, 200, 210], // Snow
+	 [255, 255, 255], // Snow
 	 [181, 180, 178],  // Moon
-	 [0,0,0] // space
+	 [0,0,0] // space!
 ];
 
 var tcIndex = Math.floor(Math.random()*terrainColors.length);
@@ -400,17 +401,12 @@ var BaseType = {Kind : TankKindEnum.BASE,
 				EvaProb : 0};
 
 var TotalProb;
-
 var TotalUnits;
 
 var Tanks = new Set("tankIndex");
-
 var Bullets = new Set("bulletIndex");
-
 var Explosions = new Set("explosionIndex");
-
 var Smokes = new Set("smokeIndex");
-
 var DebrisSet = new Set("debrisIndex");
 
 //Start:
@@ -439,8 +435,10 @@ timer();
 /////////////
 // Classes //
 /////////////
+
 //----- Set class  -----
-function Set(indexName) {
+function Set(indexName)
+{
 	var IndexName = indexName;
 	var Index = 0;
 
@@ -472,6 +470,7 @@ function Set(indexName) {
 		delete item[IndexName];
 	};
 }
+
 //----- Tank class -----
 function Tank(x_init, y_init, team, type, teamnum) {
 	var X = x_init;
@@ -502,61 +501,74 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	var This = this;
 
 	//Privileged:
-	if(Type.Kind === TankKindEnum.BASE) {
+	if(Type.Kind === TankKindEnum.BASE)
+	{
 		this.doStuff = function() {
 			State = TankStateEnum.IDLE;
-			
-			switch(State)
-			{
-				case TankStateEnum.IDLE:
-					
-					findFriendlies();
-					
-					if(HealCooldown > 0)
-						HealCooldown--;
-					else
-					{
-						heal();
-						HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
-					}
-					
-					if(Cooldown > 0)
-						Cooldown--;
-					else
-					{
-						var angle = Math.random() * 2 * Math.PI;
-						var TypeToMake;
-						var rand = Math.floor(Math.random() * TotalProb);
-						for(var i = 0; i < TankTypes.length; i++){
-							if(rand < TankTypes[i].Prob){								
-								TypeToMake = TankTypes[i];
-								break;
-							} else {
-								rand -= TankTypes[i].Prob;
-							}						
-						}
-											
-						/*if(TypeToMake.Kind == TankKindEnum.BUILDER)
-							console.log('A Base will be built. Team ' + this.getTeamnum() + " has " + this.getBaseCount() + " established bases.");
 						
-						if(TypeToMake.Kind == TankKindEnum.BUILDER && (this.getBaseCount() >= MAX_BASE_UNITS))
+			findFriendlies();
+			if(HealCooldown > 0)
+				HealCooldown--;
+			else
+			{
+				heal();
+				HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+			}
+			
+			if(Cooldown > 0)
+				Cooldown--;
+			else
+			{
+				var angle = Math.random() * 2 * Math.PI;
+				var TypeToMake;
+				var rand = Math.floor(Math.random() * TotalProb);
+				for(var i = 0; i < TankTypes.length; i++){
+					if(rand < TankTypes[i].Prob){								
+						TypeToMake = TankTypes[i];
+						break;
+					} else {
+						rand -= TankTypes[i].Prob;
+					}	
+				}
+				
+
+				if(Team.getScore() < MAX_UNITS_ON_MAP) // _StopBuilding will prevent more of the builders from appearing
+				{
+					
+					var _TotalOfUnit = GetNumOfType(TypeToMake);
+					var _TotalBasesBuilt = GetNumOfType(BaseType);
+					var _ToatlTurretBuilt = GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7]);
+					//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
+					
+					if(TypeToMake.Kind == TankKindEnum.BUILDER)
+					{
+						console.log('Team "' + this.getTeamnum() + '" is trying to build a base. They have ' + _TotalBasesBuilt + ' established base(s) our of ' + MAX_BASE_UNITS );				
+						if((_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS)
 						{
 							console.log('Max Base Count Reached.');
 							return;
-						}*/
-						
-						if(Team.getScore() < MAX_UNITS_ON_MAP)
-						{
-							Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
-							Cooldown = Type.CooldownTime;
 						}
 					}
-									
-					break;
+					
+					if(TypeToMake.Kind == TankKindEnum.TURRET)
+					{
+						console.log('Team "' + this.getTeamnum() + '" is trying to build a defense. They have ' + (_ToatlTurretBuilt+1) + ' established defenses(s) out of ' + MAX_BASE_DEFENSES);				
+						if(_ToatlTurretBuilt >= MAX_BASE_DEFENSES)
+						{
+							console.log('Max defenses Count Reached.');
+							return;
+						}
+					}
+				
+
+					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
+					Cooldown = Type.CooldownTime;
+				}
 			}
-			
 		}
-	} else if(Type.Kind === TankKindEnum.TANK) {
+	}
+	else if(Type.Kind === TankKindEnum.TANK)
+	{
 		this.doStuff = function() {
 			switch (State)
 			{
@@ -623,7 +635,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			if(Cooldown > 0)
 				Cooldown--;
 		};
-	} else if(Type.Kind === TankKindEnum.BUILDER) {
+	}
+	else if(Type.Kind === TankKindEnum.BUILDER)
+	{
 		this.doStuff = function() {
 			switch (State)
 			{
@@ -673,7 +687,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				}
 			}
 		}
-	} else if(Type.Kind === TankKindEnum.TURRET) {
+	} 
+	else if(Type.Kind === TankKindEnum.TURRET)
+	{
 		this.doStuff = function() {
 			switch (State)
 			{
@@ -703,7 +719,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				Cooldown--;
 		};
 
-	} else if(Type.Kind === TankKindEnum.PLANE) {
+	} 
+	else if(Type.Kind === TankKindEnum.PLANE) 
+	{
 		this.doStuff = function() {
 			switch (State)
 			{
@@ -782,6 +800,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.isBase = function() {
 		return Type.Kind == TankKindEnum.BASE;
 	}
+	
+	this.getKind = function() { return Type.Kind; }
 
 	this.isPlane = function() {
 		return Type.Kind == TankKindEnum.PLANE;
@@ -790,11 +810,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.getTeam = function() {
 		return Team;
 	};
-	this.getTeamnum = function()
-	{
+	
+	this.getTeamnum = function(){
 		return Teamnum;
 	}
-	
+		
 	this.getDistanceSquaredFromPoint = function(x, y) {
 		return (X - x) * (X - x) + (Y - y) * (Y - y);
 	};
@@ -991,7 +1011,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	}
 
-	this.callToAttack = function (target) {
+	this.callToAttack = function (target)
+	{
 		if(!Type.AttackingUnit)
 			return;
 		if(!Type.AntiAircraft && target.isPlane())
@@ -1003,14 +1024,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	}
 	
-	
-
 	//Private:
-	function heal() {
+	function heal()
+	{
 		AreaHeal(X,Y, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS, This);
 	};
 	
-	function die() {
+	function die()
+	{
 		var exps = Math.floor(Math.random() * 12 + 8);
 		for(var i = 0; i < exps; i++) {
 			Explosions.add(new Explosion(X + Math.random() * 14 - 7, Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10));
@@ -1027,7 +1048,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		Tanks.remove(This);
 	}
 
-	function callFriendlies(target) {
+	function callFriendlies(target)
+	{
 		for(var n in Tanks) {
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 				if(Tanks[n].getTeam() == Team) {
@@ -1037,7 +1059,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	}
 
-	function findTargets() {
+	function findTargets()
+	{
 		if(Math.random() < .2) {
 			for(var n in Tanks) {
 				if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
@@ -1054,7 +1077,21 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	};
 	
-	function findFriendlies() {
+	function GetNumOfType(type)
+	{
+		//console.log(type);
+		var count = 0;
+		for(var n in Tanks)
+			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+				if(Tanks[n].getTeam() == Team)
+					if(Tanks[n].getKind() == type.Kind)
+						count++;
+						
+		return count;	
+	}
+	
+	function findFriendlies()
+	{
 		if(Math.random() < .2) {
 			for(var n in Tanks) {
 				if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
@@ -1067,7 +1104,19 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	};
 
-	function chooseRandomDestination() {c};
+	function chooseRandomDestination()
+	{
+		DestX = DestX + Math.random() * (MOVE_RANGE * 2 + 1) - MOVE_RANGE;
+		DestY = DestY + Math.random() * (MOVE_RANGE * 2 + 1) - MOVE_RANGE;
+		if(DestX > WIDTH - 10)
+			DestX = WIDTH - 10;
+		else if(DestX < 10)
+			DestX = 10;
+		if(DestY > HEIGHT - 10)
+			DestY = HEIGHT - 10;
+		else if(DestY < 10)
+			DestY = 10;
+	};
 
 	function moveForward(){
 		//Find heading towards destination:
@@ -1172,492 +1221,512 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	};
 	Team.setScore(Team.getScore() + 1);
 }
+
 //----- Bullet class -----
-function Bullet (x, y, dx, dy, time, team, damage, shooter, type, target, airAttack) {
-	var X = x, Y = y, Dx = dx, Dy = dy, Time = time, Team = team, Damage = damage, Shooter = shooter, Type = type, Target = target;
-	var AirAttack = airAttack;
-	var LastX = x, LastY = y;
-	var This = this;
-	var LastAngle;
-
-	if(Target != null && Tanks.contains(Target) && Type === ShotTypeEnum.MISSLE)
-		LastAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
+	function Bullet (x, y, dx, dy, time, team, damage, shooter, type, target, airAttack)
+	{
+		var X = x, Y = y, Dx = dx, Dy = dy, Time = time, Team = team, Damage = damage, Shooter = shooter, Type = type, Target = target;
+		var AirAttack = airAttack;
+		var LastX = x, LastY = y;
+		var This = this;
+		var LastAngle;
 	
-	//Privileged:
-	this.move = function() {
+		if(Target != null && Tanks.contains(Target) && Type === ShotTypeEnum.MISSLE)
+			LastAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
 		
-		X += Dx;
-		Y += Dy;
-		Time--;
-		
-		if(Type === ShotTypeEnum.MISSLE) {
-			Smokes.add(new Smoke(X, Y, 2, 3, 20, 150));
-			Smokes.add(new Smoke((X + LastX) / 2, (Y + LastY) / 2, 1, 3, 20, 150));
+		//Privileged:
+		this.move = function() {
 			
-			LastX = X;
-			LastY = Y;
-
-			if(Target === null || !Tanks.contains(Target)) {
-				var BestDotProduct = -1;
-				for(var n in Tanks) {
-					if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-						var DistanceMagSquared = Tanks[n].getDistanceSquaredFromPoint(X, Y);
-						if(Tanks[n].getTeam() != Team &&  DistanceMagSquared < 200 * 200 && (AirAttack || !Tanks[n].isPlane())) {
-							var SpeedMag = Math.sqrt(Dx * Dx + Dy * Dy);
-							var DistanceMag = Math.sqrt(DistanceMagSquared);
-							var DotProduct = (Dx * (Tanks[n].getX() - X) + Dy * (Tanks[n].getY() - Y)) 
-											/ (SpeedMag * DistanceMag);
-							if(DotProduct > BestDotProduct) {								
-								Target = Tanks[n];	
-								LastAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);						
-								BestDotProduct = DotProduct;
+			X += Dx;
+			Y += Dy;
+			Time--;
+			
+			if(Type === ShotTypeEnum.MISSLE) {
+				Smokes.add(new Smoke(X, Y, 2, 3, 20, 150));
+				Smokes.add(new Smoke((X + LastX) / 2, (Y + LastY) / 2, 1, 3, 20, 150));
+				
+				LastX = X;
+				LastY = Y;
+	
+				if(Target === null || !Tanks.contains(Target)) {
+					var BestDotProduct = -1;
+					for(var n in Tanks) {
+						if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+							var DistanceMagSquared = Tanks[n].getDistanceSquaredFromPoint(X, Y);
+							if(Tanks[n].getTeam() != Team &&  DistanceMagSquared < 200 * 200 && (AirAttack || !Tanks[n].isPlane())) {
+								var SpeedMag = Math.sqrt(Dx * Dx + Dy * Dy);
+								var DistanceMag = Math.sqrt(DistanceMagSquared);
+								var DotProduct = (Dx * (Tanks[n].getX() - X) + Dy * (Tanks[n].getY() - Y)) 
+												/ (SpeedMag * DistanceMag);
+								if(DotProduct > BestDotProduct) {								
+									Target = Tanks[n];	
+									LastAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);						
+									BestDotProduct = DotProduct;
+								}
 							}
 						}
 					}
 				}
+	
+				if(Target != null && Tanks.contains(Target)) {
+					var speed = MISSLE_ACCELERATION + Math.sqrt(Dx * Dx + Dy * Dy);
+					var angle = Math.atan2(Dy, Dx);
+					var angleToTarget = Math.atan2(Target.getY() - Y, Target.getX() - X);
+					var RotateAngle = MISSLE_ROTATION * (angleToTarget - LastAngle); 
+					angle += RotateAngle > 0 ? Math.min(RotateAngle, MAX_MISSLE_ROTATION) 
+											 : Math.max(RotateAngle, -MAX_MISSLE_ROTATION);
+					LastAngle = angleToTarget;
+	
+					Dx = speed * Math.cos(angle);
+					Dy = speed * Math.sin(angle);
+				} 
 			}
-
-			if(Target != null && Tanks.contains(Target)) {
-				var speed = MISSLE_ACCELERATION + Math.sqrt(Dx * Dx + Dy * Dy);
-				var angle = Math.atan2(Dy, Dx);
-				var angleToTarget = Math.atan2(Target.getY() - Y, Target.getX() - X);
-				var RotateAngle = MISSLE_ROTATION * (angleToTarget - LastAngle); 
-				angle += RotateAngle > 0 ? Math.min(RotateAngle, MAX_MISSLE_ROTATION) 
-				                         : Math.max(RotateAngle, -MAX_MISSLE_ROTATION);
-				LastAngle = angleToTarget;
-
-				Dx = speed * Math.cos(angle);
-				Dy = speed * Math.sin(angle);
-			} 
-		}
-
-
-		if(Time <= 0)
-			explode();
-
-		if(Type != ShotTypeEnum.SHELL && Type != ShotTypeEnum.BOMB)
-		{
-			for(var n in Tanks) {
-				if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-					if(Tanks[n].getTeam() != Team &&
-						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Math.max(Dx * Dx + Dy * Dy, Tanks[n].getRadiusSquared()) &&
-						(AirAttack || !Tanks[n].isPlane())) {
-							Tanks[n].takeDamage(Damage, Shooter);
-							explode();						
+	
+	
+			if(Time <= 0)
+				explode();
+	
+			if(Type != ShotTypeEnum.SHELL && Type != ShotTypeEnum.BOMB)
+			{
+				for(var n in Tanks) {
+					if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+						if(Tanks[n].getTeam() != Team &&
+							Tanks[n].getDistanceSquaredFromPoint(X, Y) < Math.max(Dx * Dx + Dy * Dy, Tanks[n].getRadiusSquared()) &&
+							(AirAttack || !Tanks[n].isPlane())) {
+								Tanks[n].takeDamage(Damage, Shooter);
+								explode();						
+						}
 					}
 				}
 			}
-		}
-	};
-
-	this.draw = function(canvasContext) {
-		canvasContext.beginPath();
-		canvasContext.fillStyle = "rgb(255, 255,0)";
-		canvasContext.fillRect (X - .5, Y -.5, 1.5, 1.5);		
-	};
-
-	//Private:
-	function explode() {
-		if(Type === ShotTypeEnum.SHELL) {
-			AreaDamage(X, Y, Damage, SHELL_DAMAGE_RADIUS * SHELL_DAMAGE_RADIUS, Shooter);
-			Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, SHELL_DAMAGE_RADIUS));		
-		} else if(Type === ShotTypeEnum.BOMB) {
-			AreaDamage(X, Y, Damage, BOMB_DAMAGE_RADIUS * BOMB_DAMAGE_RADIUS, Shooter);
-			Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, BOMB_DAMAGE_RADIUS));		
-		} else {
-			Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, 6 + Math.random() * 3));		
-		}
-
-		Bullets.remove(This);
-		
-	};
-}
-//----- Explosion Class -----
-function Explosion (x, y, preDisplayTime, size) {
-	var X = x, Y = y, PreDisplayTime = preDisplayTime, TargetSize = size, Size = 0, GrowMode = true;
+		};
 	
-	TargetSize = 5;
+		this.draw = function(canvasContext)
+		{
+			canvasContext.beginPath();
+			canvasContext.fillStyle = "rgb(255, 255,0)";
+			canvasContext.fillRect (X - .5, Y -.5, 1.5, 1.5);		
+		};
 	
-	this.update = function () {
-		if(PreDisplayTime > 0) {
-			PreDisplayTime--;
-		}else if(GrowMode) {
-			if(Size < TargetSize)
-				Size++;
-			else
-				GrowMode = false;
-		}else if(Size > 0) {
-			Size--;
-		}else{
-			Explosions.remove(this);
-		}
-	};
-	this.draw = function (canvasContext) {
-		if(PreDisplayTime <= 0) {
-			
-			if(Size > 0)
-			{
-				var grad = canvasContext.createRadialGradient(X, Y, 0, X, Y, Size / 2);
-				grad.addColorStop(0, "rgb(255, 255, 0)");
-				grad.addColorStop(1, "rgb(255, 0, 0)");
-				
-				canvasContext.beginPath();
-				canvasContext.fillStyle = grad;
-				canvasContext.arc(X, Y, Size / 2, 0, 2 * Math.PI, false);
-				canvasContext.fill();
+		//Private:
+		function explode()
+		{
+			if(Type === ShotTypeEnum.SHELL) {
+				AreaDamage(X, Y, Damage, SHELL_DAMAGE_RADIUS * SHELL_DAMAGE_RADIUS, Shooter);
+				Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, SHELL_DAMAGE_RADIUS));		
+			} else if(Type === ShotTypeEnum.BOMB) {
+				AreaDamage(X, Y, Damage, BOMB_DAMAGE_RADIUS * BOMB_DAMAGE_RADIUS, Shooter);
+				Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, BOMB_DAMAGE_RADIUS));		
+			} else {
+				Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, 6 + Math.random() * 3));		
 			}
-			
-		}		
-	};
 	
-}
+			Bullets.remove(This);
+			
+		};
+	}
+	
+//----- Explosion Class -----
+	function Explosion (x, y, preDisplayTime, size) 
+	{
+		var X = x, Y = y, PreDisplayTime = preDisplayTime, TargetSize = size, Size = 0, GrowMode = true;
+		
+		TargetSize = 5;
+		
+		this.update = function () {
+			if(PreDisplayTime > 0) {
+				PreDisplayTime--;
+			}else if(GrowMode) {
+				if(Size < TargetSize)
+					Size++;
+				else
+					GrowMode = false;
+			}else if(Size > 0) {
+				Size--;
+			}else{
+				Explosions.remove(this);
+			}
+		};
+		this.draw = function (canvasContext) {
+			if(PreDisplayTime <= 0) {
+				
+				if(Size > 0)
+				{
+					var grad = canvasContext.createRadialGradient(X, Y, 0, X, Y, Size / 2);
+					grad.addColorStop(0, "rgb(255, 255, 0)");
+					grad.addColorStop(1, "rgb(255, 0, 0)");
+					
+					canvasContext.beginPath();
+					canvasContext.fillStyle = grad;
+					canvasContext.arc(X, Y, Size / 2, 0, 2 * Math.PI, false);
+					canvasContext.fill();
+				}
+				
+			}		
+		};
+		
+	}
+	
 //----- Smoke class -----
-function Smoke (x, y, startSize, endSize, time, redness) {
-	var X = x, Y = y, StartSize = startSize, EndSize = endSize, TotalTime = time, Redness = redness;
-	var This = this;
-	var Time = 0;
-	this.update = function () {
-		if(Time < TotalTime)
-			Time++;
-		else
-			Smokes.remove(This);			
+	function Smoke (x, y, startSize, endSize, time, redness) 
+	{
+		var X = x, Y = y, StartSize = startSize, EndSize = endSize, TotalTime = time, Redness = redness;
+		var This = this;
+		var Time = 0;
+		this.update = function () {
+			if(Time < TotalTime)
+				Time++;
+			else
+				Smokes.remove(This);			
+		}
+	
+		this.draw = function (canvasContext) {
+			var TimeRatio = Time / TotalTime;
+			var color = Math.floor(25 + 75 * TimeRatio);		
+			var red = Math.floor(Redness * (1 - 4 * TimeRatio));
+			if(red < 0)
+				red = 0;
+			if(red + color > 255)
+				red = 255 - color;
+			canvasContext.beginPath();
+			canvasContext.fillStyle = "rgba(" + (red + color) + "," + color + "," + color + "," + (1 - TimeRatio) + ")";
+			canvasContext.arc(X, Y, StartSize + (EndSize - StartSize) * Time / TotalTime, 0, 2 * Math.PI, false);
+			canvasContext.fill();					
+		}
 	}
-
-	this.draw = function (canvasContext) {
-		var TimeRatio = Time / TotalTime;
-		var color = Math.floor(25 + 75 * TimeRatio);		
-		var red = Math.floor(Redness * (1 - 4 * TimeRatio));
-		if(red < 0)
-			red = 0;
-		if(red + color > 255)
-			red = 255 - color;
-		canvasContext.beginPath();
-		canvasContext.fillStyle = "rgba(" + (red + color) + "," + color + "," + color + "," + (1 - TimeRatio) + ")";
-		canvasContext.arc(X, Y, StartSize + (EndSize - StartSize) * Time / TotalTime, 0, 2 * Math.PI, false);
-		canvasContext.fill();					
-	}
-}
 
 //----- Debris class -----
-function Debris (x, y, dx, dy, time, redness) {
-	var X = x, Y = y, Dx = dx, Dy = dy, Time = time, TotalTime = time;
-	var This = this;
-	this.update = function () {
-		if(Time-- > 0) {
-			X += Dx;
-			Y += Dy;
-			Smokes.add(new Smoke(X, Y, 1, 7, 15, 200 * (Time / TotalTime)));
-		} else {
-			DebrisSet.remove(This);
-		}		
-	}	
-}
+	function Debris (x, y, dx, dy, time, redness) 
+	{
+		var X = x, Y = y, Dx = dx, Dy = dy, Time = time, TotalTime = time;
+		var This = this;
+		this.update = function () {
+			if(Time-- > 0) {
+				X += Dx;
+				Y += Dy;
+				Smokes.add(new Smoke(X, Y, 1, 7, 15, 200 * (Time / TotalTime)));
+			} else {
+				DebrisSet.remove(This);
+			}		
+		}	
+	}
 
 //----- Team class -----
-function Team (color, name) {
-	var Color = color;
-	var Name = name;
-	var Score = 0;
-	var Taken = 0;
-	var Given = 0;
-
-	this.getColor = function() {
-		return Color;
-	}
-	this.getName = function() {
-		return Name;
-	}
-	this.getScore = function() {
-		return Score;
-	}
-	this.setScore = function(score) {
-		Score = score;
-	}
-	this.getTaken = function() {
-		return Taken;
-	}
-	this.getGiven = function() {
-		return Given;
-	}
-	this.addTaken = function(d)
+	function Team (color, name)
 	{
-		Taken = Taken + d;
-		return Taken;
+		var Color = color;
+		var Name = name;
+		var Score = 0;
+		var Taken = 0;
+		var Given = 0;
+	
+		this.getColor = function() {
+			return Color;
+		}
+		this.getName = function() {
+			return Name;
+		}
+		this.getScore = function() {
+			return Score;
+		}
+		this.setScore = function(score) {
+			Score = score;
+		}
+		this.getTaken = function() {
+			return Taken;
+		}
+		this.getGiven = function() {
+			return Given;
+		}
+		this.addTaken = function(d)
+		{
+			Taken = Taken + d;
+			return Taken;
+		}
+		this.addGiven = function(d)
+		{
+			Given = Given + d;
+			return Given;
+		}
+		this.reset = function()
+		{
+			Score = 0;
+			Taken = 0;
+			Given = 0;
+		}
 	}
-	this.addGiven = function(d)
-	{
-		Given = Given + d;
-		return Given;
-	}
-	this.reset = function()
-	{
-		Score = 0;
-		Taken = 0;
-		Given = 0;
-	}
-}
 
 //----- Color class -----
-function Color (r, g, b) {
-	this.R = r;
-	this.G = g;
-	this.B = b;
-	var This = this;
-
-	this.getColorString = function() {
-		return "rgb(" + This.R + "," + This.G + "," + This.B + ")";
-	};
-}
+	function Color (r, g, b)
+	{
+		this.R = r;
+		this.G = g;
+		this.B = b;
+		var This = this;
+	
+		this.getColorString = function()
+		{
+			return "rgb(" + This.R + "," + This.G + "," + This.B + ")";
+		};
+	}
 
 ///////////////
 // Functions //
 ///////////////
 
-function AreaDamage(X, Y, Damage, RadiusSquared, Shooter) {
-	for(var n in Tanks) {
-		if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-			if(Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared &&  !Tanks[n].isPlane()) {
-				Tanks[n].takeDamage(Damage, Shooter);
-			}
-		}
-	}
-}
-
-function AreaHeal(X, Y, RadiusSquared, Healer)
-{
-	for(var n in Tanks)
-		if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) 
-			if(Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared)
-				Tanks[n].recoverHitPoints(null,Healer);
-}
-
-function timer() {
-	var t = setTimeout(function() {timer(); ctx.fillStyle = "rgb(255,255,255)"; ctx.fillText((1000/frameTime).toFixed(1) + " fps",10,140);}, 15);
-	var TankTeam = null;
-	var AllOneTeam = true;
-	
-	//clearArea(ctx, new Color(100, 70, 25));
-	clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
-
-	for (var n in Tanks) {
-		if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-			if(TankTeam == null)
-				TankTeam = Tanks[n].getTeam();
-			else if(Tanks[n].getTeam() != TankTeam)
-				AllOneTeam = false;
-			
-			Tanks[n].draw(ctx);				
-			Tanks[n].doStuff();						
-		}
-	}
-
-	for (var n in Bullets) {
-		if (Bullets.hasOwnProperty(n) && Bullets.contains(Bullets[n])) {
-			Bullets[n].draw(ctx);
-			Bullets[n].move();
-			
-		}
-	}
-
-	for (var n in Smokes) {
-		if (Smokes.hasOwnProperty(n) && Smokes.contains(Smokes[n])) {
-			Smokes[n].draw(ctx);
-			Smokes[n].update();			
-		}
-	}
-
-	for (var n in Explosions) {
-		if (Explosions.hasOwnProperty(n) && Explosions.contains(Explosions[n])) {
-			Explosions[n].draw(ctx);
-			Explosions[n].update();
-			
-		}
-	}
-	
-	for (var n in DebrisSet) {
-		 if (DebrisSet.hasOwnProperty(n) && DebrisSet.contains(DebrisSet[n])) {
-			DebrisSet[n].update();			
-		}
-	}
-
-	if(AllOneTeam && !RESTARTING) {
-		RESTARTING = true;
-		var r = setTimeout(function() {restart();}, 10000);
-	}
-	mtextloop = 0;
-	/*for ( var mt in window.mTeams )
+	function AreaDamage(X, Y, Damage, RadiusSquared, Shooter)
 	{
-		ctx.fillStyle = window.mTeams[mt].colorstring;
-		ctx.fillText(mt + " : " + window.mTeams[mt].score,10,10+(12*mtextloop));
-		mtextloop += 1;
-	}*/
-	
-	ctx.fillStyle = "rgba(0,0,0,0.5)";
-	ctx.fillRect (0,0,250,150);
-	
-	ctx.fillStyle = "rgb(255,255,255)"; //Teams[6].getColor().getColorString();
-	ctx.fillText("Team",10,20);
-	ctx.fillText("Units",60,20);
-	ctx.fillText("Damage Given",95,20);
-	ctx.fillText("Damage Taken",170,20);
-
-	for ( teamnum in Teams )
-	{
-		var t = Teams[teamnum];
-		var voff = 35 + (12*teamnum);
-		ctx.fillStyle = t.getColor().getColorString();
-		//ctx.fillText(t.getName() + " : " + t.getScore() + " (" + t.getGiven() + " / " + t.getTaken() + ")",10,10+(12*teamnum));
-		ctx.fillText(t.getName(),10,voff);
-		ctx.fillText(t.getScore(),60,voff);
-		ctx.fillText(t.getGiven(),95,voff);
-		ctx.fillText(t.getTaken(),170,voff);
-	}
-		
-	var thisFrameTime = (thisLoop=new Date) - lastLoop;
-	frameTime+= (thisFrameTime - frameTime) / filterStrength;
-	lastLoop = thisLoop;
-		
-}
-
-function restart() {
-	countTotalProbability();
-	Tanks.clear();
-	Bullets.clear();
-	Explosions.clear();
-	Smokes.clear();
-	for(var i = 0; i < Teams.length; i++) {
-		Teams[i].reset();
-		//MIN_SEPERATION_OF_STARTING_BASES
-		var TooClose = true;
-		var attempts = 0;
-		while(TooClose && attempts++ < 100) {
-			TooClose = false;
-			x = Math.random() * (WIDTH - 40) + 20;
-			y = Math.random() * (HEIGHT - 40) + 20;
-			for (var n in Tanks) {
-				if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-					if(Tanks[n].getDistanceSquaredFromPoint(x, y) < MIN_SEPERATION_OF_STARTING_BASES * MIN_SEPERATION_OF_STARTING_BASES)
-						TooClose = true;
+		for(var n in Tanks) {
+			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+				if(Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared &&  !Tanks[n].isPlane()) {
+					Tanks[n].takeDamage(Damage, Shooter);
 				}
 			}
 		}
-		
-		Tanks.add(new Tank(x, y, Teams[i], BaseType, Teams[i].getName()));
 	}
 	
-	RESTARTING = false;
-
-}
-
-function calcPointsCirc( cx,cy, rad, dashLength)
-{
-    var n = rad/dashLength,
-        alpha = Math.PI * 2 / n,
-        pointObj = {},
-        points = [],
-        i = -1;
-        
-    while( i < n )
-    {
-        var theta = alpha * i,
-            theta2 = alpha * (i+1);
-        
-        points.push({x : (Math.cos(theta) * rad) + cx, y : (Math.sin(theta) * rad) + cy, ex : (Math.cos(theta2) * rad) + cx, ey : (Math.sin(theta2) * rad) + cy});
-   i+=2;
-    }              
-    return points;            
-}
-
-function rainbow(numOfSteps, step) {
-    // This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distiguishable vibrant markers in Google Maps and other apps.
-    // HSV to RBG adapted from: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
-    // Adam Cole, 2011-Sept-14
-    var r, g, b;
-    var h = step / numOfSteps;
-    var i = ~~(h * 6);
-    var f = h * 6 - i;
-    var q = 1 - f;
-    switch(i % 6){
-        case 0: r = 1, g = f, b = 0; break;
-        case 1: r = q, g = 1, b = 0; break;
-        case 2: r = 0, g = 1, b = f; break;
-        case 3: r = 0, g = q, b = 1; break;
-        case 4: r = f, g = 0, b = 1; break;
-        case 5: r = 1, g = 0, b = q; break;
-    }
-    var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
-    return (c);
-}
-
-function hex2rgb(hex) {
-  if (hex[0]=="#") hex=hex.substr(1);
-  if (hex.length==3) {
-    var temp=hex; hex='';
-    temp = /^([a-f0-9])([a-f0-9])([a-f0-9])$/i.exec(temp).slice(1);
-    for (var i=0;i<3;i++) hex+=temp[i]+temp[i];
-  }
-  var triplets = /^([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})$/i.exec(hex).slice(1);
-  return {
-    red:   parseInt(triplets[0],16),
-    green: parseInt(triplets[1],16),
-    blue:  parseInt(triplets[2],16)
-  }
-}
-
-function rnd(minv, maxv){
-	if (maxv < minv) return 0;
-	return Math.floor(Math.random()*(maxv-minv+1)) + minv;
-}
-
-function getName(minlength, maxlength, prefix, suffix)
-{
-	prefix = prefix || '';
-	suffix = suffix || '';
-	//these weird character sets are intended to cope with the nature of English (e.g. char 'x' pops up less frequently than char 's')
-	//note: 'h' appears as consonants and vocals
-	var vocals = 'aeiouyh' + 'aeiou' + 'aeiou';
-	var cons = 'bcdfghjklmnpqrstvwxz' + 'bcdfgjklmnprstvw' + 'bcdfgjklmnprst';
-	var allchars = vocals + cons;
-	var length = rnd(minlength, maxlength) - prefix.length - suffix.length;
-	if (length < 1) length = 1;
-	var consnum = 0;
-	if (prefix.length > 0) {
-		for (var i = 0; i < prefix.length; i++){
-			if (consnum == 2) consnum = 0;
-			if (cons.indexOf(prefix[i]) != -1) consnum++;
-		}
-	}
-	else
-		consnum = 1;
-		
-	var name = prefix;
-	
-	for (var i = 0; i < length; i++)
+	function AreaHeal(X, Y, RadiusSquared, Healer)
 	{
-		//if we have used 2 consonants, the next char must be vocal.
-		if (consnum == 2)
-		{
-			touse = vocals;
-			consnum = 0;
-		}
-		else touse = allchars;
-		//pick a random character from the set we are goin to use.
-		c = touse.charAt(rnd(0, touse.length - 1));
-		name = name + c;
-		if (cons.indexOf(c) != -1) consnum++;
+		for(var n in Tanks)
+			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) 
+				if(Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared)
+					Tanks[n].recoverHitPoints(null,Healer);
 	}
-	name = name.charAt(0).toUpperCase() + name.substring(1, name.length) + suffix;
-	return name;
-}
+	
+	// This is what makes it all happen
+	function timer()
+	{
+		var t = setTimeout(function() {timer(); ctx.fillStyle = "rgb(255,255,255)"; ctx.fillText((1000/frameTime).toFixed(1) + " fps",10,140);}, 15);
+		var TankTeam = null;
+		var AllOneTeam = true;
+		
+		//clearArea(ctx, new Color(100, 70, 25));
+		clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
+	
+		for (var n in Tanks) {
+			if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+				if(TankTeam == null)
+					TankTeam = Tanks[n].getTeam();
+				else if(Tanks[n].getTeam() != TankTeam)
+					AllOneTeam = false;
+				
+				Tanks[n].draw(ctx);				
+				Tanks[n].doStuff();						
+			}
+		}
+	
+		for (var n in Bullets) {
+			if (Bullets.hasOwnProperty(n) && Bullets.contains(Bullets[n])) {
+				Bullets[n].draw(ctx);
+				Bullets[n].move();
+				
+			}
+		}
+	
+		for (var n in Smokes) {
+			if (Smokes.hasOwnProperty(n) && Smokes.contains(Smokes[n])) {
+				Smokes[n].draw(ctx);
+				Smokes[n].update();			
+			}
+		}
+	
+		for (var n in Explosions) {
+			if (Explosions.hasOwnProperty(n) && Explosions.contains(Explosions[n])) {
+				Explosions[n].draw(ctx);
+				Explosions[n].update();
+				
+			}
+		}
+		
+		for (var n in DebrisSet) {
+			 if (DebrisSet.hasOwnProperty(n) && DebrisSet.contains(DebrisSet[n])) {
+				DebrisSet[n].update();			
+			}
+		}
+	
+		if(AllOneTeam && !RESTARTING) {
+			RESTARTING = true;
+			var r = setTimeout(function() {restart();}, 10000);
+		}
+		mtextloop = 0;
+		/*for ( var mt in window.mTeams )
+		{
+			ctx.fillStyle = window.mTeams[mt].colorstring;
+			ctx.fillText(mt + " : " + window.mTeams[mt].score,10,10+(12*mtextloop));
+			mtextloop += 1;
+		}*/
+		
+		ctx.fillStyle = "rgba(0,0,0,0.5)";
+		ctx.fillRect (0,0,250,150);
+		
+		ctx.fillStyle = "rgb(255,255,255)"; //Teams[6].getColor().getColorString();
+		ctx.fillText("Team",10,20);
+		ctx.fillText("Units",60,20);
+		ctx.fillText("Damage Given",95,20);
+		ctx.fillText("Damage Taken",170,20);
+	
+		for ( teamnum in Teams )
+		{
+			var t = Teams[teamnum];
+			var voff = 35 + (12*teamnum);
+			ctx.fillStyle = t.getColor().getColorString();
+			//ctx.fillText(t.getName() + " : " + t.getScore() + " (" + t.getGiven() + " / " + t.getTaken() + ")",10,10+(12*teamnum));
+			ctx.fillText(t.getName(),10,voff);
+			ctx.fillText(t.getScore(),60,voff);
+			ctx.fillText(t.getGiven(),95,voff);
+			ctx.fillText(t.getTaken(),170,voff);
+		}
+			
+		var thisFrameTime = (thisLoop=new Date) - lastLoop;
+		frameTime+= (thisFrameTime - frameTime) / filterStrength;
+		lastLoop = thisLoop;
+			
+	}
 
-function countTotalProbability() {
-	TotalProb = 0;
-	for(var i = 0; i < TankTypes.length; i++)
-		TotalProb += TankTypes[i].Prob;
-}
-
-function clearArea(canvasContext, color)
-{
-	canvasContext.fillStyle = color.getColorString();
-	canvasContext.fillRect (0, 0, WIDTH, HEIGHT);
-}
+	function restart()
+	{
+		countTotalProbability();
+		Tanks.clear();
+		Bullets.clear();
+		Explosions.clear();
+		Smokes.clear();
+		for(var i = 0; i < Teams.length; i++) {
+			Teams[i].reset();
+			//MIN_SEPERATION_OF_STARTING_BASES
+			var TooClose = true;
+			var attempts = 0;
+			while(TooClose && attempts++ < 100) {
+				TooClose = false;
+				x = Math.random() * (WIDTH - 40) + 20;
+				y = Math.random() * (HEIGHT - 40) + 20;
+				for (var n in Tanks) {
+					if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+						if(Tanks[n].getDistanceSquaredFromPoint(x, y) < MIN_SEPERATION_OF_STARTING_BASES * MIN_SEPERATION_OF_STARTING_BASES)
+							TooClose = true;
+					}
+				}
+			}
+			
+			Tanks.add(new Tank(x, y, Teams[i], BaseType, Teams[i].getName()));
+		}
+		
+		RESTARTING = false;
+	
+	}
+	
+	function calcPointsCirc( cx,cy, rad, dashLength)
+	{
+		var n = rad/dashLength,
+			alpha = Math.PI * 2 / n,
+			pointObj = {},
+			points = [],
+			i = -1;
+			
+		while( i < n )
+		{
+			var theta = alpha * i,
+				theta2 = alpha * (i+1);
+			
+			points.push({x : (Math.cos(theta) * rad) + cx, y : (Math.sin(theta) * rad) + cy, ex : (Math.cos(theta2) * rad) + cx, ey : (Math.sin(theta2) * rad) + cy});
+	   i+=2;
+		}              
+		return points;            
+	}
+	
+	function rainbow(numOfSteps, step)
+	{
+		// This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distiguishable vibrant markers in Google Maps and other apps.
+		// HSV to RBG adapted from: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
+		// Adam Cole, 2011-Sept-14
+		var r, g, b;
+		var h = step / numOfSteps;
+		var i = ~~(h * 6);
+		var f = h * 6 - i;
+		var q = 1 - f;
+		switch(i % 6){
+			case 0: r = 1, g = f, b = 0; break;
+			case 1: r = q, g = 1, b = 0; break;
+			case 2: r = 0, g = 1, b = f; break;
+			case 3: r = 0, g = q, b = 1; break;
+			case 4: r = f, g = 0, b = 1; break;
+			case 5: r = 1, g = 0, b = q; break;
+		}
+		var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
+		return (c);
+	}
+	
+	function hex2rgb(hex)
+	{
+	  if (hex[0]=="#") hex=hex.substr(1);
+	  if (hex.length==3) {
+		var temp=hex; hex='';
+		temp = /^([a-f0-9])([a-f0-9])([a-f0-9])$/i.exec(temp).slice(1);
+		for (var i=0;i<3;i++) hex+=temp[i]+temp[i];
+	  }
+	  var triplets = /^([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})$/i.exec(hex).slice(1);
+	  return {
+		red:   parseInt(triplets[0],16),
+		green: parseInt(triplets[1],16),
+		blue:  parseInt(triplets[2],16)
+	  }
+	}
+	
+	function rnd(minv, maxv)
+	{
+		if (maxv < minv) return 0;
+		return Math.floor(Math.random()*(maxv-minv+1)) + minv;
+	}
+	
+	function getName(minlength, maxlength, prefix, suffix)
+	{
+		prefix = prefix || '';
+		suffix = suffix || '';
+		//these weird character sets are intended to cope with the nature of English (e.g. char 'x' pops up less frequently than char 's')
+		//note: 'h' appears as consonants and vocals
+		var vocals = 'aeiouyh' + 'aeiou' + 'aeiou';
+		var cons = 'bcdfghjklmnpqrstvwxz' + 'bcdfgjklmnprstvw' + 'bcdfgjklmnprst';
+		var allchars = vocals + cons;
+		var length = rnd(minlength, maxlength) - prefix.length - suffix.length;
+		if (length < 1) length = 1;
+		var consnum = 0;
+		if (prefix.length > 0) {
+			for (var i = 0; i < prefix.length; i++){
+				if (consnum == 2) consnum = 0;
+				if (cons.indexOf(prefix[i]) != -1) consnum++;
+			}
+		}
+		else
+			consnum = 1;
+			
+		var name = prefix;
+		
+		for (var i = 0; i < length; i++)
+		{
+			//if we have used 2 consonants, the next char must be vocal.
+			if (consnum == 2)
+			{
+				touse = vocals;
+				consnum = 0;
+			}
+			else touse = allchars;
+			//pick a random character from the set we are goin to use.
+			c = touse.charAt(rnd(0, touse.length - 1));
+			name = name + c;
+			if (cons.indexOf(c) != -1) consnum++;
+		}
+		name = name.charAt(0).toUpperCase() + name.substring(1, name.length) + suffix;
+		return name;
+	}
+	
+	function countTotalProbability()
+	{
+		TotalProb = 0;
+		for(var i = 0; i < TankTypes.length; i++)
+			TotalProb += TankTypes[i].Prob;
+	}
+	
+	function clearArea(canvasContext, color)
+	{
+		canvasContext.fillStyle = color.getColorString();
+		canvasContext.fillRect (0, 0, WIDTH, HEIGHT);
+	}
