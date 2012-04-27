@@ -1117,14 +1117,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	if(Type.Kind === TankKindEnum.BASE)
 	{
 		this.draw = function(canvasContext) {
-			canvasContext.fillStyle = "rgba(0,0,0,0.5)";
-			canvasContext.fillRect (X - 12, Y - 12, 24, 24);
+
+			canvasContext.fillStyle = "rgb(0,0,0)";
+			canvasContext.fillRect (X - 11, Y - 11, 22, 22);
 			
 			canvasContext.fillStyle = Team.getColor().getColorString();
 			canvasContext.fillRect (X - 10, Y - 10, 20, 20);
 						
-			canvasContext.fillStyle = (new Color(0, 130, 0)).getColorString();
-			canvasContext.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
+			//canvasContext.fillStyle = (new Color(0, 130, 0)).getColorString();
+			//canvasContext.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
 			
 			// Draw Healing Circle
 			{
@@ -1153,10 +1154,25 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(BaseAngle);
 
+				// This was the shadow for tanks. Made it look kinda bad, so its gutted.
+				/*canvasContext.strokeStyle = "rgb(0,0,0)";
+				canvasContext.beginPath();
+				canvasContext.lineWidth = 2;
+				canvasContext.moveTo(12, 6);
+				canvasContext.lineTo(-12, 6);
+				canvasContext.lineTo(-12, -6);
+				canvasContext.lineTo(12, -6);
+				canvasContext.closePath();
+				canvasContext.stroke();*/
+
+				canvasContext.beginPath();
+				canvasContext.rect (-14, -8, 28, 16);
+				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.5);
+				canvasContext.fill();
+				
+				/*
+				// Original tank body builder!
 				canvasContext.strokeStyle = Team.getColor().getColorString();
-				
-				// Also draw a second line for depth
-				
 				canvasContext.beginPath();
 				canvasContext.moveTo(12, 6);
 				canvasContext.lineTo(-12, 6);
@@ -1164,17 +1180,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.lineTo(12, -6);
 				canvasContext.closePath();
 				canvasContext.stroke();
-				
-				canvasContext.strokeStyle = "rgb(0,0,0)";
-				
-				canvasContext.beginPath();
-				canvasContext.moveTo(13, 7);
-				canvasContext.lineTo(-13, 7);
-				canvasContext.lineTo(-13, -7);
-				canvasContext.lineTo(13, -7);
-				canvasContext.closePath();
-				canvasContext.stroke();
-				
+				*/
+								
 				canvasContext.restore();
 			}
 
@@ -1726,6 +1733,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		{
 			return "rgb(" + This.R + "," + This.G + "," + This.B + ")";
 		};
+		
+		this.getColorStringWithAlpha = function(alpha)
+		{
+			return "rgba(" + This.R + "," + This.G + "," + This.B + ", " + alpha + ")";
+		}
 		
 	}
 
