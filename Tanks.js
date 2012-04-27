@@ -25,12 +25,12 @@ var MIN_BASE_DISTANCE_SQUARE = 5000;
 // New Globals //
 /////////////////
 var ROUND = 0; // func RESET() increases this on new rounds.
-var NUM_TEAMS = 5; // This is the max amount on the playing field.
+var NUM_TEAMS = 4; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
 var RANDOM_TERRAIN = true;
 
 // Fun stuff!
-var SCORE_TO_WIN = 100000;
+var SCORE_TO_WIN = 10000;
 var WINNING_TEAMS = [];
 
 var DAMAGE_MULTIPLIER = 1; // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
@@ -103,66 +103,19 @@ var filterStrength = 20;
 var frameTime = 0, lastLoop = new Date, thisLoop;
 
 var Teams = [];
-if(RANDOM_COLORS)
-{
-	var colorsUsed = [];
-	var randomStep;
-	var colorLength = NUM_TEAMS * 2;
-	var colorVariant = 2;
-	
-	for(i=0;i<=NUM_TEAMS-1;i++)
-	{
-		var tooClose = false;
-		var colorAttempts = 1;		
-		randomStep = Math.ceil(Math.random() * colorLength);		
-		
-		if(colorsUsed.length >= 3)
-		{
-			var f = getClosestValues(colorsUsed,randomStep);
-			console.log(i+") The Step: "+randomStep);
-			console.log(i+") Colors Used: "+colorsUsed);
-			console.log(i+") Nearest Matches: "+f);
-			
-			if((randomStep - colorVariant) == f[0] || (randomStep + colorVariant) == f[1])
-				tooClose = true;
-			
-			console.log(i+") Is Close? "+ tooClose);
-		}
-		
-		while((tooClose || $.inArray(randomStep,colorsUsed) != -1) && colorAttempts++ < 50)
-		{
-			console.log(i+") Getting new Color ");
-			tooClose = false;
-			newRandomStep = Math.ceil((Math.random() * colorLength) + 1);
-			
-			f = getClosestValues(colorsUsed,randomStep);
-			if((randomStep - colorVariant) == f[0] || (randomStep + colorVariant) == f[1])
-				tooClose = true;
-			else if(newRandomStep != randomStep && $.inArray(randomStep,colorsUsed) != -1)
-			{
-				randomStep = newRandomStep;
-				break;
-			}
-		}
-		colorsUsed.push(randomStep);
-		var rgb = hex2rgb(rainbow(colorLength,randomStep));
-		Teams[i] = new Team(new Color(rgb.red,rgb.green,rgb.blue),getName(4,7,null,null));
-	}
-	
-	console.log(colorsUsed);
-	delete colorsUsed;
-}
-else
-{
-	Teams[0] = new Team(new Color(255, 0, 0),'Red');
-	Teams[1] = new Team(new Color(0, 255, 0),'Green');
-	Teams[2] = new Team(new Color(0, 0, 255),'Blue');
-	Teams[3] = new Team(new Color(0, 255, 255),'Cyan');
-	Teams[4] = new Team(new Color(255, 0, 255),'Purple');
-	Teams[5] = new Team(new Color(255, 255, 0),'Yellow');
-	Teams[6] = new Team(new Color(0, 0, 0),'Black');
-	Teams[7] = new Team(new Color(255, 255, 255),'White');
-}
+var TeamColors = [
+	new Color(255, 0, 0),
+	new Color(0, 255, 0),
+	new Color(0, 0, 255),
+	new Color(0, 255, 255),
+	new Color(255, 0, 255),
+	new Color(255, 255, 0),
+	new Color(0, 0, 0),
+	new Color(255, 255, 255)
+];
+
+for(i=0;i<=NUM_TEAMS-1;i++)
+	Teams[i] = new Team(TeamColors[i],getName(4,7,null,null));
 
 var TankTypes = [];
 //Small Tank:
@@ -835,7 +788,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							Target = null;
 						else
 						{
-							
 							//Target = null;
 							// If less than 90%, i want you to stick around, but attack when required!
 							if(Math.random() < .2) {
@@ -854,10 +806,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								}
 							}
 							
-							setTargetTurretAngle(Target);
-							turnTurret();
-							TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
-							attack();
+							if(!Target.isBase())
+							{							
+								setTargetTurretAngle(Target);
+								turnTurret();
+								TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
+								attack();
+							}
 						}
 					}
 
@@ -1180,7 +1135,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				{
 					canvasContext.moveTo(pointArray[p].x, pointArray[p].y);
 					canvasContext.lineTo(pointArray[p].ex, pointArray[p].ey);
-					canvasContext.stroke();
+					canvasContext.stroke();					
 				}
 				canvasContext.closePath();
 			}
@@ -1210,13 +1165,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.closePath();
 				canvasContext.stroke();
 				
-				canvasContext.strokeStyle = "rgba(0,0,0,0.5)";
+				canvasContext.strokeStyle = "rgb(0,0,0)";
 				
 				canvasContext.beginPath();
-				canvasContext.moveTo(14, 8);
-				canvasContext.lineTo(-14, 8);
-				canvasContext.lineTo(-14, -8);
-				canvasContext.lineTo(14, -8);
+				canvasContext.moveTo(13, 7);
+				canvasContext.lineTo(-13, 7);
+				canvasContext.lineTo(-13, -7);
+				canvasContext.lineTo(13, -7);
 				canvasContext.closePath();
 				canvasContext.stroke();
 				
@@ -1260,7 +1215,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			canvasContext.rotate(BaseAngle);
 
 			canvasContext.strokeStyle = Team.getColor().getColorString();
-			
+						
 			canvasContext.beginPath();
 			canvasContext.moveTo(-12, 0);
 			canvasContext.lineTo(12, 0);
@@ -1269,7 +1224,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			canvasContext.moveTo(0, 0);
 			canvasContext.lineTo(-5, 8);
 			canvasContext.stroke();
-
 			canvasContext.restore();
 		}
 	}
@@ -1495,6 +1449,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	};
 	Team.setScore(Team.getScore() + 1);
+	Team.addScore(1);
 	Team.addTicket();
 }
 
@@ -1699,6 +1654,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var Color = color;
 		var Name = name;
 		var Score = 0;
+		var TotalScore = 0;
 		var Taken = 0;
 		var Given = 0;
 		var UsedTickets = 0; // Used in Hard Mode
@@ -1711,6 +1667,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		this.getScore = function() {
 			return Score;
+		}
+		this.getTotalScore = function()
+		{
+			return TotalScore;
 		}
 		this.setScore = function(score) {
 			Score = score;
@@ -1734,6 +1694,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Given = Given + d;
 			return Given;
 		}
+		this.addScore = function(d)
+		{
+			TotalScore = TotalScore + d;
+			return TotalScore;
+		}
 		this.addTicket = function()
 		{
 			UsedTickets++;
@@ -1742,6 +1707,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		this.reset = function()
 		{
 			Score = 0;
+			TotalScore = 0;
 			Taken = 0;
 			Given = 0;
 			UsedTickets = 0;
@@ -1796,19 +1762,21 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		
 		//clearArea(ctx, new Color(100, 70, 25));
 		clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
-	
+		
+		for(var n in Teams)
+			if(Teams[n].getGiven() >= SCORE_TO_WIN)
+			{
+				TeamWonByScore = true;
+				break;
+			}
+		
 		for (var n in Tanks) {
 			if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 				if(TankTeam == null)
 					TankTeam = Tanks[n].getTeam();
 				else if(Tanks[n].getTeam() != TankTeam)
 					AllOneTeam = false;
-				
-				var _tempTeam = Tanks[n].getTeam();
-				if(!TeamWonByScore && _tempTeam.getGiven() >= SCORE_TO_WIN){
-					TeamWonByScore = true;
-				}
-				
+								
 				Tanks[n].draw(ctx);
 				Tanks[n].doStuff();
 			}
@@ -1843,20 +1811,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			}
 		}
 		
-		if(TeamWonByScore && !RESTARTING) {
+		if(TeamWonByScore && !RESTARTING)
+		{
 			RESTARTING = true;
 			var r = setTimeout(function() {restart();}, 5000);
-		} else if(AllOneTeam && !RESTARTING) {
+		} 
+		else if(AllOneTeam && !RESTARTING) {
 			RESTARTING = true;
 			var r = setTimeout(function() {restart();}, 5000);
 		}
-		mtextloop = 0;
-		/*for ( var mt in window.mTeams )
-		{
-			ctx.fillStyle = window.mTeams[mt].colorstring;
-			ctx.fillText(mt + " : " + window.mTeams[mt].score,10,10+(12*mtextloop));
-			mtextloop += 1;
-		}*/
 		
 		ctx.fillStyle = "rgba(0,0,0,0.5)";
 		ctx.fillRect (0,0,250,(HARD_MODE) ? 80+(17*NUM_TEAMS) : 60+(17*NUM_TEAMS));
@@ -1879,13 +1842,54 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.fillText(t.getGiven(),95,voff);
 			ctx.fillText(t.getTaken(),170,voff);
 		}
-		
-		//ctx.fillText("Units: " + MAX_UNITS_PER_FACTION_ON_MAP,60,140);
-		//ctx.fillText("Special: " + MAX_SPECIAL_UNITS,100,140);
-		
+				
 		ctx.fillStyle = "rgb(255,255,255)";
 		if(HARD_MODE) ctx.fillText("HARD MODE ENABLED!",10,voff+30);		
 		ctx.fillText("Round: " + ROUND,150,40+(18*NUM_TEAMS));
+		
+		// Show the winners roster 
+		if(WINNING_TEAMS.length >= 1)
+		{
+			winners = WINNING_TEAMS;
+			/*top6 = winners.splice(-6);
+			teamWinnings = {};
+			
+			for(i = 0; i < winners.length; ++i)
+			{
+				if(!teamWinnings[winners[i]]) teamWinnings[winners[i]] = 1;
+				++teamWinnings[winners[i]];
+			}
+			
+			if(teamWinnings.length > 0)
+				console.log(teamWinnings);*/
+			
+			var bw = WIDTH-250;
+			var bh = 0;
+			
+			ctx.fillStyle = "rgba(0,0,0,0.5)";
+			ctx.fillRect (bw,bh,250,60+(17*NUM_TEAMS));
+			
+			ctx.fillStyle = "rgb(255,255,255)"; //Teams[6].getColor().getColorString();
+			ctx.font = "8pt Arial";
+			ctx.fillText("Winner Roster",bw+10,15);
+			ctx.fillText("Team",bw+10,30);
+			ctx.fillText("Score",bw+70,30);
+			ctx.fillText("Units",bw+120,30);
+			ctx.fillText("Last Standing?",bw+160,30);
+						
+			for(i=0;i<=WINNING_TEAMS.length-1;i++)
+			{				
+				var voff = 30 + (15*(i+1));
+				ctx.fillStyle = WINNING_TEAMS[i][5];
+				
+				var TotalVictory = (WINNING_TEAMS[i][2] < SCORE_TO_WIN) ? "Yes" : "";
+				
+				ctx.fillText(WINNING_TEAMS[i][1],bw+10,voff);
+				ctx.fillText(WINNING_TEAMS[i][2],bw+70,voff);
+				ctx.fillText(WINNING_TEAMS[i][4],bw+120,voff);
+				ctx.fillText(TotalVictory,bw+160,voff);
+			}
+		}
 		
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
 		frameTime+= (thisFrameTime - frameTime) / filterStrength;
@@ -1894,21 +1898,21 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	}
 
 	function restart()
-	{	
+	{
 		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
 		
 		//if(tcIndex == 5)
 			//IN_SPACE=true;
 		
 		//SetMapAdjustments();
+		
+		TallyAndSetResults(Teams);
 		countTotalProbability();
 		Tanks.clear();
 		Bullets.clear();
 		Explosions.clear();
 		Smokes.clear();
-		
-		TallyAndSetResults();
-		
+				
 		for(var i = 0; i < Teams.length; i++) {
 			Teams[i].reset();
 			//MIN_SEPERATION_OF_STARTING_BASES
@@ -1934,7 +1938,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Tanks.add(new Tank(x, y, Teams[i], BaseType, Teams[i].getName()));
 		}
 		
-		console.log(WINNING_TEAMS);
+		if(WINNING_TEAMS.length > 0)
+			console.log(WINNING_TEAMS);
 		
 		ROUND++; // New Round, increase count
 		RESTARTING = false;
@@ -2058,16 +2063,24 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		canvasContext.fillRect (0, 0, WIDTH, HEIGHT);
 	}
 	
-	function TallyAndSetResults()
-	{		
+	function TallyAndSetResults(teamList)
+	{
+		var _team = teamList;
 		var TeamInfo = [];
 		var TeamScores = [];
 		var TeamUnits = [];
 	
-		for(var i = 0; i < Teams.length; i++) {
-			TeamInfo.push([i,Teams[i].getName(),Teams[i].getGiven(),Teams[i].getScore()]);
-			TeamScores.push(Teams[i].getGiven()); //Push Scores
-			TeamUnits.push(Teams[i].getScore()); //Push Units
+		for(var i = 0; i < _team.length; i++) {
+			TeamInfo.push([
+				i,										//0
+				_team[i].getName(),						//1
+				_team[i].getGiven(),					//2
+				_team[i].getScore(),					//3
+				_team[i].getTotalScore(),				//4
+				_team[i].getColor().getColorString()	//5
+			]);
+			TeamScores.push(_team[i].getGiven()); //Push Scores
+			TeamUnits.push(_team[i].getScore()); //Push Units
 		}
 		
 		var _highScore = Math.max.apply(Math,TeamScores);
@@ -2084,25 +2097,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				break;
 			}
 		}
+	}
 		
-	}
-	
-	// http://stackoverflow.com/questions/4431259/formal-way-of-getting-closest-values-in-array-in-javascript-given-a-value-and-a
-	function getClosestValues (a, x)
-	{
-		var lo = 0, hi = a.length-1;
-		while (hi - lo > 1) {
-			var mid = Math.round((lo + hi)/2);
-			if (a[mid] <= x) {
-				lo = mid;
-			} else {
-				hi = mid;
-			}
-		}
-		if (a[lo] == x) hi = lo;
-		return [a[lo], a[hi]];
-	}
-	
 	Array.Max = function(array){
 		return Math.max.apply(Math,array);
 	};
