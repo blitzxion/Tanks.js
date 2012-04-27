@@ -23,15 +23,28 @@ var MIN_BASE_DISTANCE_SQUARE = 5000;
 /////////////////
 // New Globals //
 /////////////////
-var NUM_TEAMS = 8; // This is the max amount on the playing field.
+var ROUND = 0; // func RESET() increases this on new rounds.
+var NUM_TEAMS = 4; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
-var RANDOM_TERRAIN = false;
-var MAX_UNITS_PER_FACTION_ON_MAP = 30; // Max units per faction!
-var MAX_BASE_UNITS = (MAX_UNITS_PER_FACTION_ON_MAP * .1); // 10% can be bases 
-var MAX_BASE_DEFENSES = (MAX_UNITS_PER_FACTION_ON_MAP * .3); // 30% can be defenses
-var MAX_SPECIAL_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2); // 1% / 2 can be specails
+var RANDOM_TERRAIN = true;
+
+// Fun stuff!
+var DAMAGE_MULTIPLIER = 1; // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
+var HP_MULTIPLIER = 1;
+
+var HARD_MODE = true; // MUHAHAHAH, health regen is out and no special units! Damage is reduced and the max of units on map is reduced!
+var HARD_MODE_TICKETS = 100;
+var HARD_MODE_DAMAGE_REDUCTION = .10;
+var HARD_MODE_MAX_UNIT_REDUCTION = 2; // Max Units divided by this number
+
+// Important (can be changed from above)
+var MAX_UNITS_PER_FACTION_ON_MAP = (HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * 10 * .5)); // Max units per faction!
+var MAX_BASE_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)); // 10% can be bases 
+var MAX_BASE_DEFENSES = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)); // 30% can be defenses
+var MAX_SPECIAL_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2);
+	MAX_SPECIAL_UNITS = (MAX_SPECIAL_UNITS <= 0) ? 1 : MAX_SPECIAL_UNITS; // I required at least one.
 var BASE_HEAL_RADIUS = 65;
-var HEALTH_COOLDOWN = 50;
+var HEALTH_COOLDOWN = 100;
 
 var TankStateEnum = {
 	IDLE : 0,
@@ -76,9 +89,9 @@ var frameTime = 0, lastLoop = new Date, thisLoop;
 var Teams = [];
 if(RANDOM_COLORS)
 {
-	for(i=0;i<=7;i++)
+	for(i=0;i<=NUM_TEAMS-1;i++)
 	{
-		var rgb = hex2rgb(rainbow(8,i+1));
+		var rgb = hex2rgb(rainbow(NUM_TEAMS,i+1));
 		Teams[i] = new Team(new Color(rgb.red,rgb.green,rgb.blue),getName(4,7,null,null));
 		
 	}
@@ -455,6 +468,20 @@ var DebrisSet = new Set("debrisIndex");
 restart();
 timer();
 
+console.log("Welcome to Tanks!");
+console.log("Number of Teams Playing: " + NUM_TEAMS);
+console.log("Random Map Terrain? " + RANDOM_TERRAIN.toString());
+console.log("Max Units per Faction: " + MAX_UNITS_PER_FACTION_ON_MAP);
+console.log("Max Bases per Faction: " + MAX_BASE_UNITS);
+console.log("Max Bases defenses per Faction: " + MAX_BASE_DEFENSES);
+console.log("Max Special units per Faction: " + MAX_SPECIAL_UNITS);
+console.log("Current Healing Radius for Bases: " + BASE_HEAL_RADIUS);
+console.log("Healing Cooldown base value : " + HEALTH_COOLDOWN);
+console.log("Welcoming todays fighters...");
+for(var tn in Teams)
+	console.log(Teams[tn].getName() + "!");
+
+
 /*var mTimer = setInterval(function(){
 	window.mTeams = new Object;
 	for ( mtank in Tanks )
@@ -523,7 +550,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	var Teamnum = teamnum;
 	var Type = type;
 	var Time = 60;
-	var HitPoints = Type.HitPoints;
+	var HitPoints = (Type.HitPoints * HP_MULTIPLIER);
 	var Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime;
 	var Target = null;
 	var Specail = false;
@@ -542,7 +569,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	}
 
 	var This = this;
-
+			
 	//Privileged:
 	if(Type.Kind === TankKindEnum.BASE)
 	{
@@ -550,14 +577,30 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			State = TankStateEnum.IDLE;
 						
 			findFriendlies();
-			if(HealCooldown > 0)
-				HealCooldown--;
-			else
-			{
-				heal();
-				HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
-			}
 			
+			if(!HARD_MODE)
+			{
+				if(HealCooldown > 0)
+					HealCooldown--;
+				else
+				{
+					heal();
+					HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+				}
+			}
+			else
+				if(Team.getUsedTickets() >= HARD_MODE_TICKETS)
+				{
+					// need to blow up the base if there are no more units to defend it!
+					if(Team.getScore() == 1)
+					{
+						die();
+						return;
+					}
+					else
+						return; // Used up all tickets, you're screwed!
+				}
+
 			if(Cooldown > 0)
 				Cooldown--;
 			else
@@ -584,12 +627,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					var _TotalSpecials = GetNumOfSpecials();
 					//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
 					
-					if(TypeToMake.Kind == TankKindEnum.BUILDER && (_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS) return; // Maxed out Bases!					
+					if(TypeToMake.Kind == TankKindEnum.BUILDER && (HARD_MODE || (_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS)) return; // Maxed out Bases!					
 					if(TypeToMake.Kind == TankKindEnum.TURRET && _TotalTurretBuilt >= MAX_BASE_DEFENSES) return; // Maxed out defenses!			
 					if(TypeToMake.Kind == TankKindEnum.TANK && _TotalSpecials >= MAX_SPECIAL_UNITS) return;
 
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
-					Cooldown = Type.CooldownTime;
+					Cooldown = Type.CooldownTime;					
 				}
 				else
 					return; // Maxed out units!
@@ -888,7 +931,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		return Type.AttackingUnit ? target === Target : false;
 	}
 
-	this.takeDamage = function(damage, shooter) {
+	this.takeDamage = function(damage, shooter) 
+	{
 		HitPoints -= damage;
 		Team.addTaken(damage);
 		if(shooter !== null && shooter.getTeam() !== Team)
@@ -949,7 +993,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	};
 
-	if(Type.Kind === TankKindEnum.BASE) {
+	if(Type.Kind === TankKindEnum.BASE)
+	{
 		this.draw = function(canvasContext) {
 			canvasContext.fillStyle = Team.getColor().getColorString();
 			canvasContext.fillRect (X - 10, Y - 10, 20, 20);
@@ -971,7 +1016,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			}
 						
 		};
-	} else if(Type.Kind === TankKindEnum.TANK || Type.Kind === TankKindEnum.BUILDER || Type.Kind === TankKindEnum.TURRET) {
+	}
+	else if(Type.Kind === TankKindEnum.TANK || Type.Kind === TankKindEnum.BUILDER || Type.Kind === TankKindEnum.TURRET) 
+	{
 		this.draw = function(canvasContext) {
 			canvasContext.fillStyle = (new Color(0, 130, 0)).getColorString();
 			canvasContext.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
@@ -1018,7 +1065,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			canvasContext.fill();
 			canvasContext.restore();
 		};
-	} else if(Type.Kind === TankKindEnum.PLANE) {
+	} 
+	else if(Type.Kind === TankKindEnum.PLANE) 
+	{
 		this.draw = function(canvasContext) {
 			canvasContext.fillStyle = (new Color(0, 130, 0)).getColorString();
 			canvasContext.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
@@ -1263,6 +1312,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	};
 	Team.setScore(Team.getScore() + 1);
+	Team.addTicket();
 }
 
 //----- Bullet class -----
@@ -1273,7 +1323,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var LastX = x, LastY = y;
 		var This = this;
 		var LastAngle;
-	
+		
+		Damage = (HARD_MODE) ? (Damage * DAMAGE_MULTIPLIER) : ((Damage * DAMAGE_MULTIPLIER) * HARD_MODE_DAMAGE_REDUCTION);
+		
 		if(Target != null && Tanks.contains(Target) && Type === ShotTypeEnum.MISSLE)
 			LastAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
 		
@@ -1462,6 +1514,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var Score = 0;
 		var Taken = 0;
 		var Given = 0;
+		var UsedTickets = 0; // Used in Hard Mode
 	
 		this.getColor = function() {
 			return Color;
@@ -1481,6 +1534,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		this.getGiven = function() {
 			return Given;
 		}
+		this.getUsedTickets = function(){
+			return UsedTickets;
+		}
 		this.addTaken = function(d)
 		{
 			Taken = Taken + d;
@@ -1491,11 +1547,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Given = Given + d;
 			return Given;
 		}
+		this.addTicket = function()
+		{
+			UsedTickets++;
+			return UsedTickets;
+		}
 		this.reset = function()
 		{
 			Score = 0;
 			Taken = 0;
 			Given = 0;
+			UsedTickets = 0;
 		}
 	}
 
@@ -1539,7 +1601,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	// This is what makes it all happen
 	function timer()
 	{
-		var t = setTimeout(function() {timer(); ctx.fillStyle = "rgb(255,255,255)"; ctx.fillText((1000/frameTime).toFixed(1) + " fps",10,140);}, 15);
+		var t = setTimeout(function() {timer(); ctx.fillStyle = "rgb(255,255,255)"; ctx.fillText((1000/frameTime).toFixed(1) + " fps",10,40+(12*NUM_TEAMS));}, 15);
 		var TankTeam = null;
 		var AllOneTeam = true;
 		
@@ -1598,31 +1660,34 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.fillText(mt + " : " + window.mTeams[mt].score,10,10+(12*mtextloop));
 			mtextloop += 1;
 		}*/
-		
+				
 		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (0,0,250,150);
+		ctx.fillRect (0,0,250,(HARD_MODE) ? 70+(12*NUM_TEAMS) : 50+(12*NUM_TEAMS));
 		
 		ctx.fillStyle = "rgb(255,255,255)"; //Teams[6].getColor().getColorString();
 		ctx.fillText("Team",10,20);
 		ctx.fillText("Units",60,20);
 		ctx.fillText("Damage Given",95,20);
 		ctx.fillText("Damage Taken",170,20);
-		
-		ctx.fillText("Max Units: " + MAX_UNITS_PER_FACTION_ON_MAP,60,140);
-		ctx.fillText("Max Special: " + MAX_SPECIAL_UNITS,140,140);
-		
+				
 		for ( teamnum in Teams )
 		{
 			var t = Teams[teamnum];
 			var voff = 35 + (12*teamnum);
 			ctx.fillStyle = t.getColor().getColorString();
-			//ctx.fillText(t.getName() + " : " + t.getScore() + " (" + t.getGiven() + " / " + t.getTaken() + ")",10,10+(12*teamnum));
 			ctx.fillText(t.getName(),10,voff);
 			ctx.fillText(t.getScore(),60,voff);
 			ctx.fillText(t.getGiven(),95,voff);
 			ctx.fillText(t.getTaken(),170,voff);
 		}
-			
+		
+		//ctx.fillText("Units: " + MAX_UNITS_PER_FACTION_ON_MAP,60,140);
+		//ctx.fillText("Special: " + MAX_SPECIAL_UNITS,100,140);
+		
+		ctx.fillStyle = "rgb(255,255,255)";
+		if(HARD_MODE) ctx.fillText("HARD MODE ENABLED!",10,voff+30);		
+		ctx.fillText("Round: " + ROUND,150,40+(12*NUM_TEAMS));
+		
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
 		frameTime+= (thisFrameTime - frameTime) / filterStrength;
 		lastLoop = thisLoop;
@@ -1631,6 +1696,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function restart()
 	{
+		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
+		
 		countTotalProbability();
 		Tanks.clear();
 		Bullets.clear();
@@ -1656,6 +1723,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Tanks.add(new Tank(x, y, Teams[i], BaseType, Teams[i].getName()));
 		}
 		
+		ROUND++; // New Round, increase count
 		RESTARTING = false;
 	
 	}
