@@ -25,7 +25,7 @@ var MIN_BASE_DISTANCE_SQUARE = 5000;
 // New Globals //
 /////////////////
 var ROUND = 0; // func RESET() increases this on new rounds.
-var NUM_TEAMS = 4; // This is the max amount on the playing field.
+var NUM_TEAMS = 5; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
 var RANDOM_TERRAIN = true;
 
@@ -107,22 +107,49 @@ if(RANDOM_COLORS)
 {
 	var colorsUsed = [];
 	var randomStep;
-	var colorAttempts = 1;
+	var colorLength = NUM_TEAMS * 2;
+	var colorVariant = 2;
 	
 	for(i=0;i<=NUM_TEAMS-1;i++)
 	{
-		randomStep = Math.floor((Math.random() * 12) + 1);
+		var tooClose = false;
+		var colorAttempts = 1;		
+		randomStep = Math.ceil(Math.random() * colorLength);		
 		
-		while(colorsUsed.indexOf(randomStep) == -1 && colorAttempts++ < 50)
+		if(colorsUsed.length >= 3)
 		{
-			randomStep = Math.floor((Math.random() * 12) + 1);
-			colorsUsed.push[randomStep];
+			var f = getClosestValues(colorsUsed,randomStep);
+			console.log(i+") The Step: "+randomStep);
+			console.log(i+") Colors Used: "+colorsUsed);
+			console.log(i+") Nearest Matches: "+f);
+			
+			if((randomStep - colorVariant) == f[0] || (randomStep + colorVariant) == f[1])
+				tooClose = true;
+			
+			console.log(i+") Is Close? "+ tooClose);
 		}
 		
-		var rgb = hex2rgb(rainbow(12,randomStep));
+		while((tooClose || $.inArray(randomStep,colorsUsed) != -1) && colorAttempts++ < 50)
+		{
+			console.log(i+") Getting new Color ");
+			tooClose = false;
+			newRandomStep = Math.ceil((Math.random() * colorLength) + 1);
+			
+			f = getClosestValues(colorsUsed,randomStep);
+			if((randomStep - colorVariant) == f[0] || (randomStep + colorVariant) == f[1])
+				tooClose = true;
+			else if(newRandomStep != randomStep && $.inArray(randomStep,colorsUsed) != -1)
+			{
+				randomStep = newRandomStep;
+				break;
+			}
+		}
+		colorsUsed.push(randomStep);
+		var rgb = hex2rgb(rainbow(colorLength,randomStep));
 		Teams[i] = new Team(new Color(rgb.red,rgb.green,rgb.blue),getName(4,7,null,null));
 	}
 	
+	console.log(colorsUsed);
 	delete colorsUsed;
 }
 else
@@ -1733,6 +1760,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		{
 			return "rgb(" + This.R + "," + This.G + "," + This.B + ")";
 		};
+		
 	}
 
 ///////////////
@@ -1762,7 +1790,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	// This is what makes it all happen
 	function timer()
 	{
-		var t = setTimeout(function() {timer(); ctx.fillStyle = "rgb(255,255,255)"; ctx.fillText((1000/frameTime).toFixed(1) + " fps",10,40+(12*NUM_TEAMS));}, 15);
+		var t = setTimeout(function() {timer(); ctx.fillStyle = "rgb(255,255,255)"; ctx.fillText((1000/frameTime).toFixed(1) + " fps",10,40+(18*NUM_TEAMS));}, 15);
 		var TankTeam = null;
 		var AllOneTeam = true;
 		
@@ -1829,20 +1857,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.fillText(mt + " : " + window.mTeams[mt].score,10,10+(12*mtextloop));
 			mtextloop += 1;
 		}*/
-				
+		
 		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (0,0,250,(HARD_MODE) ? 70+(12*NUM_TEAMS) : 50+(12*NUM_TEAMS));
+		ctx.fillRect (0,0,250,(HARD_MODE) ? 80+(17*NUM_TEAMS) : 60+(17*NUM_TEAMS));
 		
 		ctx.fillStyle = "rgb(255,255,255)"; //Teams[6].getColor().getColorString();
-		ctx.fillText("Team",10,20);
-		ctx.fillText("Units",60,20);
-		ctx.fillText("Damage Given",95,20);
-		ctx.fillText("Damage Taken",170,20);
-				
+		ctx.font = "8pt Arial";
+		ctx.fillText("Team",10,15);
+		ctx.fillText("Units",60,15);
+		ctx.fillText("Damage Given",95,15);
+		ctx.fillText("Damage Taken",170,15);
+					
 		for ( teamnum in Teams )
 		{
 			var t = Teams[teamnum];
-			var voff = 35 + (12*teamnum);
+			var voff = 35 + (18*teamnum);
+		
 			ctx.fillStyle = t.getColor().getColorString();
 			ctx.fillText(t.getName(),10,voff);
 			ctx.fillText(t.getScore(),60,voff);
@@ -1855,7 +1885,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		
 		ctx.fillStyle = "rgb(255,255,255)";
 		if(HARD_MODE) ctx.fillText("HARD MODE ENABLED!",10,voff+30);		
-		ctx.fillText("Round: " + ROUND,150,40+(12*NUM_TEAMS));
+		ctx.fillText("Round: " + ROUND,150,40+(18*NUM_TEAMS));
 		
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
 		frameTime+= (thisFrameTime - frameTime) / filterStrength;
@@ -2055,6 +2085,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			}
 		}
 		
+	}
+	
+	// http://stackoverflow.com/questions/4431259/formal-way-of-getting-closest-values-in-array-in-javascript-given-a-value-and-a
+	function getClosestValues (a, x)
+	{
+		var lo = 0, hi = a.length-1;
+		while (hi - lo > 1) {
+			var mid = Math.round((lo + hi)/2);
+			if (a[mid] <= x) {
+				lo = mid;
+			} else {
+				hi = mid;
+			}
+		}
+		if (a[lo] == x) hi = lo;
+		return [a[lo], a[hi]];
 	}
 	
 	Array.Max = function(array){
