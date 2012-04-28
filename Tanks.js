@@ -1934,9 +1934,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function restart()
 	{
 		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
-		
-		//if(tcIndex == 5)
-			//IN_SPACE=true;
+		console.log(terrainColors[tcIndex].toString());
+		if(terrainColors[tcIndex].toString() == '0,0,0')
+			IN_SPACE=true;
 		
 		//SetMapAdjustments();
 		
