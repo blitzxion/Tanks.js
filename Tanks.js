@@ -7,8 +7,8 @@
 /////////////
 // Globals //
 /////////////
-var WIDTH = window.innerWidth - 30;
-var HEIGHT = window.innerHeight - 30;
+var WIDTH = window.innerWidth;
+var HEIGHT = window.innerHeight;
 var MOVE_RANGE = 100;
 var MOVE_PROB = 0.01;
 var RESTARTING = false;
@@ -112,6 +112,13 @@ canvas.addEventListener('click', function(evt){
 		ClickCreateUnit(msX,msY,false);
 	
 }, false);
+
+window.onresize = function(event) {
+	WIDTH = window.innerWidth;
+	HEIGHT = window.innerHeight;
+	canvas.width = WIDTH;
+	canvas.height = HEIGHT;
+}
 
 // FPS Related Vars
 var filterStrength = 20;
