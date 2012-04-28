@@ -568,16 +568,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		TargetBaseAngle = 2 * Math.PI * Math.random();
 		BaseAngle = 2 * Math.PI * Math.random();
 	}
-	
-	/*if(Type.Kind === TankKindEnum.TANK || Type.Kind === TankKindEnum.BUILDER)
-	{
-		if(SPEED_ADJ.enabled)
-		{
-			Type.MoveSpeed = Math.floor(SPEED_ADJ.speed * Type.MoveSpeed);
-			Type.MoveSpeed = (Type.MoveSpeed <= 0) ? 1 : Type.MoveSpeed;
-		} 
-	}*/
-	
+		
 	var This = this;
 			
 	//Privileged:
@@ -1124,9 +1115,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			
 			canvasContext.fillStyle = Team.getColor().getColorString();
 			canvasContext.fillRect (X - 10, Y - 10, 20, 20);
-						
-			//canvasContext.fillStyle = (new Color(0, 130, 0)).getColorString();
-			//canvasContext.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
+			
+			this.drawHPBar(canvasContext,X,Y);
 			
 			// Draw Healing Circle
 			{
@@ -1157,8 +1147,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	else if(Type.Kind === TankKindEnum.TANK || Type.Kind === TankKindEnum.BUILDER || Type.Kind === TankKindEnum.TURRET) 
 	{
 		this.draw = function(canvasContext) {
-			canvasContext.fillStyle = (new Color(0, 130, 0)).getColorString();
-			canvasContext.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
+			
+			this.drawHPBar(canvasContext,X,Y);
+			
 			//Base:
 			if(!(Type.Kind === TankKindEnum.TURRET)) {
 				canvasContext.save();
@@ -1228,8 +1219,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	else if(Type.Kind === TankKindEnum.PLANE) 
 	{
 		this.draw = function(canvasContext) {
-			canvasContext.fillStyle = (new Color(0, 130, 0)).getColorString();
-			canvasContext.fillRect(X-10,Y-15,20*(HitPoints/Type.HitPoints),2);
+			
+			this.drawHPBar(canvasContext,X,Y);
 
 			canvasContext.save();
 			canvasContext.translate(X, Y);
@@ -1246,6 +1237,23 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			canvasContext.lineTo(-5, 8);
 			canvasContext.stroke();
 			canvasContext.restore();
+		}
+	}
+
+	this.drawHPBar = function (ctx, X,Y)
+	{
+		// Hide the HP bar until units health drops.
+		if(HitPoints < Type.HitPoints)
+		{
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(X-10,Y-20,25*(HitPoints/Type.HitPoints),3);
+			ctx.fillStyle = (new Color(0, 130, 0)).getColorString();
+			ctx.fill();
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = (new Color(0, 0, 0)).getColorString();
+			ctx.stroke();
+			ctx.restore();
 		}
 	}
 
