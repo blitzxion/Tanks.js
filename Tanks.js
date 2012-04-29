@@ -780,12 +780,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							moveForward();
 							if(TargetDistanceSquared < Type.AttackRange * Type.AttackRange)
 							{
-								if(CanEvade && (HitPoints / Type.HitPoints) <= .5 && Math.random() <= EvadeProb)
-								{
-									Target = null;
-									State = TankStateEnum.EVASIVE_ACTION;
-								}
-								else
+								if(!this.startEvading())
 									attack();
 							}
 						}
@@ -804,12 +799,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						if(Target.getDistanceSquaredFromPoint(X, Y) > Type.AttackDistance * Type.AttackDistance) {
 							State = TankStateEnum.TARGET_AQUIRED;
 						} else {
-							if(CanEvade && (HitPoints / Type.HitPoints) <= .5 && Math.random() <= EvadeProb)
-							{
-								Target = null;
-								State = TankStateEnum.EVASIVE_ACTION;
-							}
-							else
+							if(!this.startEvading())
 							{
 								setTargetTurretAngle(Target);
 								turnTurret();
@@ -1158,6 +1148,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		} else {
 			return 0;
 		}
+	}
+
+	this.startEvading = function() {
+		if (CanEvade && (HitPoints / Type.HitPoints) <= .5 && Math.random() <= EvadeProb)
+		{
+			Target = null;
+			State = TankStateEnum.EVASIVE_ACTION;
+			return true;
+		}
+		return false;
 	}
 
 	this.attackingTarget = function(target) {
