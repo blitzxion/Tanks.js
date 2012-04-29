@@ -819,11 +819,20 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				case TankStateEnum.EVASIVE_ACTION:
 					if(Target === null || !Tanks.contains(Target))
 					{
+						var dist = null;
+
 						// need to get one of the tanks bases and move to it!
 						for(var n in Tanks)
 							if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
 								if(Tanks[n].getTeam() == Team && Tanks[n].isBase())
-									Target = Tanks[n];
+								{
+									/* find closest base */
+									var currDist = Tanks[n].getDistanceSquaredFromPoint(X,Y);
+									if (dist == null || currDist < dist) { 
+										Target = Tanks[n];
+										dist = currDist;
+									}
+								}
 					}
 					else
 					{
@@ -854,8 +863,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					break;
 				case TankStateEnum.STOP:
 					
-					// Check their HP. If is over 90%, get back out there and fight!
-					if((HitPoints / Type.HitPoints) >= .9)
+					// Check their HP. If is over 70%, get back out there and fight!
+					if((HitPoints / Type.HitPoints) >= .7)
 					{					
 						State = TankStateEnum.IDLE;
 						
@@ -1374,12 +1383,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	function die()
 	{
-		var exps = Math.floor(Math.random() * 12 + 8);
+		var exps = Math.floor(Math.random() * 4 + 8);
 		for(var i = 0; i < exps; i++) {
 			Explosions.add(new Explosion(X + Math.random() * 14 - 7, Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10));
 		}
 
-		var debris = Math.floor(3 + Math.random() * 7);
+		var debris = Math.floor(3 + Math.random() * 4);
 		for(i = 0; i < debris; i++) {
 			var angle = Math.random() * 2 * Math.PI;
 			var speed = Math.random() * 4 + .2;
@@ -1624,8 +1633,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							if(Tanks[n].getTeam() != Team &&  DistanceMagSquared < 200 * 200 && (AirAttack || !Tanks[n].isPlane())) {
 								var SpeedMag = Math.sqrt(Dx * Dx + Dy * Dy);
 								var DistanceMag = Math.sqrt(DistanceMagSquared);
-								var DotProduct = (Dx * (Tanks[n].getX() - X) + Dy * (Tanks[n].getY() - Y)) 
-												/ (SpeedMag * DistanceMag);
+								var DotProduct = (Dx * (Tanks[n].getX() - X) + Dy * (Tanks[n].getY() - Y)) / (SpeedMag * DistanceMag);
 								if(DotProduct > BestDotProduct) {								
 									Target = Tanks[n];	
 									LastAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);						
@@ -1772,7 +1780,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			if(Time-- > 0) {
 				X += Dx;
 				Y += Dy;
-				Smokes.add(new Smoke(X, Y, 1, 7, 15, 200 * (Time / TotalTime)));
+				Smokes.add(new Smoke(X, Y, 1, 7, 15, 150 * (Time / TotalTime)));
 			} else {
 				DebrisSet.remove(This);
 			}		
