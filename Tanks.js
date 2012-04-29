@@ -4,22 +4,7 @@
 	Modified by Richard S.
 */
 
-/////////////
-// Globals //
-/////////////
-var WIDTH = window.innerWidth;
-var HEIGHT = window.innerHeight;
-var MOVE_RANGE = 100;
-var MOVE_PROB = 0.01;
-var RESTARTING = false;
-var MAX_MOVE_ANGLE = 2;
-var MIN_SEPERATION_OF_STARTING_BASES = 200;
-var SHELL_DAMAGE_RADIUS = 30;
-var BOMB_DAMAGE_RADIUS = 20;
-var MISSLE_ACCELERATION = 0.3;
-var MISSLE_ROTATION = 1.5;
-var MAX_MISSLE_ROTATION = .4;
-var MIN_BASE_DISTANCE_SQUARE = 5000;
+
 
 /////////////////
 // New Globals //
@@ -87,6 +72,25 @@ var terrainColors = [
 	 [112, 128, 144],  // Moon
 	 [0,0,0] // space!
 ];
+
+/////////////
+// Globals //
+/////////////
+var WIDTH = window.innerWidth,
+	HEIGHT = window.innerHeight;
+	WIDTHPREV = WIDTH,
+	HEIGHTPREV = HEIGHT;
+var MOVE_RANGE = 100;
+var MOVE_PROB = 0.01;
+var RESTARTING = false;
+var MAX_MOVE_ANGLE = 2;
+var MIN_SEPERATION_OF_STARTING_BASES = (BASE_HEAL_RADIUS * 2) + 30;
+var SHELL_DAMAGE_RADIUS = 30;
+var BOMB_DAMAGE_RADIUS = 20;
+var MISSLE_ACCELERATION = 0.3;
+var MISSLE_ROTATION = 1.5;
+var MAX_MISSLE_ROTATION = .4;
+var MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5);
 
 //////////
 // Init //
