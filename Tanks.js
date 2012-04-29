@@ -99,6 +99,35 @@ var ctx = canvas.getContext("2d");
 //ctx.width = WIDTH;
 //ctx.height = HEIGHT;
 
+/* shim to allow us to use request animation frame intelligently for max FPS and no painting when tab isn't active...
+* http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+* https://gist.github.com/1579671
+*/
+(function() {
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());
+
 canvas.addEventListener('mousemove',function(evt){
 	var mousePos = getMousePos(canvas, evt),
 		msX = mousePos.x,
@@ -140,7 +169,7 @@ window.onresize = function(event) {
 	canvas.height = HEIGHT;
 	
 	// Need to relocate bases that are outsize the new boundries!
-	RelocateBases();	
+	//RelocateBases();	
 }
 
 // FPS Related Vars
@@ -509,7 +538,7 @@ var DebrisSet = new Set("debrisIndex");
 
 //Start:
 restart();
-timer();
+animate();
 
 console.log("Welcome to Tanks!");
 console.log("Number of Teams Playing: " + NUM_TEAMS);
@@ -1840,9 +1869,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	var TeamWonByScore = false;
 	// This is what makes it all happen
-	function timer()
+	function animate()
 	{
-		var t = setTimeout(function() {timer(); ShowFPS();}, 15);
+		requestAnimationFrame(animate);
+		draw();
+		ShowFPS();
+	}
+	function draw()
+	{
 		var TankTeam = null;
 		var AllOneTeam = true;
 		
