@@ -790,6 +790,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							}
 						}
 					}
+					findTargets(); /* see if there is a better target to fire on*/
+
+					if (Target !== null) callFriendlies(Target);
 					break;
 				case TankStateEnum.TARGET_IN_RANGE:
 					if(Target === null || !Tanks.contains(Target)) {
@@ -997,6 +1000,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							attack();
 						}
 					}
+
+					findTargets(); /* see if there is a better target to fire on*/
+
+					if (Target !== null) callFriendlies(Target);
 
 					break;				
 			}
