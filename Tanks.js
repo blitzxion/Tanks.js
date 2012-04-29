@@ -1707,8 +1707,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		var X = x, Y = y, PreDisplayTime = preDisplayTime, TargetSize = size, Size = 0, GrowMode = true;
 		
-		TargetSize = 5;
-		
 		this.update = function () {
 			if(PreDisplayTime > 0) {
 				PreDisplayTime--;
