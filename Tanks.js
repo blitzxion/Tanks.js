@@ -114,6 +114,8 @@ canvas.addEventListener('click', function(evt){
 		msX = mousePos.x,
 		msY = mousePos.y;
 	
+	console.log(msX + "," + msY);
+	
 	// This is where the GOD_MODE button is located.
 	if(msX >= (WIDTH-150) && msX <= (WIDTH-150+105) && msY >= 0 && msY <= 25){GOD_MODE = !GOD_MODE;	return;}
 	
@@ -136,6 +138,9 @@ window.onresize = function(event) {
 	HEIGHT = window.innerHeight;
 	canvas.width = WIDTH;
 	canvas.height = HEIGHT;
+	
+	// Need to relocate bases that are outsize the new boundries!
+	RelocateBases();	
 }
 
 // FPS Related Vars
@@ -714,9 +719,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							setTargetTurretAngle(Target);
 							turnTurret();
 							TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X) + Math.PI;
-							moveForward();							
+							moveForward();						
 						} else if(TargetDistanceSquared <= Type.AttackDistance * Type.AttackDistance) {
 							State = TankStateEnum.TARGET_IN_RANGE;
+							if(IN_SPACE) moveForward();
 						} else {
 							setTargetTurretAngle(Target);
 							turnTurret();
@@ -734,7 +740,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							}
 						}
 					}
-					if(IN_SPACE) moveForward();
 					break;
 				case TankStateEnum.TARGET_IN_RANGE:
 					if(Target === null || !Tanks.contains(Target)) {
@@ -1061,6 +1066,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		die();
 	}
+	
+	this.setX = function(x){X = x; return X;};
+	this.setY = function(y){Y = y; return Y;};
+		
 
 	this.getDx = function() {
 		if(State === TankStateEnum.MOVE || State === TankStateEnum.TARGET_AQUIRED || State === TankStateEnum.CRASH_AND_BURN) {
@@ -2212,6 +2221,30 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			
 		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
 		Tanks.add(_NewTank);
+	}
+	
+	function RelocateBases()
+	{		
+		for(var n in Tanks)
+			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+				if(Tanks[n].isBase() || Tanks[n].getKind() == TankKindEnum.TURRET)
+				{					
+					// Moves bases against the walls atleast
+					if(Tanks[n].isBase() && Tanks[n].getX() + BASE_HEAL_RADIUS > WIDTH)
+						Tanks[n].setX(WIDTH - BASE_HEAL_RADIUS);
+					
+					if(Tanks[n].isBase() && Tanks[n].getY() + BASE_HEAL_RADIUS > HEIGHT)
+						Tanks[n].setY(HEIGHT - BASE_HEAL_RADIUS);
+						
+					// Move the base defenses!
+					if(Tanks[n].getKind() == TankKindEnum.TURRET && Tanks[n].getX() > WIDTH)
+						Tanks[n].setX(WIDTH - BASE_HEAL_RADIUS - rnd(10,45));
+						
+					if(Tanks[n].getKind() == TankKindEnum.TURRET && Tanks[n].getY() > HEIGHT)
+						Tanks[n].setY(HEIGHT - BASE_HEAL_RADIUS - rnd(10,45));
+										
+				}
+		
 	}
 	
 	// Javascript Extensions
