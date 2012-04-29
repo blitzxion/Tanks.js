@@ -852,7 +852,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
 								moveForward();
 															
-								if(TargetDistanceSquared < (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - 3000)
+								if(TargetDistanceSquared < (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - (BASE_HEAL_RADIUS * .1))
 									State = TankStateEnum.STOP;
 							}
 						}
@@ -883,25 +883,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							Target = null;
 						else
 						{
-							//Target = null;
-							// If less than 90%, i want you to stick around, but attack when required!
-							if(Math.random() < .2) {
-								for(var n in Tanks) {
-									if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-										if(Tanks[n].getTeam() != Team 
-											&& Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance 
-											&& (Type.AntiAircraft || !Tanks[n].isPlane()))
-											{
-												Target = Tanks[n];
-	
-												if(!Type.AntiAircraft || Tanks[n].isPlane()) //AA tanks try to attack planes first of all
-													break;
-											}
-									}
+							/* Look for a target to help shoot */
+							for(var n in Tanks) {
+								if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+									if(Tanks[n].getTeam() != Team 
+										&& Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance 
+										&& (Type.AntiAircraft || !Tanks[n].isPlane()))
+										{
+											Target = Tanks[n];
+
+											if(Type.AntiAircraft && Tanks[n].isPlane()) //AA tanks try to attack planes first of all
+												break;
+										}
 								}
 							}
 							
-							if(!Target.isBase())
+							if(Target !== null && !Target.isBase())
 							{							
 								setTargetTurretAngle(Target);
 								turnTurret();
@@ -1063,6 +1060,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
 						}
 					}
+
+					findTargets(); /* see if there is a better target to fire on*/
+
+					if (Target !== null) callFriendlies(Target);
 					
 					break;
 				case TankStateEnum.CRASH_AND_BURN:
@@ -1401,6 +1402,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function callFriendlies(target)
 	{
+		if (target.isBase()) /* target is for evasive reasons */
+			return;
 		for(var n in Tanks) {
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 				if(Tanks[n].getTeam() == Team) {
@@ -1417,12 +1420,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
 				{
 					if(Tanks[n].getTeam() != Team && Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance && (Type.AntiAircraft || !Tanks[n].isPlane()))
-					{						
-						Target = Tanks[n];
-						State = TankStateEnum.TARGET_AQUIRED;
+					{
+						/* choose a better target if we found one closer/more damaged */
+						if (Target == null || (Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) || 
+							Tanks[n].HitPoints < Target.HitPoints))
+						{						
+							Target = Tanks[n];
+							State = TankStateEnum.TARGET_AQUIRED;
 
-						if(!Type.AntiAircraft || Tanks[n].isPlane()) //AA tanks try to attack planes first of all
-							break;
+							if(Type.AntiAircraft && Tanks[n].isPlane()) //AA tanks try to attack planes first of all
+								break;
+						}
 					}
 					
 					if(Target != null)
