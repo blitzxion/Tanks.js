@@ -91,7 +91,7 @@ var MISSLE_ACCELERATION = 0.3;
 var MISSLE_ROTATION = 1.5;
 var MAX_MISSLE_ROTATION = .4;
 var MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5);
-
+var ANIMATION_ID;
 //////////
 // Init //
 //////////
@@ -132,6 +132,32 @@ var ctx = canvas.getContext("2d");
         };
 }());
 
+
+window.onresize = function(event) {
+
+	pauseAnimation();
+
+	WIDTHPREV = WIDTH;
+	HEIGHTPREV = HEIGHT;
+	WIDTH = window.innerWidth;
+	HEIGHT = window.innerHeight;
+	canvas.width = WIDTH;
+	canvas.height = HEIGHT;
+	
+	var xRatio = WIDTH / WIDTHPREV,
+		yRatio = HEIGHT / HEIGHTPREV;
+
+	for(var n in Tanks)
+		if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+		{
+			var t = Tanks[n];
+			t.setX(t.getX() * xRatio);	/* adjust every object to a given resize ratio */
+			t.setY(t.getY() * yRatio);
+		}
+
+	animate();
+}
+
 canvas.addEventListener('mousemove',function(evt){
 	var mousePos = getMousePos(canvas, evt),
 		msX = mousePos.x,
@@ -166,15 +192,6 @@ canvas.addEventListener('click', function(evt){
 	
 }, false);
 
-window.onresize = function(event) {
-	WIDTH = window.innerWidth;
-	HEIGHT = window.innerHeight;
-	canvas.width = WIDTH;
-	canvas.height = HEIGHT;
-	
-	// Need to relocate bases that are outsize the new boundries!
-	//RelocateBases();	
-}
 
 // FPS Related Vars
 var filterStrength = 20;
@@ -1875,9 +1892,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	// This is what makes it all happen
 	function animate()
 	{
-		requestAnimationFrame(animate);
+		ANIMATION_ID = requestAnimationFrame(animate);
 		draw();
 		ShowFPS();
+	}
+	function pauseAnimation()
+	{
+		if (ANIMATION_ID) cancelAnimationFrame(ANIMATION_ID);
 	}
 	function draw()
 	{
@@ -2259,30 +2280,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			
 		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
 		Tanks.add(_NewTank);
-	}
-	
-	function RelocateBases()
-	{		
-		for(var n in Tanks)
-			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
-				if(Tanks[n].isBase() || Tanks[n].getKind() == TankKindEnum.TURRET)
-				{					
-					// Moves bases against the walls atleast
-					if(Tanks[n].isBase() && Tanks[n].getX() + BASE_HEAL_RADIUS > WIDTH)
-						Tanks[n].setX(WIDTH - BASE_HEAL_RADIUS);
-					
-					if(Tanks[n].isBase() && Tanks[n].getY() + BASE_HEAL_RADIUS > HEIGHT)
-						Tanks[n].setY(HEIGHT - BASE_HEAL_RADIUS);
-						
-					// Move the base defenses!
-					if(Tanks[n].getKind() == TankKindEnum.TURRET && Tanks[n].getX() > WIDTH)
-						Tanks[n].setX(WIDTH - BASE_HEAL_RADIUS - rnd(10,45));
-						
-					if(Tanks[n].getKind() == TankKindEnum.TURRET && Tanks[n].getY() > HEIGHT)
-						Tanks[n].setY(HEIGHT - BASE_HEAL_RADIUS - rnd(10,45));
-										
-				}
-		
 	}
 	
 	// Javascript Extensions
