@@ -4,22 +4,7 @@
 	Modified by Richard S.
 */
 
-/////////////
-// Globals //
-/////////////
-var WIDTH = window.innerWidth;
-var HEIGHT = window.innerHeight;
-var MOVE_RANGE = 100;
-var MOVE_PROB = 0.01;
-var RESTARTING = false;
-var MAX_MOVE_ANGLE = 2;
-var MIN_SEPERATION_OF_STARTING_BASES = 200;
-var SHELL_DAMAGE_RADIUS = 30;
-var BOMB_DAMAGE_RADIUS = 20;
-var MISSLE_ACCELERATION = 0.3;
-var MISSLE_ROTATION = 1.5;
-var MAX_MISSLE_ROTATION = .4;
-var MIN_BASE_DISTANCE_SQUARE = 5000;
+
 
 /////////////////
 // New Globals //
@@ -88,6 +73,25 @@ var terrainColors = [
 	 [0,0,0] // space!
 ];
 
+/////////////
+// Globals //
+/////////////
+var WIDTH = window.innerWidth,
+	HEIGHT = window.innerHeight;
+	WIDTHPREV = WIDTH,
+	HEIGHTPREV = HEIGHT;
+var MOVE_RANGE = 100;
+var MOVE_PROB = 0.01;
+var RESTARTING = false;
+var MAX_MOVE_ANGLE = 2;
+var MIN_SEPERATION_OF_STARTING_BASES = (BASE_HEAL_RADIUS * 2) + 30;
+var SHELL_DAMAGE_RADIUS = 30;
+var BOMB_DAMAGE_RADIUS = 20;
+var MISSLE_ACCELERATION = 0.3;
+var MISSLE_ROTATION = 1.5;
+var MAX_MISSLE_ROTATION = .4;
+var MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5);
+var ANIMATION_ID;
 //////////
 // Init //
 //////////
@@ -98,6 +102,61 @@ canvas.height = HEIGHT;
 var ctx = canvas.getContext("2d");
 //ctx.width = WIDTH;
 //ctx.height = HEIGHT;
+
+/* shim to allow us to use request animation frame intelligently for max FPS and no painting when tab isn't active...
+* http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+* https://gist.github.com/1579671
+*/
+(function() {
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); }, 
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());
+
+
+window.onresize = function(event) {
+
+	pauseAnimation();
+
+	WIDTHPREV = WIDTH;
+	HEIGHTPREV = HEIGHT;
+	WIDTH = window.innerWidth;
+	HEIGHT = window.innerHeight;
+	canvas.width = WIDTH;
+	canvas.height = HEIGHT;
+	
+	var xRatio = WIDTH / WIDTHPREV,
+		yRatio = HEIGHT / HEIGHTPREV;
+
+	for(var n in Tanks)
+		if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+		{
+			var t = Tanks[n];
+			t.setX(t.getX() * xRatio);	/* adjust every object to a given resize ratio */
+			t.setY(t.getY() * yRatio);
+		}
+
+	animate();
+}
 
 canvas.addEventListener('mousemove',function(evt){
 	var mousePos = getMousePos(canvas, evt),
@@ -133,15 +192,6 @@ canvas.addEventListener('click', function(evt){
 	
 }, false);
 
-window.onresize = function(event) {
-	WIDTH = window.innerWidth;
-	HEIGHT = window.innerHeight;
-	canvas.width = WIDTH;
-	canvas.height = HEIGHT;
-	
-	// Need to relocate bases that are outsize the new boundries!
-	RelocateBases();	
-}
 
 // FPS Related Vars
 var filterStrength = 20;
@@ -509,7 +559,7 @@ var DebrisSet = new Set("debrisIndex");
 
 //Start:
 restart();
-timer();
+animate();
 
 console.log("Welcome to Tanks!");
 console.log("Number of Teams Playing: " + NUM_TEAMS);
@@ -769,11 +819,20 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				case TankStateEnum.EVASIVE_ACTION:
 					if(Target === null || !Tanks.contains(Target))
 					{
+						var dist = null;
+
 						// need to get one of the tanks bases and move to it!
 						for(var n in Tanks)
 							if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
 								if(Tanks[n].getTeam() == Team && Tanks[n].isBase())
-									Target = Tanks[n];
+								{
+									/* find closest base */
+									var currDist = Tanks[n].getDistanceSquaredFromPoint(X,Y);
+									if (dist == null || currDist < dist) { 
+										Target = Tanks[n];
+										dist = currDist;
+									}
+								}
 					}
 					else
 					{
@@ -804,8 +863,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					break;
 				case TankStateEnum.STOP:
 					
-					// Check their HP. If is over 90%, get back out there and fight!
-					if((HitPoints / Type.HitPoints) >= .9)
+					// Check their HP. If is over 70%, get back out there and fight!
+					if((HitPoints / Type.HitPoints) >= .7)
 					{					
 						State = TankStateEnum.IDLE;
 						
@@ -1324,12 +1383,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	function die()
 	{
-		var exps = Math.floor(Math.random() * 12 + 8);
+		var exps = Math.floor(Math.random() * 4 + 8);
 		for(var i = 0; i < exps; i++) {
 			Explosions.add(new Explosion(X + Math.random() * 14 - 7, Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10));
 		}
 
-		var debris = Math.floor(3 + Math.random() * 7);
+		var debris = Math.floor(3 + Math.random() * 4);
 		for(i = 0; i < debris; i++) {
 			var angle = Math.random() * 2 * Math.PI;
 			var speed = Math.random() * 4 + .2;
@@ -1574,8 +1633,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							if(Tanks[n].getTeam() != Team &&  DistanceMagSquared < 200 * 200 && (AirAttack || !Tanks[n].isPlane())) {
 								var SpeedMag = Math.sqrt(Dx * Dx + Dy * Dy);
 								var DistanceMag = Math.sqrt(DistanceMagSquared);
-								var DotProduct = (Dx * (Tanks[n].getX() - X) + Dy * (Tanks[n].getY() - Y)) 
-												/ (SpeedMag * DistanceMag);
+								var DotProduct = (Dx * (Tanks[n].getX() - X) + Dy * (Tanks[n].getY() - Y)) / (SpeedMag * DistanceMag);
 								if(DotProduct > BestDotProduct) {								
 									Target = Tanks[n];	
 									LastAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);						
@@ -1722,7 +1780,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			if(Time-- > 0) {
 				X += Dx;
 				Y += Dy;
-				Smokes.add(new Smoke(X, Y, 1, 7, 15, 200 * (Time / TotalTime)));
+				Smokes.add(new Smoke(X, Y, 1, 7, 15, 150 * (Time / TotalTime)));
 			} else {
 				DebrisSet.remove(This);
 			}		
@@ -1834,15 +1892,24 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		for(var n in Tanks)
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) 
-				if(Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared)
+				if(Tanks[n] !== Healer && Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared)
 					Tanks[n].recoverHitPoints(null,Healer);
 	}
 	
 	var TeamWonByScore = false;
 	// This is what makes it all happen
-	function timer()
+	function animate()
 	{
-		var t = setTimeout(function() {timer(); ShowFPS();}, 15);
+		ANIMATION_ID = requestAnimationFrame(animate);
+		draw();
+		ShowFPS();
+	}
+	function pauseAnimation()
+	{
+		if (ANIMATION_ID) cancelAnimationFrame(ANIMATION_ID);
+	}
+	function draw()
+	{
 		var TankTeam = null;
 		var AllOneTeam = true;
 		
@@ -2221,30 +2288,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			
 		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
 		Tanks.add(_NewTank);
-	}
-	
-	function RelocateBases()
-	{		
-		for(var n in Tanks)
-			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
-				if(Tanks[n].isBase() || Tanks[n].getKind() == TankKindEnum.TURRET)
-				{					
-					// Moves bases against the walls atleast
-					if(Tanks[n].isBase() && Tanks[n].getX() + BASE_HEAL_RADIUS > WIDTH)
-						Tanks[n].setX(WIDTH - BASE_HEAL_RADIUS);
-					
-					if(Tanks[n].isBase() && Tanks[n].getY() + BASE_HEAL_RADIUS > HEIGHT)
-						Tanks[n].setY(HEIGHT - BASE_HEAL_RADIUS);
-						
-					// Move the base defenses!
-					if(Tanks[n].getKind() == TankKindEnum.TURRET && Tanks[n].getX() > WIDTH)
-						Tanks[n].setX(WIDTH - BASE_HEAL_RADIUS - rnd(10,45));
-						
-					if(Tanks[n].getKind() == TankKindEnum.TURRET && Tanks[n].getY() > HEIGHT)
-						Tanks[n].setY(HEIGHT - BASE_HEAL_RADIUS - rnd(10,45));
-										
-				}
-		
 	}
 	
 	// Javascript Extensions
