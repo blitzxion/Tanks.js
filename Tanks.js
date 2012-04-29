@@ -28,6 +28,8 @@ var ROUND = 0; // func RESET() increases this on new rounds.
 var NUM_TEAMS = 4; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
 var RANDOM_TERRAIN = true;
+var GOD_MODE = false; // While enabled, click methods will fire
+var DRAW_GOD_MODE_HELP = false;
 
 // Fun stuff!
 var SCORE_TO_WIN = 10000;
@@ -79,8 +81,8 @@ var TankKindEnum = {
 var tcIndex;
 var terrainColors = [
 	 [100, 70, 25], // Mud
-	 //[0, 100, 0], // Tundra
-	 //[191, 142, 76], // Desert
+	 [0, 100, 0], // Tundra
+	 [191, 142, 76], // Desert
 	 //[255, 250, 250], // Snow
 	 [112, 128, 144],  // Moon
 	 [0,0,0] // space!
@@ -97,19 +99,35 @@ var ctx = canvas.getContext("2d");
 //ctx.width = WIDTH;
 //ctx.height = HEIGHT;
 
+canvas.addEventListener('mousemove',function(evt){
+	var mousePos = getMousePos(canvas, evt),
+		msX = mousePos.x,
+		msY = mousePos.y;
+		
+	DRAW_GOD_MODE_HELP = (msX >= (WIDTH-150) && msX <= (WIDTH-150+105) && msY >= 0 && msY <= 25);
+		
+},false);
+
 canvas.addEventListener('click', function(evt){
+										  										  
 	var mousePos = getMousePos(canvas, evt),
 		msX = mousePos.x,
 		msY = mousePos.y;
 	
-	if(evt.shiftKey)
-		ClickExplodeUnit(msX,msY,10);
-	else if(evt.ctrlKey)
-		ClickCreateUnit(msX,msY,true);
-	else if(evt.altKey)
-		ClickExplodeUnit(msX,msY,300);
-	else
-		ClickCreateUnit(msX,msY,false);
+	// This is where the GOD_MODE button is located.
+	if(msX >= (WIDTH-150) && msX <= (WIDTH-150+105) && msY >= 0 && msY <= 25){GOD_MODE = !GOD_MODE;	return;}
+	
+	if(GOD_MODE)
+	{
+		if(evt.shiftKey)
+			ClickExplodeUnit(msX,msY,10);
+		else if(evt.ctrlKey)
+			ClickCreateUnit(msX,msY,true);
+		else if(evt.altKey)
+			ClickExplodeUnit(msX,msY,300);
+		else
+			ClickCreateUnit(msX,msY,false);
+	}
 	
 }, false);
 
@@ -128,11 +146,10 @@ var Teams = [];
 var TeamColors = [
 	new Color(255, 0, 0),
 	new Color(0, 255, 0),
-	new Color(255, 255, 0),
 	new Color(0, 255, 255),
 	new Color(255, 0, 255),
 	new Color(255, 255, 0),
-	//new Color(0, 0, 0),
+	new Color(0, 0, 0),
 	new Color(0, 0, 255),
 	new Color(255, 255, 255)
 ];
@@ -1816,11 +1833,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	// This is what makes it all happen
 	function timer()
 	{
-		var t = setTimeout(function() {timer(); ctx.fillStyle = "rgb(255,255,255)"; ctx.fillText((1000/frameTime).toFixed(1) + " fps",10,40+(18*NUM_TEAMS));}, 15);
+		var t = setTimeout(function() {timer(); ShowFPS();}, 15);
 		var TankTeam = null;
 		var AllOneTeam = true;
 		
-		//clearArea(ctx, new Color(100, 70, 25));
 		clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
 		
 		for(var n in Teams)
@@ -1883,46 +1899,38 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		
 		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (0,0,250,(HARD_MODE) ? 80+(17*NUM_TEAMS) : 60+(17*NUM_TEAMS));
+		ctx.fillRect (0,0,WIDTH,25);
 		
-		ctx.fillStyle = "rgb(255,255,255)"; //Teams[6].getColor().getColorString();
-		ctx.font = "8pt Arial";
-		ctx.fillText("Team",10,15);
+		ctx.font = "10pt Arial";
+		/*ctx.fillText("Team",10,15);
 		ctx.fillText("Units",60,15);
 		ctx.fillText("Damage Given",95,15);
-		ctx.fillText("Damage Taken",170,15);
+		ctx.fillText("Damage Taken",170,15);*/
 					
 		for ( teamnum in Teams )
 		{
 			var t = Teams[teamnum];
-			var voff = 35 + (18*teamnum);
-		
+			var hoff = 15 + ((NUM_TEAMS * 10 + 120)*teamnum);
+			var voff = 18;			
 			ctx.fillStyle = t.getColor().getColorString();
-			ctx.fillText(t.getName(),10,voff);
-			ctx.fillText(t.getScore(),60,voff);
-			ctx.fillText(t.getGiven(),95,voff);
-			ctx.fillText(t.getTaken(),170,voff);
+			ctx.fillText(t.getName() + " - " + t.getScore()+" units, "+t.getGiven(),hoff,voff);
+			
+			//ctx.fillText(t.getGiven(),hoff,voff);
+			//ctx.fillText(t.getName(),10,voff);
+			//ctx.fillText(t.getTaken(),170,voff);
 		}
-				
+		
+		// Display What Round it is
+		ctx.fillStyle = "rgba(0,0,0,0.5)";
+		ctx.fillRect (0,HEIGHT-20,85,20);
 		ctx.fillStyle = "rgb(255,255,255)";
-		if(HARD_MODE) ctx.fillText("HARD MODE ENABLED!",10,voff+30);		
-		ctx.fillText("Round: " + ROUND,150,40+(18*NUM_TEAMS));
+		ctx.fillText("Round: " + ROUND,5,HEIGHT - 5);
 		
 		// Show the winners roster 
+		/*
 		if(WINNING_TEAMS.length >= 1)
 		{
 			winners = WINNING_TEAMS;
-			/*top6 = winners.splice(-6);
-			teamWinnings = {};
-			
-			for(i = 0; i < winners.length; ++i)
-			{
-				if(!teamWinnings[winners[i]]) teamWinnings[winners[i]] = 1;
-				++teamWinnings[winners[i]];
-			}
-			
-			if(teamWinnings.length > 0)
-				console.log(teamWinnings);*/
 			
 			var bw = WIDTH-250;
 			var bh = 0;
@@ -1951,7 +1959,29 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				ctx.fillText(TotalVictory,bw+160,voff);
 			}
 		}
+		*/
 		
+		// Draw button for GOD MODE
+		ctx.fillStyle = (!GOD_MODE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillRect(WIDTH-150,0,105,25);
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillText("GOD MODE",WIDTH-135,18);
+		
+		// Show a little helper for the GOD_MODE button
+		if(DRAW_GOD_MODE_HELP)
+		{
+			ctx.fillStyle = "rgba(0,0,0,.5)";
+			ctx.fillRect(WIDTH-400,25,400,100);
+			ctx.fillStyle = "rgb(255,0,0)";
+			ctx.fillText("GOD MODE is " + ((GOD_MODE) ? "Enabled!" : "Disabled..."),WIDTH-395,36)
+			ctx.fillStyle = "rgb(255,255,255)";
+			ctx.fillText("Ctrl+LClick = Instant Random Base (for random faction as well)",WIDTH-395,60);
+			ctx.fillText("Shift+LClick = Destroys the unit clicked on.",WIDTH-395,80);
+			ctx.fillText("Alt+LClick = Destroys lots of units within a large radius.",WIDTH-395,100);
+			ctx.fillText("LClick = Instant Random Unit (for random faction as well)",WIDTH-395,120);
+		}
+		
+		// Setup for the FPS counter
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
 		frameTime+= (thisFrameTime - frameTime) / filterStrength;
 		lastLoop = thisLoop;
@@ -2027,45 +2057,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}              
 		return points;            
 	}
-	
-	function rainbow(numOfSteps, step)
-	{
-		// This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating easily distiguishable vibrant markers in Google Maps and other apps.
-		// HSV to RBG adapted from: http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
-		// Adam Cole, 2011-Sept-14
-		var r, g, b;
-		var h = step / numOfSteps;
-		var i = ~~(h * 6);
-		var f = h * 6 - i;
-		var q = 1 - f;
-		switch(i % 6){
-			case 0: r = 1, g = f, b = 0; break;
-			case 1: r = q, g = 1, b = 0; break;
-			case 2: r = 0, g = 1, b = f; break;
-			case 3: r = 0, g = q, b = 1; break;
-			case 4: r = f, g = 0, b = 1; break;
-			case 5: r = 1, g = 0, b = q; break;
-		}
-		var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
-		return (c);
-	}
-	
-	function hex2rgb(hex)
-	{
-	  if (hex[0]=="#") hex=hex.substr(1);
-	  if (hex.length==3) {
-		var temp=hex; hex='';
-		temp = /^([a-f0-9])([a-f0-9])([a-f0-9])$/i.exec(temp).slice(1);
-		for (var i=0;i<3;i++) hex+=temp[i]+temp[i];
-	  }
-	  var triplets = /^([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})$/i.exec(hex).slice(1);
-	  return {
-		red:   parseInt(triplets[0],16),
-		green: parseInt(triplets[1],16),
-		blue:  parseInt(triplets[2],16)
-	  }
-	}
-	
+		
 	function rnd(minv, maxv)
 	{
 		if (maxv < minv) return 0;
@@ -2160,6 +2152,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				break;
 			}
 		}
+	}
+	
+	function ShowFPS()
+	{
+		ctx.fillStyle = "rgba(0,0,0,0.5)";
+		ctx.fillRect (WIDTH-70,HEIGHT-20,85,20);
+		ctx.fillStyle = "rgb(255,255,255)";
+		ctx.fillText((1000/frameTime).toFixed(1) + " fps",WIDTH-65,HEIGHT - 5);
 	}
 	
 	function getMousePos(canvas, evt)
