@@ -1892,7 +1892,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		for(var n in Tanks)
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) 
-				if(Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared)
+				if(Tanks[n] !== Healer && Tanks[n].getDistanceSquaredFromPoint(X, Y) < RadiusSquared)
 					Tanks[n].recoverHitPoints(null,Healer);
 	}
 	
