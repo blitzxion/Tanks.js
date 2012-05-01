@@ -1173,14 +1173,20 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			shooter.getTeam().addGiven(damage);
 			if(Tanks.contains(shooter)){ //Make sure the shooter of this bullet isn't already dead!
 				if(Type.AntiAircraft || !shooter.isPlane()) {
-					if(State == TankStateEnum.TARGET_AQUIRED || State == TankStateEnum.TARGET_IN_RANGE) {
-						if(!Target.attackingTarget(This)) { //Don't change targets if the current target is attacking this tank
+					if(State != TankStateEnum.EVASIVE_ACTION)
+					{
+						if(State == TankStateEnum.TARGET_AQUIRED || State == TankStateEnum.TARGET_IN_RANGE) {
+							/* Don't change targets if the current target is attacking this tank */
+							
+							if(!Target.attackingTarget(This) && 
+								shooter.getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y)) { 
+								Target = shooter;
+								State = TankStateEnum.TARGET_AQUIRED;
+							}
+						} else {
 							Target = shooter;
 							State = TankStateEnum.TARGET_AQUIRED;
 						}
-					} else {
-						Target = shooter;
-						State = TankStateEnum.TARGET_AQUIRED;
 					}
 				}
 			}
