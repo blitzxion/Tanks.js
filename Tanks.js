@@ -5,19 +5,26 @@
 */
 
 
+/* crummy mobile phone detection so we can tweak things for better performance */
+var IS_IPAD = navigator.platform === 'iPad',
+	IS_IPHONE = navigator.platform === 'iPhone',
+	IS_ANDROID = navigator.userAgent.toLowerCase().indexOf("android") != -1,
+	IS_IOS = IS_IPAD || IS_IPHONE || navigator.userAgent.indexOf("iPod") != -1,
+	IS_MOBILE = IS_IOS || IS_ANDROID;
+
 
 /////////////////
 // New Globals //
 /////////////////
 var ROUND = 0; // func RESET() increases this on new rounds.
-var NUM_TEAMS = 4; // This is the max amount on the playing field.
+var NUM_TEAMS = IS_MOBILE ? 2 : 4; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
 var RANDOM_TERRAIN = true;
 var GOD_MODE = false; // While enabled, click methods will fire
 var DRAW_GOD_MODE_HELP = false;
 
 // Fun stuff!
-var SCORE_TO_WIN = 10000;
+var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000;
 var WINNING_TEAMS = [];
 
 var DAMAGE_MULTIPLIER = 1; // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
@@ -29,12 +36,14 @@ var HARD_MODE_MAX_UNIT_REDUCTION = 2; // Max Units divided by this number
 var IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_PER_FACTION_ON_MAP = (HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * 10 * .5)); // Max units per faction!
+var MAX_UNITS_PER_FACTION_ON_MAP = 
+		(HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : 
+		Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)); // Max units per faction!
 var MAX_BASE_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)); // 10% can be bases 
 var MAX_BASE_DEFENSES = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)); // 30% can be defenses
 var MAX_SPECIAL_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2);
 	MAX_SPECIAL_UNITS = (MAX_SPECIAL_UNITS <= 0) ? 1 : MAX_SPECIAL_UNITS; // I required at least one.
-var BASE_HEAL_RADIUS = 65;
+var BASE_HEAL_RADIUS = (IS_MOBILE ? 35 : 65);
 var HEALTH_COOLDOWN = 100;
 
 // DEBUG Stuff
@@ -96,6 +105,7 @@ var MISSLE_ROTATION = 1.5;
 var MAX_MISSLE_ROTATION = .4;
 var MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5);
 var ANIMATION_ID;
+
 //////////
 // Init //
 //////////
@@ -136,7 +146,6 @@ var ctx = canvas.getContext("2d");
         };
 }());
 
-
 window.onresize = function(event) {
 
 	pauseAnimation();
@@ -160,7 +169,28 @@ window.onresize = function(event) {
 		}
 
 	animate();
-}
+};
+window.onkeydown = function(event) {
+  if(event == null) keyCode = window.event.keyCode; 
+  else keyCode = event.keyCode; 
+
+  switch (keyCode)
+  {
+  	case 116:
+  	case 84: /*T*/
+  		DRAW_TARGET_LINE = !DRAW_TARGET_LINE;
+  		break;
+  	case 114:	
+	case 82: /*R*/
+		DRAW_RANGE_CIRCLE = !DRAW_RANGE_CIRCLE;
+		break;
+	case 103:
+	case 71: /*G*/
+		GOD_MODE = !GOD_MODE;
+		break;
+  	default: break;
+  }
+};
 
 canvas.addEventListener('mousemove',function(evt){
 	var mousePos = getMousePos(canvas, evt),
@@ -204,6 +234,7 @@ canvas.addEventListener('click', function(evt){
 // FPS Related Vars
 var filterStrength = 20;
 var frameTime = 0, lastLoop = new Date, thisLoop;
+var roundStartTime;
 
 var Teams = [];
 var TeamColors = [
@@ -379,7 +410,7 @@ TankTypes[5] = {Kind : TankKindEnum.TANK,
 TankTypes[6] = {Kind : TankKindEnum.TURRET,
 				Special : false,
 				AttackingUnit : true,
-				Prob : 20,
+				Prob : 40,
 				MoveSpeed : 0,
 				TurnSpeed : 0, 
 				TurretTurnSpeed : 0.16, 
@@ -404,7 +435,7 @@ TankTypes[6] = {Kind : TankKindEnum.TURRET,
 TankTypes[7] = {Kind : TankKindEnum.TURRET,
 				Special : false,
 				AttackingUnit : true,
-				Prob : 50,
+				Prob : 70,
 				MoveSpeed : 0,
 				TurnSpeed : 0, 
 				TurretTurnSpeed : 0.14, 
@@ -456,12 +487,12 @@ TankTypes[8] = {Kind : TankKindEnum.BUILDER,
 TankTypes[9] = {Kind : TankKindEnum.PLANE, 
 				Special : false,
 				AttackingUnit : true, 
-				Prob : 20, 
+				Prob : 40, 
 				MoveSpeed : 2.5, 
 				TurnSpeed : .08, 
 				TurretTurnSpeed : .5, 
 				Radius : 12, 
-				HitPoints : 60, 
+				HitPoints : 80, 
 				CooldownTime : 6, 
 				MinRange : 10, 
 				AttackDistance : 60,
@@ -470,7 +501,7 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 				BulletType : ShotTypeEnum.BOMB,
 				BulletTime :  40, 
 				BulletSpeed : 1, 
-				BulletDamage : 10, 
+				BulletDamage : 6, 
 				BarrelLength :  0,
 				DoubleTurret : false,
 				AntiAircraft : false,
@@ -508,12 +539,12 @@ TankTypes[11] = {Kind : TankKindEnum.TANK,
 				Special : true,
 				AttackingUnit : true,
 				Prob : 20, // 20
-				MoveSpeed : 1.75, 
+				MoveSpeed : 1.55, 
 				TurnSpeed : .12, 
 				TurretTurnSpeed : 0.27, 
 				Radius : 10, 
 				HitPoints : 300, //500 
-				CooldownTime : 30,
+				CooldownTime : 40,
 				MinRange : 25,
 				AttackDistance : 130,
 				AttackRange : 155,
@@ -521,7 +552,7 @@ TankTypes[11] = {Kind : TankKindEnum.TANK,
 				BulletType : ShotTypeEnum.MISSLE,
 				BulletTime : 30, 
 				BulletSpeed : 10, 
-				BulletDamage : 10, // 20
+				BulletDamage : 8, // 20
 				TurretSize : 10,
 				BarrelLength : 20,
 				DoubleTurret : true,
@@ -637,7 +668,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	var Target = null,
 		TargetEvasive = null;
 	var Specail = false;
-
 	var BaseAngle = 0;
 	var TargetBaseAngle = 0;
 	var TurretAngle = 0;
@@ -645,75 +675,96 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	var HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN; // Random time the health regen will occur
 	var CanEvade = Type.CanGoEvasive;
 	var EvadeProb = Type.EvaProb;
-
 	var State = TankStateEnum.IDLE;
-	if(Type.Kind === TankKindEnum.PLANE || Type.Kind === TankKindEnum.BUILDER) {
-		State = TankStateEnum.MOVE;
-		TargetBaseAngle = 2 * Math.PI * Math.random();
-		BaseAngle = 2 * Math.PI * Math.random();
-	}
-		
 	var This = this;
 	
-	// Unit Action Methods (DoStuff only... lol)
+	// Special changes for unique units	
+	switch(Type.Kind)
+	{
+		case TankKindEnum.PLANE:
+		case TankKindEnum.BUILDER:
+			State = TankStateEnum.MOVE;
+			TargetBaseAngle = 2 * Math.PI * Math.random();
+			BaseAngle = 2 * Math.PI * Math.random();
+			break;
+		default:
+			/* Nothing changes */
+			break;
+	}
+					
+	//Privileged:
 	switch(Type.Kind)
 	{
 		case TankKindEnum.BASE:
-			this.doStuff = function()
-			{
+			this.doStuff = function() {
 				State = TankStateEnum.IDLE;
-				findFriendlies();
 				
-				if(HealCooldown > 0)
-					HealCooldown--;
-				else
+				if(!HARD_MODE)
 				{
-					heal();
-					HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
-				}
-			
-				if(Cooldown > 0)
-					Cooldown--;
-				else
-				{
-					var angle = Math.random() * 2 * Math.PI;
-					var TypeToMake;
-					var rand = Math.floor(Math.random() * TotalProb);
-					for(var i = 0; i < TankTypes.length; i++){
-						if(rand < TankTypes[i].Prob){								
-							TypeToMake = TankTypes[i];
-							break;
-						} else {
-							rand -= TankTypes[i].Prob;
-						}	
-					}
-					
-					Special = TypeToMake.Special;
-					
-					if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
+					if(HealCooldown > 0)
+						HealCooldown--;
+					else
 					{
+						heal();
+						HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+					}
+				}
+				else
+					if(Team.getUsedTickets() >= HARD_MODE_TICKETS)
+					{
+						// need to blow up the base if there are no more units to defend it!
+						if(Team.getScore() <= 1)
+						{
+							die();
+							return;
+						}
+					}
+	
+				if(Cooldown > 0)
+				{
+					Cooldown--;
+					return;
+				}
+	
+				var TypeToMake;
+				var rand = Math.floor(Math.random() * TotalProb);
+	
+				for(var i = 0; i < TankTypes.length; i++){
+					if(rand < TankTypes[i].Prob){								
+						TypeToMake = TankTypes[i];
+						break;
+					} 
+					else rand -= TankTypes[i].Prob;
+				}
+	
+				if (!TypeToMake) return;
+				if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
+				{
+					//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
+					
+					if(TypeToMake.Kind == TankKindEnum.BUILDER)
+					{ 
 						var _TotalOfUnit = GetNumOfType(TypeToMake,Team);
 						var _TotalBasesBuilt = GetNumOfType(BaseType,Team);
-						var _TotalTurretBuilt = GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7],Team);
-						var _TotalSpecials = GetNumOfSpecials();
-						//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
-						
-						if(TypeToMake.Kind == TankKindEnum.BUILDER && (HARD_MODE || (_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS)) return; // Maxed out Bases!					
-						if(TypeToMake.Kind == TankKindEnum.TURRET && _TotalTurretBuilt >= MAX_BASE_DEFENSES) return; // Maxed out defenses!			
-						if(TypeToMake.Kind == TankKindEnum.TANK && _TotalSpecials >= MAX_SPECIAL_UNITS) return;
-			
-						Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
-						Cooldown = Type.CooldownTime;					
+					
+						if (HARD_MODE || (_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS) return; // Maxed out Bases!					
 					}
-					else
-						return; // Maxed out units!
+					
+					if(TypeToMake.Kind == TankKindEnum.TURRET)
+						if (GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7],Team) >= MAX_BASE_DEFENSES) return; // Maxed out defenses!			
+					
+					if(TypeToMake.Special && GetNumOfSpecials() >= MAX_SPECIAL_UNITS) return;
+	
+					var angle = Math.random() * 2 * Math.PI;
+					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
+					Cooldown = Type.CooldownTime;					
 				}
+				else
+					return; // Maxed out units!
 			}
 			break;
-		
 		case TankKindEnum.TANK:
-			this.doStuff = function()
-			{
+			this.doStuff = function() {
 				switch (State)
 				{
 					case TankStateEnum.IDLE:
@@ -807,14 +858,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								this.moveTurretAndAttack();
 							}
 						
-							if((HitPoints / Type.HitPoints) <= .5)
+							/* keep moving towards base, we havent finished healing */
+							if((HitPoints / Type.HitPoints) <= rnd(.3,.5))
 							{
 								var TargetEvasiveDistanceSquared = TargetEvasive.getDistanceSquaredFromPoint(X, Y);
-								if(TargetEvasiveDistanceSquared > (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - (BASE_HEAL_RADIUS * .1))
+								if(TargetEvasiveDistanceSquared > (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS))
 								{
 									TargetBaseAngle = Math.atan2(TargetEvasive.getY() - Y, TargetEvasive.getX() - X);
 									moveForward();
 								}
+								else
+									State = TankStateEnum.STOP;
 							}
 							else
 								State = TankStateEnum.IDLE;
@@ -823,38 +877,44 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						break;
 					case TankStateEnum.STOP:
 						
-						// Check their HP. If is over 70%, get back out there and fight!
-						if((HitPoints / Type.HitPoints) >= .7)
-						{					
+						// Check their HP. If is over 60%, get back out there and fight!
+						if((HitPoints / Type.HitPoints) >= rnd(.6,1))
 							State = TankStateEnum.IDLE;
-							
-							if(Math.random() < MOVE_PROB) {
-								TargetBaseAngle = 2 * Math.PI * Math.random();
-								State = TankStateEnum.MOVE;
-							}
-							
-							TargetTurretAngle = TargetBaseAngle;
-							findTargets();
-							this.moveTurretAndAttack();
-						}
 						else
 						{
+							/* move randomly in the healing circle */
+							if(false && Math.random() < MOVE_PROB) {
+	
+								if(Math.random() < MOVE_PROB)
+									TargetBaseAngle = Math.atan2(TargetEvasive.getY() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - Y, 
+										TargetEvasive.getX() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - X)
+								moveForward();
+	
+								/* moved outside of circle randomly, get back into fight! */
+								if (X > TargetEvasive.X + BASE_HEAL_RADIUS || X < TargetEvasive.X - BASE_HEAL_RADIUS ||
+									Y > TargetEvasive.Y + BASE_HEAL_RADIUS || Y < TargetEvasive.Y - BASE_HEAL_RADIUS)
+									State = TankStateEnum.IDLE;
+							}
+	
 							findTargets();
 							/* Look for a target to help shoot */							
 							if(Target != null && !Target.isBase())						
 								this.moveTurretAndAttack();
+							else if(Math.random() < MOVE_PROB)
+							{
+								TargetBaseAngle = 2 * Math.PI * Math.random();
+								TargetTurretAngle = TargetBaseAngle;
+								turnTurret();
+							}
 						}
 	
 						break;
 				}
-				
 				if(Cooldown > 0)
 					Cooldown--;
 			};
 			break;
-			
 		case TankKindEnum.BUILDER:
-		
 			this.doStuff = function() {
 				switch (State)
 				{
@@ -865,56 +925,46 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						}
 						break;
 					case TankStateEnum.MOVE:
-						moveForward();
-						if(Math.random() < MOVE_PROB)
+						if(Math.random() < MOVE_PROB && Math.random() < MOVE_PROB)
 							State = TankStateEnum.IDLE;
 						if(Math.random() < MOVE_PROB)
 							TargetBaseAngle = 2 * Math.PI * Math.random();
+						moveForward();
 						break;
 					case TankStateEnum.TARGET_AQUIRED:
-						if(Target === null || !Tanks.contains(Target)) {
-							State = TankStateEnum.IDLE;
-							Target = null;
-						} else {
-							TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X) + Math.PI; // Run away! "+ Math.PI" = opposite direction of target.
-							moveForward();
-							if(Target.getDistanceSquaredFromPoint(X, Y) >= Type.SightDistance * Type.SightDistance) 
-								State = TankStateEnum.IDLE;
-						}
+						State = TankStateEnum.IDLE;
+						Target = null;
 						break;
 				}
-				
 				if(Cooldown > 0) {
 					Cooldown--;
-				} else {
-					var dontBuild = false;
-					for(var n in Tanks) {
-						if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-							if(Tanks[n].isBase() && Tanks[n].getDistanceSquaredFromPoint(X, Y) < MIN_BASE_DISTANCE_SQUARE) {
-								dontBuild = true;
-								break;
-							}
-						}
-					}
-					if(dontBuild) {
-						Cooldown += 5;
-					} else {
-						
-						// Need to prevent bases from building so close to the edges!				
-						if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || Y > HEIGHT - BASE_HEAL_RADIUS || Y < BASE_HEAL_RADIUS)
-							Cooldown += 5; // Keep going until you're away from the wall jerks...
-						else
-						{					
-							Tanks.add(new Tank(X, Y, Team, BaseType, teamnum));
-							Team.setScore(Team.getScore()-1);
-							Tanks.remove(This);
+					return;
+				}
+				var dontBuild = false;
+				for(var n in Tanks) {
+					if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+						if(Tanks[n].isBase() && Tanks[n].getDistanceSquaredFromPoint(X, Y) < MIN_BASE_DISTANCE_SQUARE) {
+							dontBuild = true;
+							break;
 						}
 					}
 				}
-			}
-	
+				if(dontBuild) {
+					Cooldown += 5;
+				} else {
+					
+					// Need to prevent bases from building so close to the edges!				
+					if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || Y > HEIGHT - BASE_HEAL_RADIUS || Y < BASE_HEAL_RADIUS)
+						Cooldown += 5; // Keep going until you're away from the wall jerks...
+					else
+					{					
+						Tanks.add(new Tank(X, Y, Team, BaseType, teamnum));
+						Team.setScore(Team.getScore()-1);
+						Tanks.remove(This);
+					}
+				}
+			};
 			break;
-			
 		case TankKindEnum.TURRET:
 			this.doStuff = function() {
 				switch (State)
@@ -940,7 +990,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					Cooldown--;
 			};
 			break;
-			
 		case TankKindEnum.PLANE:
 			this.doStuff = function() {
 				switch (State)
@@ -960,9 +1009,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						if(Math.abs(TargetTurretAngle - TurretAngle) < Type.TurretTurnSpeed)
 							TargetTurretAngle = TurretAngle;
 	
-						findTargets(); /* see if there is a better target to fire on*/
-						
-						if(Target === null) {
+						if(Target === null || !Tanks.contains(Target)) {
 							State = TankStateEnum.MOVE;
 							Target = null;
 						} else {
@@ -1014,33 +1061,39 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 						break;
 				}
-				
 				if(Cooldown > 0)
 					Cooldown--;
 			};
 			break;
 	}
-		
-	// Unit Draw Methods
+	
+	// Unit Draw methods
 	switch(Type.Kind)
 	{
 		case TankKindEnum.BASE:
 			this.draw = function(canvasContext) {
+	
 				canvasContext.fillStyle = "rgb(0,0,0)";
 				canvasContext.fillRect (X - 11, Y - 11, 22, 22);
+				
 				canvasContext.fillStyle = Team.getColor().getColorString();
-				canvasContext.fillRect (X - 10, Y - 10, 20, 20);				
+				canvasContext.fillRect (X - 10, Y - 10, 20, 20);
+				
 				this.drawHPBar(canvasContext,X,Y);
+				
 				// Draw Healing Circle
-				var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
-				canvasContext.beginPath();
-				canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
-				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-				canvasContext.fill();
-				canvasContext.closePath();
+				{
+					var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
+					canvasContext.beginPath();
+					
+					canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
+					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+					canvasContext.fill();
+					canvasContext.closePath();
+				}
+							
 			};
 			break;
-		
 		case TankKindEnum.TANK:
 		case TankKindEnum.BUILDER:
 		case TankKindEnum.TURRET:
@@ -1058,15 +1111,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.fill();
 					canvasContext.lineWidth = 1;
 					canvasContext.strokeStyle = Team.getColor().getColorString();
-					canvasContext.stroke();				
+					canvasContext.stroke();								
 					canvasContext.restore();
 				}
+	
 				//Turret:
 				canvasContext.save();
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(TurretAngle);
 				canvasContext.strokeStyle = Team.getColor().getColorString();
 				canvasContext.fillStyle = Team.getColor().getColorString();
+	
 				canvasContext.beginPath();
 				if(Type.DoubleTurret)
 				{
@@ -1088,9 +1143,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				this.doDebug(canvasContext);
 			};
 			break;
-		
 		case TankKindEnum.PLANE:
-			this.draw = function(canvasContext) {
+			this.draw = function(canvasContext)
+			{
 				this.drawHPBar(canvasContext,X,Y);
 				canvasContext.save();
 				canvasContext.translate(X, Y);
@@ -1106,24 +1161,26 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.stroke();
 				canvasContext.restore();
 				this.doDebug(canvasContext);
-			};
+				
+			}
 			break;
-	}
-	
+	}	
+		
 	this.isBase = function(){return Type.Kind == TankKindEnum.BASE;}
-	this.isSpecial = function (){ return Special; }
-	this.isPlane = function(){return Type.Kind==TankKindEnum.PLANE;}
-	this.getKind = function(){ return Type.Kind; }
-	this.getTeam = function(){return Team;};
+	this.isSpecial = function (){ return Type.Special; }	
+	this.isPlane = function() {return Type.Kind == TankKindEnum.PLANE;};
+	this.isTurret = function() { return Type.Kind == TankKindEnum.TURRET; }
+	this.getKind = function() { return Type.Kind; }
+	this.getTeam = function() {return Team;};
 	this.getTeamnum = function(){return Teamnum;}
 	this.getDistanceSquaredFromPoint = function(x, y) {return (X - x) * (X - x) + (Y - y) * (Y - y);};
-	this.getRadiusSquared = function(){return Type.Radius * Type.Radius;};
+	this.getRadiusSquared = function() {return Type.Radius * Type.Radius;};
 	this.getX = function() {return X;}
-	this.getY = function() {return Y;}
+	this.getY = function() {return Y;}	
 	this.setX = function(x){X = x; return X;};
 	this.setY = function(y){Y = y; return Y;};
-	this.kill = function(){die();}
-	
+	this.kill = function(){die();}	
+
 	this.getDx = function()
 	{
 		if(State === TankStateEnum.MOVE || State === TankStateEnum.TARGET_AQUIRED || State === TankStateEnum.CRASH_AND_BURN) {
@@ -1151,7 +1208,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.startEvading = function()
 	{
 		if(State == TankStateEnum.EVASIVE_ACTION) return true;
-		if (CanEvade && (HitPoints / Type.HitPoints) <= .5 && Math.random() <= EvadeProb)
+		if (CanEvade && (HitPoints / Type.HitPoints) <= rnd(.1,.5) && Math.random() <= EvadeProb)
 		{
 			State = TankStateEnum.EVASIVE_ACTION;
 			return true;
@@ -1160,7 +1217,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	}
 
 	this.attackingTarget = function(target){return Type.AttackingUnit ? target === Target : false;}
-
+	
 	this.takeDamage = function(damage, shooter) 
 	{
 		HitPoints -= damage;
@@ -1168,8 +1225,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if(shooter !== null && shooter.getTeam() !== Team)
 		{
 			shooter.getTeam().addGiven(damage);
+
 			if(Tanks.contains(shooter)){ //Make sure the shooter of this bullet isn't already dead!
 				if(Type.AntiAircraft || !shooter.isPlane()) {
+
+					if (State === TankStateEnum.EVASIVE_ACTION) /* random change to leave evasive */
+						if (Math.random() < EvadeProb) State = TankStateEnum.IDLE;
+
 					if(State != TankStateEnum.EVASIVE_ACTION)
 					{
 						if(Target != null && State == TankStateEnum.TARGET_AQUIRED || State == TankStateEnum.TARGET_IN_RANGE) {
@@ -1198,22 +1260,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			
 		
 	};
-				
-	this.callToAttack = function (target)
-	{
-		/* we already have a target that is closer, can't help right now */
-		if(Target != null && Target.getDistanceSquaredFromPoint(X, Y) < target.getDistanceSquaredFromPoint(X, Y)) return; 
-		/* we can't attack or we can't attack that plane */
-		if(!Type.AttackingUnit) return;
-		if(!Type.AntiAircraft && target.isPlane()) return;
-						
-		if(State == TankStateEnum.IDLE || State == TankStateEnum.MOVE || State == TankStateEnum.EVASIVE_ACTION) {
-			Target = target;
-			if(State != TankStateEnum.EVASIVE_ACTION)
-				State = TankStateEnum.TARGET_AQUIRED;
-		}
-	}
-	
+			
 	this.moveTurretAndAttack = function()
 	{
 		if(Target != null)
@@ -1229,27 +1276,21 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	}
 	
-	var healing = false;
-	this.recoverHitPoints = function(health, healer)
+	this.callToAttack = function (target)
 	{
-		if(health == null)
-			health = Math.floor(Type.HitPoints * .1); // 10% of this unit's HP
-		
-		if(healer !== null && healer.getTeam() == Team)
-		{
-			if(HitPoints == Type.HitPoints) return;	
-			
-			if(!healing)
-			{
-				healing=true;
-				HitPoints += health;			
-				healing = false;
-			}
+		/* we already have a target that is closer, can't help right now */
+		if(Target != null && Target.getDistanceSquaredFromPoint(X, Y) < target.getDistanceSquaredFromPoint(X, Y)) return; 
+		/* we can't attack or we can't attack that plane */
+		if(!Type.AttackingUnit) return;
+		if(!Type.AntiAircraft && target.isPlane()) return;
+		if(this.isTurret()) return; /* wait until Target is in range */
 						
-			if(HitPoints > Type.HitPoints)
-				HitPoints = Type.HitPoints; // Can't heal over the max HP of the unit.
+		if(State == TankStateEnum.IDLE || State == TankStateEnum.MOVE || State == TankStateEnum.EVASIVE_ACTION) {
+			Target = target;
+			if(State != TankStateEnum.EVASIVE_ACTION)
+				State = TankStateEnum.TARGET_AQUIRED;
 		}
-	};
+	}
 	
 	this.drawHPBar = function (ctx, X,Y)
 	{
@@ -1267,6 +1308,29 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.restore();
 		}
 	}
+	
+	var healing = false;
+	this.recoverHitPoints = function(health, healer)
+	{
+		if(health == null)
+			health = Math.floor(Type.HitPoints * .1); // 10% of this unit's HP
+		
+		if(healer !== null && healer.getTeam() == Team)
+		{
+			if(HitPoints == Type.HitPoints) return;	
+			//console.log(HitPoints+"/"+Type.HitPoints+" +["+health+"] = "+(HitPoints + health));
+			
+			if(!healing)
+			{
+				healing=true;
+				HitPoints += health;			
+				healing = false;
+			}
+						
+			if(HitPoints > Type.HitPoints)
+				HitPoints = Type.HitPoints; // Can't heal over the max HP of the unit.
+		}
+	};
 	
 	this.doDebug = function(canvasContext)
 	{
@@ -1294,18 +1358,20 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	//Private:
 	function heal()
-	{
-		AreaHeal(X,Y, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS, This);
-	};
+	{AreaHeal(X,Y, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS, This);};
 	
 	function die()
 	{
 		var exps = Math.floor(Math.random() * 4 + 8);
+		if (IS_MOBILE) expos = 2;
+
 		for(var i = 0; i < exps; i++) {
 			Explosions.add(new Explosion(X + Math.random() * 14 - 7, Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10));
 		}
 
 		var debris = Math.floor(3 + Math.random() * 4);
+		if (IS_MOBILE) debris = 2;
+
 		for(i = 0; i < debris; i++) {
 			var angle = Math.random() * 2 * Math.PI;
 			var speed = Math.random() * 4 + .2;
@@ -1318,8 +1384,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function callFriendlies(target)
 	{
-		if (target.isBase()) /* target is for evasive reasons */
-			return;
 		for(var n in Tanks) {
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 				if(Tanks[n].getTeam() == Team) {
@@ -1328,7 +1392,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			}
 		}
 	}
-
+	
 	function findTargets()
 	{
 		if (Target != null && !Tanks.contains(Target)) Target = null;
@@ -1640,6 +1704,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function Explosion (x, y, preDisplayTime, size) 
 	{
 		var X = x, Y = y, PreDisplayTime = preDisplayTime, TargetSize = size, Size = 0, GrowMode = true;
+
+		if (IS_MOBILE) TargetSize = 3;
 		
 		this.update = function () {
 			if(PreDisplayTime > 0) {
@@ -1679,6 +1745,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function Smoke (x, y, startSize, endSize, time, redness) 
 	{
 		var X = x, Y = y, StartSize = startSize, EndSize = endSize, TotalTime = time, Redness = redness;
+
+		if (IS_MOBILE) TOtalTime = 2;
+
 		var This = this;
 		var Time = 0;
 		this.update = function () {
@@ -1836,10 +1905,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		draw();
 		ShowFPS();
 	}
+	
 	function pauseAnimation()
 	{
 		if (ANIMATION_ID) cancelAnimationFrame(ANIMATION_ID);
 	}
+	
 	function draw()
 	{
 		var TankTeam = null;
@@ -1907,13 +1978,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		
 		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (0,0,WIDTH,25);
-		
+		ctx.fillRect (0,0,WIDTH,25);		
 		ctx.font = "10pt Arial";
-		/*ctx.fillText("Team",10,15);
-		ctx.fillText("Units",60,15);
-		ctx.fillText("Damage Given",95,15);
-		ctx.fillText("Damage Taken",170,15);*/
 					
 		for ( teamnum in Teams )
 		{
@@ -1922,17 +1988,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var voff = 18;			
 			ctx.fillStyle = t.getColor().getColorString();
 			ctx.fillText(t.getName() + " - " + t.getScore()+" units, "+t.getGiven(),hoff,voff);
-			
-			//ctx.fillText(t.getGiven(),hoff,voff);
-			//ctx.fillText(t.getName(),10,voff);
-			//ctx.fillText(t.getTaken(),170,voff);
 		}
 		
 		// Display What Round it is
 		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (0,HEIGHT-20,85,20);
+		ctx.fillRect (0,HEIGHT-20,135,20);
 		ctx.fillStyle = "rgb(255,255,255)";
-		ctx.fillText("Round: " + ROUND,5,HEIGHT - 5);
+		ctx.fillText("Round: " + ROUND + "  -  " + Math.round((+new Date - roundStartTime) / 1000)  + " secs",5,HEIGHT - 5);
 		
 		// Show the winners roster 
 		/*
@@ -2011,6 +2073,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function restart()
 	{
+		roundStartTime = new Date;
+
 		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
 		console.log(terrainColors[tcIndex].toString());
 		IN_SPACE=false;
@@ -2034,16 +2098,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var attempts = 0;
 			while(TooClose && attempts++ < 100) {
 				TooClose = false;
-				x = Math.random() * (WIDTH - 40) + 20;
-				y = Math.random() * (HEIGHT - 40) + 20;
+
+				x = rnd(BASE_HEAL_RADIUS, WIDTH - BASE_HEAL_RADIUS);
+				y = rnd(BASE_HEAL_RADIUS, HEIGHT - BASE_HEAL_RADIUS);
+
 				for (var n in Tanks) {
-					if(x > WIDTH - BASE_HEAL_RADIUS || x < BASE_HEAL_RADIUS || y > HEIGHT - BASE_HEAL_RADIUS || y < BASE_HEAL_RADIUS)
-						TooClose = true;
-					else
-					{				
-						if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-							if(Tanks[n].getDistanceSquaredFromPoint(x, y) < MIN_SEPERATION_OF_STARTING_BASES * MIN_SEPERATION_OF_STARTING_BASES)
-								TooClose = true;
+					if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+						if(Tanks[n].getDistanceSquaredFromPoint(x, y) < MIN_SEPERATION_OF_STARTING_BASES * MIN_SEPERATION_OF_STARTING_BASES)
+						{
+							TooClose = true;
+							continue;
 						}
 					}
 				}
