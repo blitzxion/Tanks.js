@@ -234,6 +234,7 @@ canvas.addEventListener('click', function(evt){
 // FPS Related Vars
 var filterStrength = 20;
 var frameTime = 0, lastLoop = new Date, thisLoop;
+var roundStartTime;
 
 var Teams = [];
 var TeamColors = [
@@ -2050,9 +2051,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		
 		// Display What Round it is
 		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (0,HEIGHT-20,85,20);
+		ctx.fillRect (0,HEIGHT-20,135,20);
 		ctx.fillStyle = "rgb(255,255,255)";
-		ctx.fillText("Round: " + ROUND,5,HEIGHT - 5);
+		ctx.fillText("Round: " + ROUND + "  -  " + Math.round((+new Date - roundStartTime) / 1000)  + " secs",5,HEIGHT - 5);
 		
 		// Show the winners roster 
 		/*
@@ -2131,6 +2132,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function restart()
 	{
+		roundStartTime = new Date;
+
 		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
 		console.log(terrainColors[tcIndex].toString());
 		IN_SPACE=false;
