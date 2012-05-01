@@ -486,7 +486,7 @@ TankTypes[8] = {Kind : TankKindEnum.BUILDER,
 TankTypes[9] = {Kind : TankKindEnum.PLANE, 
 				Special : false,
 				AttackingUnit : true, 
-				Prob : 50, 
+				Prob : 40, 
 				MoveSpeed : 2.5, 
 				TurnSpeed : .08, 
 				TurretTurnSpeed : .5, 
@@ -500,7 +500,7 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 				BulletType : ShotTypeEnum.BOMB,
 				BulletTime :  40, 
 				BulletSpeed : 1, 
-				BulletDamage : 10, 
+				BulletDamage : 6, 
 				BarrelLength :  0,
 				DoubleTurret : false,
 				AntiAircraft : false,
@@ -871,20 +871,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					
 					// Check their HP. If is over 60%, get back out there and fight!
 					if((HitPoints / Type.HitPoints) >= rnd(.6,1))
-					{					
 						State = TankStateEnum.IDLE;
-
-						TargetTurretAngle = TargetBaseAngle;
-						findTargets();
-						this.moveTurretAndAttack();
-					}
 					else
 					{
 						/* move randomly in the healing circle */
-						if(Math.random() < MOVE_PROB) {
+						if(false && Math.random() < MOVE_PROB) {
 
-							TargetBaseAngle = Math.atan2(TargetEvasive.getY() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - Y, 
-								TargetEvasive.getX() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - X)
+							if(Math.random() < MOVE_PROB)
+								TargetBaseAngle = Math.atan2(TargetEvasive.getY() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - Y, 
+									TargetEvasive.getX() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - X)
 							moveForward();
 
 							/* moved outside of circle randomly, get back into fight! */
@@ -897,7 +892,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						/* Look for a target to help shoot */							
 						if(Target != null && !Target.isBase())						
 							this.moveTurretAndAttack();
-						else
+						else if(Math.random() < MOVE_PROB)
 						{
 							TargetBaseAngle = 2 * Math.PI * Math.random();
 							TargetTurretAngle = TargetBaseAngle;
@@ -923,9 +918,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					}
 					break;
 				case TankStateEnum.MOVE:
-					if(Math.random() < MOVE_PROB)
+					if(Math.random() < MOVE_PROB && Math.random() < MOVE_PROB)
 						State = TankStateEnum.IDLE;
-					TargetBaseAngle = 2 * Math.PI * Math.random();
+					if(Math.random() < MOVE_PROB)
+						TargetBaseAngle = 2 * Math.PI * Math.random();
 					moveForward();
 					break;
 				case TankStateEnum.TARGET_AQUIRED:
