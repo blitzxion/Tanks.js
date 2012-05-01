@@ -854,11 +854,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						if((HitPoints / Type.HitPoints) <= rnd(.3,.5)) /* keep moving towards base, we haven't finished healing */
 						{
 							var TargetEvasiveDistanceSquared = TargetEvasive.getDistanceSquaredFromPoint(X, Y);
-							if(TargetEvasiveDistanceSquared > (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - (BASE_HEAL_RADIUS * .1))
+							if(TargetEvasiveDistanceSquared > (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS))
 							{
 								TargetBaseAngle = Math.atan2(TargetEvasive.getY() - Y, TargetEvasive.getX() - X);
 								moveForward();
 							}
+							else
+								State = TankStateEnum.STOP;
 						}
 						else
 							State = TankStateEnum.IDLE;
@@ -867,26 +869,40 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					break;
 				case TankStateEnum.STOP:
 					
-					// Check their HP. If is over 70%, get back out there and fight!
-					if((HitPoints / Type.HitPoints) >= .7)
+					// Check their HP. If is over 60%, get back out there and fight!
+					if((HitPoints / Type.HitPoints) >= rnd(.6,1))
 					{					
 						State = TankStateEnum.IDLE;
-						
-						if(Math.random() < MOVE_PROB) {
-							TargetBaseAngle = 2 * Math.PI * Math.random();
-							State = TankStateEnum.MOVE;
-						}
-						
+
 						TargetTurretAngle = TargetBaseAngle;
 						findTargets();
 						this.moveTurretAndAttack();
 					}
 					else
 					{
+						/* move randomly in the healing circle */
+						if(Math.random() < MOVE_PROB) {
+
+							TargetBaseAngle = Math.atan2(TargetEvasive.getY() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - Y, 
+								TargetEvasive.getX() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - X)
+							moveForward();
+
+							/* moved outside of circle randomly, get back into fight! */
+							if (X > TargetEvasive.X + BASE_HEAL_RADIUS || X < TargetEvasive.X - BASE_HEAL_RADIUS ||
+								Y > TargetEvasive.Y + BASE_HEAL_RADIUS || Y < TargetEvasive.Y - BASE_HEAL_RADIUS)
+								State = TankStateEnum.IDLE;
+						}
+
 						findTargets();
 						/* Look for a target to help shoot */							
 						if(Target != null && !Target.isBase())						
 							this.moveTurretAndAttack();
+						else
+						{
+							TargetBaseAngle = 2 * Math.PI * Math.random();
+							TargetTurretAngle = TargetBaseAngle;
+							turnTurret();
+						}
 					}
 
 					break;
@@ -993,7 +1009,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					if(Math.abs(TargetTurretAngle - TurretAngle) < Type.TurretTurnSpeed)
 						TargetTurretAngle = TurretAngle;
 
-					if(Target === null) {
+					if(Target === null || !Tanks.contains(Target)) {
 						State = TankStateEnum.MOVE;
 						Target = null;
 					} else {
