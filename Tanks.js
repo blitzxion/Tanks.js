@@ -146,7 +146,6 @@ var ctx = canvas.getContext("2d");
         };
 }());
 
-
 window.onresize = function(event) {
 
 	pauseAnimation();
@@ -170,7 +169,28 @@ window.onresize = function(event) {
 		}
 
 	animate();
-}
+};
+window.onkeydown = function(event) {
+  if(event == null) keyCode = window.event.keyCode; 
+  else keyCode = event.keyCode; 
+
+  switch (keyCode)
+  {
+  	case 116:
+  	case 84: /*T*/
+  		DRAW_TARGET_LINE = !DRAW_TARGET_LINE;
+  		break;
+  	case 114:	
+	case 82: /*R*/
+		DRAW_RANGE_CIRCLE = !DRAW_RANGE_CIRCLE;
+		break;
+	case 103:
+	case 71: /*G*/
+		GOD_MODE = !GOD_MODE;
+		break;
+  	default: break;
+  }
+};
 
 canvas.addEventListener('mousemove',function(evt){
 	var mousePos = getMousePos(canvas, evt),
