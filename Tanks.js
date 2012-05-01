@@ -1045,7 +1045,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		return Type.Kind == TankKindEnum.BASE;
 	}
 	
-	this.isSpecial = function (){ return Special; }
+	this.isSpecial = function (){ return Type.Special; }
 	
 	this.getKind = function() { return Type.Kind; }
 
