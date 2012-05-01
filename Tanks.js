@@ -887,49 +887,41 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					}
 					break;
 				case TankStateEnum.MOVE:
-					moveForward();
 					if(Math.random() < MOVE_PROB)
 						State = TankStateEnum.IDLE;
-					if(Math.random() < MOVE_PROB)
-						TargetBaseAngle = 2 * Math.PI * Math.random();
+					TargetBaseAngle = 2 * Math.PI * Math.random();
+					moveForward();
 					break;
 				case TankStateEnum.TARGET_AQUIRED:
-					if(Target === null || !Tanks.contains(Target)) {
-						State = TankStateEnum.IDLE;
-						Target = null;
-					} else {
-						TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X) + Math.PI;
-						moveForward();
-						if(Target.getDistanceSquaredFromPoint(X, Y) >= Type.SightDistance * Type.SightDistance) 
-							State = TankStateEnum.IDLE;
-					}
+					State = TankStateEnum.IDLE;
+					Target = null;
 					break;
 			}
 			if(Cooldown > 0) {
 				Cooldown--;
-			} else {
-				var dontBuild = false;
-				for(var n in Tanks) {
-					if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-						if(Tanks[n].isBase() && Tanks[n].getDistanceSquaredFromPoint(X, Y) < MIN_BASE_DISTANCE_SQUARE) {
-							dontBuild = true;
-							break;
-						}
+				return;
+			}
+			var dontBuild = false;
+			for(var n in Tanks) {
+				if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+					if(Tanks[n].isBase() && Tanks[n].getDistanceSquaredFromPoint(X, Y) < MIN_BASE_DISTANCE_SQUARE) {
+						dontBuild = true;
+						break;
 					}
 				}
-				if(dontBuild) {
-					Cooldown += 5;
-				} else {
-					
-					// Need to prevent bases from building so close to the edges!				
-					if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || Y > HEIGHT - BASE_HEAL_RADIUS || Y < BASE_HEAL_RADIUS)
-						Cooldown += 5; // Keep going until you're away from the wall jerks...
-					else
-					{					
-						Tanks.add(new Tank(X, Y, Team, BaseType, teamnum));
-						Team.setScore(Team.getScore()-1);
-						Tanks.remove(This);
-					}
+			}
+			if(dontBuild) {
+				Cooldown += 5;
+			} else {
+				
+				// Need to prevent bases from building so close to the edges!				
+				if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || Y > HEIGHT - BASE_HEAL_RADIUS || Y < BASE_HEAL_RADIUS)
+					Cooldown += 5; // Keep going until you're away from the wall jerks...
+				else
+				{					
+					Tanks.add(new Tank(X, Y, Team, BaseType, teamnum));
+					Team.setScore(Team.getScore()-1);
+					Tanks.remove(This);
 				}
 			}
 		}
@@ -2127,16 +2119,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var attempts = 0;
 			while(TooClose && attempts++ < 100) {
 				TooClose = false;
-				x = Math.random() * (WIDTH - 40) + 20;
-				y = Math.random() * (HEIGHT - 40) + 20;
+
+				x = rnd(BASE_HEAL_RADIUS, WIDTH - BASE_HEAL_RADIUS);
+				y = rnd(BASE_HEAL_RADIUS, HEIGHT - BASE_HEAL_RADIUS);
+
 				for (var n in Tanks) {
-					if(x > WIDTH - BASE_HEAL_RADIUS || x < BASE_HEAL_RADIUS || y > HEIGHT - BASE_HEAL_RADIUS || y < BASE_HEAL_RADIUS)
-						TooClose = true;
-					else
-					{				
-						if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-							if(Tanks[n].getDistanceSquaredFromPoint(x, y) < MIN_SEPERATION_OF_STARTING_BASES * MIN_SEPERATION_OF_STARTING_BASES)
-								TooClose = true;
+					if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+						if(Tanks[n].getDistanceSquaredFromPoint(x, y) < MIN_SEPERATION_OF_STARTING_BASES * MIN_SEPERATION_OF_STARTING_BASES)
+						{
+							TooClose = true;
+							continue;
 						}
 					}
 				}
