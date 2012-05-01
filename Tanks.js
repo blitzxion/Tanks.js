@@ -575,25 +575,6 @@ for(var tn in Teams)
 	console.log(Teams[tn].getName() + "!");
 
 
-/*var mTimer = setInterval(function(){
-	window.mTeams = new Object;
-	for ( mtank in Tanks )
-	{
-		if ( !isNaN(mtank) )
-		{
-			if ( typeof window.mTeams[Tanks[mtank].getTeamnum()] == 'undefined' ) {
-				window.mTeams[Tanks[mtank].getTeamnum()] = new Object;
-				window.mTeams[Tanks[mtank].getTeamnum()].score = 1;
-				window.mTeams[Tanks[mtank].getTeamnum()].colorstring = Tanks[mtank].getTeam().getColor().getColorString();
-				//console.debug(Tanks[mtank]);
-			}
-			else {
-				window.mTeams[Tanks[mtank].getTeamnum()].score = window.mTeams[Tanks[mtank].getTeamnum()].score + 1;
-			}
-		}
-	}
-},5000);*/
-
 /////////////
 // Classes //
 /////////////
@@ -645,7 +626,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	var Time = 60;
 	var HitPoints = Type.HitPoints;
 	var Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime;
-	var Target = null;
+	var Target = null,
+		TargetEvasive = null;
 	var Specail = false;
 
 	var BaseAngle = 0;
@@ -787,7 +769,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					}
 					findTargets(); /* see if there is a better target to fire on*/
 
-					if (Target !== null) callFriendlies(Target);
+					if (Target != null) callFriendlies(Target);
 					break;
 				case TankStateEnum.TARGET_IN_RANGE:
 					if(Target === null || !Tanks.contains(Target)) {
@@ -810,7 +792,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					if(IN_SPACE) moveForward();
 					break;
 				case TankStateEnum.EVASIVE_ACTION:
-					if(Target === null || !Tanks.contains(Target))
+					if(TargetEvasive === null || !Tanks.contains(TargetEvasive))
 					{
 						var dist = null;
 
@@ -822,31 +804,34 @@ function Tank(x_init, y_init, team, type, teamnum) {
 									/* find closest base */
 									var currDist = Tanks[n].getDistanceSquaredFromPoint(X,Y);
 									if (dist == null || currDist < dist) { 
-										Target = Tanks[n];
+										TargetEvasive = Tanks[n];
 										dist = currDist;
 									}
 								}
 					}
 					else
 					{
+						findTargets(); /* see if there is a better target to fire on*/
+						if (Target != null)
+						{ 
+							callFriendlies(Target);
+							setTargetTurretAngle(Target);
+							turnTurret();
+							
+							var TargetDistanceSquared = Target.getDistanceSquaredFromPoint(X, Y);
+							if (TargetDistanceSquared <= Type.AttackDistance * Type.AttackDistance) {
+								/* Fire at the target while running away! */
+								attack();
+							}
+						}
+					
 						if((HitPoints / Type.HitPoints) <= .5)
 						{
-							var TargetDistanceSquared = Target.getDistanceSquaredFromPoint(X, Y);
-							if(TargetDistanceSquared <= Type.MinRange * Type.MinRange) {
-								setTargetTurretAngle(Target);
-								turnTurret();
-								TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X) + Math.PI;
-								moveForward();							
-							/*} else if(TargetDistanceSquared <= (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - 3000) {
-								State = TankStateEnum.STOP;*/
-							} else {
-								setTargetTurretAngle(Target);
-								turnTurret();
-								TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
+							var TargetEvasiveDistanceSquared = TargetEvasive.getDistanceSquaredFromPoint(X, Y);
+							if(TargetEvasiveDistanceSquared > (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - (BASE_HEAL_RADIUS * .1))
+							{
+								TargetBaseAngle = Math.atan2(TargetEvasive.getY() - Y, TargetEvasive.getX() - X);
 								moveForward();
-															
-								if(TargetDistanceSquared < (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - (BASE_HEAL_RADIUS * .1))
-									State = TankStateEnum.STOP;
 							}
 						}
 						else
@@ -891,11 +876,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								}
 							}
 							
-							if(Target !== null && !Target.isBase())
+							if(Target != null && !Target.isBase())
 							{							
 								setTargetTurretAngle(Target);
 								turnTurret();
-								TargetBaseAngle = Math.atan2(Target.getY() - Y, Target.getX() - X);
 								attack();
 							}
 						}
@@ -993,7 +977,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 					findTargets(); /* see if there is a better target to fire on*/
 
-					if (Target !== null) callFriendlies(Target);
+					if (Target != null) callFriendlies(Target);
 
 					break;				
 			}
@@ -1060,7 +1044,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 					findTargets(); /* see if there is a better target to fire on*/
 
-					if (Target !== null) callFriendlies(Target);
+					if (Target != null) callFriendlies(Target);
 					
 					break;
 				case TankStateEnum.CRASH_AND_BURN:
@@ -1378,14 +1362,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	this.callToAttack = function (target)
 	{
-		if(!Type.AttackingUnit)
-			return;
-		if(!Type.AntiAircraft && target.isPlane())
-			return;
+		/* we already have a target that is closer, can't help right now */
+		if(Target != null && Target.getDistanceSquaredFromPoint(X, Y) < target.getDistanceSquaredFromPoint(X, Y)) return; 
+		/* we can't attack or we can't attack that plane */
+		if(!Type.AttackingUnit) return;
+		if(!Type.AntiAircraft && target.isPlane()) return;
 						
-		if(State == TankStateEnum.IDLE || State == TankStateEnum.MOVE) {
+		if(State == TankStateEnum.IDLE || State == TankStateEnum.MOVE || State == TankStateEnum.EVASIVE_ACTION) {
 			Target = target;
-			State = TankStateEnum.TARGET_AQUIRED;
+			if(State != TankStateEnum.EVASIVE_ACTION)
+				State = TankStateEnum.TARGET_AQUIRED;
 		}
 	}
 	
@@ -1428,31 +1414,29 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function findTargets()
 	{
-		if(Math.random() < .2) {
-			for(var n in Tanks) {
-				if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+		if (Target != null && !Tanks.contains(Target)) Target = null;
+		
+		for(var n in Tanks) {
+			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+			{
+				if(Tanks[n].getTeam() != Team && Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance && (Type.AntiAircraft || !Tanks[n].isPlane()))
 				{
-					if(Tanks[n].getTeam() != Team && Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance && (Type.AntiAircraft || !Tanks[n].isPlane()))
-					{
-						/* choose a better target if we found one closer/more damaged */
-						if (Target == null || (Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) || 
-							Tanks[n].HitPoints < Target.HitPoints))
-						{						
-							Target = Tanks[n];
+					/* choose a better target if we found one closer/more damaged */
+					if (Target == null || (Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) || 
+						Tanks[n].HitPoints < Target.HitPoints))
+					{						
+						Target = Tanks[n];
+						
+						/* don't switch state if we are running away */
+						if (State != TankStateEnum.EVASIVE_ACTION)
 							State = TankStateEnum.TARGET_AQUIRED;
 
-							if(Type.AntiAircraft && Tanks[n].isPlane()) //AA tanks try to attack planes first of all
-								break;
-						}
+						if(Type.AntiAircraft && Tanks[n].isPlane()) //AA tanks try to attack planes first of all
+							break;
 					}
-					
-					if(Target != null)
-						if(Target.isBase())
-							continue;
-					
 				}
-			}			
-		}
+			}
+		}	
 	};
 	
 	function GetNumOfType(type,team)
