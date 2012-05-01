@@ -1357,7 +1357,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	this.moveTurretAndAttack = function()
 	{
-		if(Target != null && !Target.isBase())
+		if(Target != null)
 		{							
 			setTargetTurretAngle(Target);
 			turnTurret();
@@ -1414,11 +1414,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		for(var n in Tanks) {
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
 			{
-				if(Tanks[n].getTeam() != Team && Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance && (Type.AntiAircraft || !Tanks[n].isPlane()))
+				if(Tanks[n].getTeam() != Team && 
+					Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance && 
+					(Type.AntiAircraft || !Tanks[n].isPlane()))
 				{
 					/* choose a better target if we found one closer/more damaged */
-					if (Target == null || (Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) || 
-						Tanks[n].HitPoints < Target.HitPoints))
+					if (Target == null || 
+						(Target.isBase() && !Tanks[n].isBase()) /*attack something else if we are targetting a base*/
+						(Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
+						Tanks[n].HitPoints < Target.HitPoints)) /* more damaged */
 					{
 						Target = Tanks[n];
 						
