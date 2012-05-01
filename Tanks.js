@@ -851,7 +851,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							this.moveTurretAndAttack();
 						}
 					
-						if((HitPoints / Type.HitPoints) <= .5)
+						if((HitPoints / Type.HitPoints) <= rnd(.3,.5)) /* keep moving towards base, we haven't finished healing */
 						{
 							var TargetEvasiveDistanceSquared = TargetEvasive.getDistanceSquaredFromPoint(X, Y);
 							if(TargetEvasiveDistanceSquared > (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - (BASE_HEAL_RADIUS * .1))
@@ -993,8 +993,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					if(Math.abs(TargetTurretAngle - TurretAngle) < Type.TurretTurnSpeed)
 						TargetTurretAngle = TurretAngle;
 
-					findTargets(); /* see if there is a better target to fire on*/
-					
 					if(Target === null) {
 						State = TankStateEnum.MOVE;
 						Target = null;
@@ -1124,7 +1122,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	this.startEvading = function() {
 		if(State == TankStateEnum.EVASIVE_ACTION) return true;
-		if (CanEvade && (HitPoints / Type.HitPoints) <= .5 && Math.random() <= EvadeProb)
+		if (CanEvade && (HitPoints / Type.HitPoints) <= rnd(.1,.5) && Math.random() <= EvadeProb)
 		{
 			State = TankStateEnum.EVASIVE_ACTION;
 			return true;
@@ -1143,8 +1141,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if(shooter !== null && shooter.getTeam() !== Team)
 		{
 			shooter.getTeam().addGiven(damage);
+
 			if(Tanks.contains(shooter)){ //Make sure the shooter of this bullet isn't already dead!
 				if(Type.AntiAircraft || !shooter.isPlane()) {
+
+					if (State === TankStateEnum.EVASIVE_ACTION) /* random change to leave evasive */
+						if (Math.random() < EvadeProb) State = TankStateEnum.IDLE;
+
 					if(State != TankStateEnum.EVASIVE_ACTION)
 					{
 						if(Target != null && State == TankStateEnum.TARGET_AQUIRED || State == TankStateEnum.TARGET_IN_RANGE) {
