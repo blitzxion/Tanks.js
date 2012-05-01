@@ -1063,7 +1063,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	this.isPlane = function() {
 		return Type.Kind == TankKindEnum.PLANE;
-	}
+	};
+
+	this.isTurret = function() { return Type.Kind == TankKindEnum.TURRET; }
 
 	this.getTeam = function() {
 		return Team;
@@ -1362,21 +1364,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.restore();
 		}
 	}
-
-	this.callToAttack = function (target)
-	{
-		/* we already have a target that is closer, can't help right now */
-		if(Target != null && Target.getDistanceSquaredFromPoint(X, Y) < target.getDistanceSquaredFromPoint(X, Y)) return; 
-		/* we can't attack or we can't attack that plane */
-		if(!Type.AttackingUnit) return;
-		if(!Type.AntiAircraft && target.isPlane()) return;
-						
-		if(State == TankStateEnum.IDLE || State == TankStateEnum.MOVE || State == TankStateEnum.EVASIVE_ACTION) {
-			Target = target;
-			if(State != TankStateEnum.EVASIVE_ACTION)
-				State = TankStateEnum.TARGET_AQUIRED;
-		}
-	}
 	
 	this.moveTurretAndAttack = function()
 	{
@@ -1423,14 +1410,27 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function callFriendlies(target)
 	{
-		if (target.isBase()) /* target is for evasive reasons */
-			return;
 		for(var n in Tanks) {
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 				if(Tanks[n].getTeam() == Team) {
 					Tanks[n].callToAttack(target);
 				}
 			}
+		}
+	}
+	this.callToAttack = function (target)
+	{
+		/* we already have a target that is closer, can't help right now */
+		if(Target != null && Target.getDistanceSquaredFromPoint(X, Y) < target.getDistanceSquaredFromPoint(X, Y)) return; 
+		/* we can't attack or we can't attack that plane */
+		if(!Type.AttackingUnit) return;
+		if(!Type.AntiAircraft && target.isPlane()) return;
+		if(this.isTurret()) return; /* wait until Target is in range */
+						
+		if(State == TankStateEnum.IDLE || State == TankStateEnum.MOVE || State == TankStateEnum.EVASIVE_ACTION) {
+			Target = target;
+			if(State != TankStateEnum.EVASIVE_ACTION)
+				State = TankStateEnum.TARGET_AQUIRED;
 		}
 	}
 
