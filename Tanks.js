@@ -16,39 +16,37 @@ var IS_IPAD = navigator.platform === 'iPad',
 /////////////////
 // New Globals //
 /////////////////
-var ROUND = 0; // func RESET() increases this on new rounds.
-var NUM_TEAMS = IS_MOBILE ? 2 : 4; // This is the max amount on the playing field.
-var RANDOM_COLORS = true;
-var RANDOM_TERRAIN = true;
-var GOD_MODE = false; // While enabled, click methods will fire
-var DRAW_GOD_MODE_HELP = false;
+var ROUND = 0, // func RESET() increases this on new rounds.
+	NUM_TEAMS = IS_MOBILE ? 2 : 4, // This is the max amount on the playing field.
+	RANDOM_COLORS = true,
+	RANDOM_TERRAIN = true,
+	GOD_MODE = false, // While enabled, click methods will fire
+	DRAW_GOD_MODE_HELP = false;
 
 // Fun stuff!
-var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000;
-var WINNING_TEAMS = [];
-
-var DAMAGE_MULTIPLIER = 1; // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
-var WORLD_WRAP = false; // Experimental!
-var HARD_MODE = false; // Experimental!
-var HARD_MODE_TICKETS = 100; // Once this runs out for each faction, no more units can be built
-var HARD_MODE_DAMAGE_REDUCTION = .10; // Reduces damage output by this amount
-var HARD_MODE_MAX_UNIT_REDUCTION = 2; // Max Units divided by this number
-var IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
+var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000,
+	WINNING_TEAMS = [],
+	
+	DAMAGE_MULTIPLIER = 1, // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
+	WORLD_WRAP = false, // Experimental!
+	HARD_MODE = false, // Experimental!
+	HARD_MODE_TICKETS = 100, // Once this runs out for each faction, no more units can be built
+	HARD_MODE_DAMAGE_REDUCTION = .10, // Reduces damage output by this amount
+	HARD_MODE_MAX_UNIT_REDUCTION = 2, // Max Units divided by this number
+	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_PER_FACTION_ON_MAP = 
-		(HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : 
-		Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)); // Max units per faction!
-var MAX_BASE_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)); // 10% can be bases 
-var MAX_BASE_DEFENSES = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)); // 30% can be defenses
-var MAX_SPECIAL_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2);
-	MAX_SPECIAL_UNITS = (MAX_SPECIAL_UNITS <= 0) ? 1 : MAX_SPECIAL_UNITS; // I required at least one.
-var BASE_HEAL_RADIUS = (IS_MOBILE ? 35 : 65);
-var HEALTH_COOLDOWN = 100;
+var MAX_UNITS_PER_FACTION_ON_MAP = (HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)),
+	MAX_BASE_UNITS		= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)), 		/* 10% can be bases */
+	MAX_BASE_DEFENSES	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)), 		/* 30% can be defenses */
+	MAX_SPECIAL_UNITS	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2),
+	MAX_SPECIAL_UNITS	= (MAX_SPECIAL_UNITS <= 0) ? 1 : MAX_SPECIAL_UNITS, 	/* I required at least one. */
+	BASE_HEAL_RADIUS	= (IS_MOBILE ? 35 : 65),
+	HEALTH_COOLDOWN		= 100;
 
 // DEBUG Stuff
-DRAW_TARGET_LINE = false;
-DRAW_RANGE_CIRCLE = false;
+var DRAW_TARGET_LINE = false,
+	DRAW_RANGE_CIRCLE = false;
 
 var TankStateEnum = {
 	IDLE : 0,
@@ -76,8 +74,8 @@ var TankKindEnum = {
 	PLANE   : 4
 }
 
-var tcIndex;
-var terrainColors = [
+var tcIndex,
+	terrainColors = [
 	 [100, 70, 25], // Mud
 	 [0, 100, 0], // Tundra
 	 [191, 142, 76], // Desert
@@ -92,19 +90,19 @@ var terrainColors = [
 var WIDTH = window.innerWidth,
 	HEIGHT = window.innerHeight;
 	WIDTHPREV = WIDTH,
-	HEIGHTPREV = HEIGHT;
-var MOVE_RANGE = 100;
-var MOVE_PROB = 0.01;
-var RESTARTING = false;
-var MAX_MOVE_ANGLE = 2;
-var MIN_SEPERATION_OF_STARTING_BASES = (BASE_HEAL_RADIUS * 2) + 30;
-var SHELL_DAMAGE_RADIUS = 30;
-var BOMB_DAMAGE_RADIUS = 20;
-var MISSLE_ACCELERATION = 0.3;
-var MISSLE_ROTATION = 1.5;
-var MAX_MISSLE_ROTATION = .4;
-var MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5);
-var ANIMATION_ID;
+	HEIGHTPREV = HEIGHT,
+	MOVE_RANGE = 100,
+	MOVE_PROB = 0.01,
+	RESTARTING = false,
+	MAX_MOVE_ANGLE = 2,
+	MIN_SEPERATION_OF_STARTING_BASES = (BASE_HEAL_RADIUS * 2) + 30,
+	SHELL_DAMAGE_RADIUS = 30,
+	BOMB_DAMAGE_RADIUS = 20,
+	MISSLE_ACCELERATION = 0.3,
+	MISSLE_ROTATION = 1.5,
+	MAX_MISSLE_ROTATION = .4,
+	MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5),
+	ANIMATION_ID;
 
 //////////
 // Init //
@@ -112,18 +110,15 @@ var ANIMATION_ID;
 var canvas = document.getElementById("canvas");
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
-//if(!canvas.getContext){return;}
 var ctx = canvas.getContext("2d");
-//ctx.width = WIDTH;
-//ctx.height = HEIGHT;
 
 /* shim to allow us to use request animation frame intelligently for max FPS and no painting when tab isn't active...
 * http://paulirish.com/2011/requestanimationframe-for-smart-animating/
 * https://gist.github.com/1579671
 */
 (function() {
-    var lastTime = 0;
-    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    var lastTime = 0,
+    	vendors = ['ms', 'moz', 'webkit', 'o'];
     for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
         window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
         window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame'] 
@@ -232,21 +227,21 @@ canvas.addEventListener('click', function(evt){
 
 
 // FPS Related Vars
-var filterStrength = 20;
-var frameTime = 0, lastLoop = new Date, thisLoop;
-var roundStartTime;
+var filterStrength = 20,
+	frameTime = 0, lastLoop = new Date, thisLoop,
+	roundStartTime;
 
-var Teams = [];
-var TeamColors = [
-	new Color(255, 0, 0),
-	new Color(0, 255, 0),
-	new Color(0, 255, 255),
-	new Color(255, 0, 255),
-	new Color(255, 255, 0),
-	new Color(0, 0, 0),
-	new Color(0, 0, 255),
-	new Color(255, 255, 255)
-];
+var Teams = [],
+	TeamColors = [
+		new Color(255, 0, 0),
+		new Color(0, 255, 0),
+		new Color(0, 255, 255),
+		new Color(255, 0, 255),
+		new Color(255, 255, 0),
+		new Color(0, 0, 0),
+		new Color(0, 0, 255),
+		new Color(255, 255, 255)
+	];
 
 for(i=0;i<=NUM_TEAMS-1;i++)
 	Teams[i] = new Team(TeamColors[i],getName(4,7,null,null));
@@ -655,28 +650,28 @@ function Set(indexName)
 
 //----- Tank class -----
 function Tank(x_init, y_init, team, type, teamnum) {
-	var X = x_init;
-	var Y = y_init;
-	var DestX = x_init;
-	var DestY = y_init;
-	var Team = team;
-	var Teamnum = teamnum;
-	var Type = type;
-	var Time = 60;
-	var HitPoints = Type.HitPoints;
-	var Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime;
-	var Target = null,
-		TargetEvasive = null;
-	var Specail = false;
-	var BaseAngle = 0;
-	var TargetBaseAngle = 0;
-	var TurretAngle = 0;
-	var TargetTurretAngle = 0;
-	var HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN; // Random time the health regen will occur
-	var CanEvade = Type.CanGoEvasive;
-	var EvadeProb = Type.EvaProb;
-	var State = TankStateEnum.IDLE;
-	var This = this;
+	var X = x_init,
+		Y = y_init,
+		DestX = x_init,
+		DestY = y_init,
+		Team = team,
+		Teamnum = teamnum,
+		Type = type,
+		Time = 60,
+		HitPoints = Type.HitPoints,
+		Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime,
+		Target = null,
+		TargetEvasive = null,
+		Specail = false,
+		BaseAngle = 0,
+		TargetBaseAngle = 0,
+		TurretAngle = 0,
+		TargetTurretAngle = 0,
+		HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN, // Random time the health regen will occur
+		CanEvade = Type.CanGoEvasive,
+		EvadeProb = Type.EvaProb,
+		State = TankStateEnum.IDLE,
+		This = this;
 	
 	// Special changes for unique units	
 	switch(Type.Kind)
