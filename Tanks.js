@@ -670,8 +670,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		this.doStuff = function() {
 			State = TankStateEnum.IDLE;
-						
-			findFriendlies();
 			
 			if(!HARD_MODE)
 			{
@@ -687,51 +685,54 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(Team.getUsedTickets() >= HARD_MODE_TICKETS)
 				{
 					// need to blow up the base if there are no more units to defend it!
-					if(Team.getScore() == 1)
+					if(Team.getScore() <= 1)
 					{
 						die();
 						return;
 					}
-					else
-						return; // Used up all tickets, you're screwed!
 				}
 
 			if(Cooldown > 0)
-				Cooldown--;
-			else
 			{
-				var angle = Math.random() * 2 * Math.PI;
-				var TypeToMake;
-				var rand = Math.floor(Math.random() * TotalProb);
-				for(var i = 0; i < TankTypes.length; i++){
-					if(rand < TankTypes[i].Prob){								
-						TypeToMake = TankTypes[i];
-						break;
-					} else {
-						rand -= TankTypes[i].Prob;
-					}	
-				}
+				Cooldown--;
+				return;
+			}
+
+			var TypeToMake;
+			var rand = Math.floor(Math.random() * TotalProb);
+
+			for(var i = 0; i < TankTypes.length; i++){
+				if(rand < TankTypes[i].Prob){								
+					TypeToMake = TankTypes[i];
+					break;
+				} 
+				else rand -= TankTypes[i].Prob;
+			}
+
+			if (!TypeToMake) return;
+			if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
+			{
+				//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
 				
-				Special = TypeToMake.Special;
-				
-				if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
-				{
+				if(TypeToMake.Kind == TankKindEnum.BUILDER)
+				{ 
 					var _TotalOfUnit = GetNumOfType(TypeToMake,Team);
 					var _TotalBasesBuilt = GetNumOfType(BaseType,Team);
-					var _TotalTurretBuilt = GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7],Team);
-					var _TotalSpecials = GetNumOfSpecials();
-					//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
-					
-					if(TypeToMake.Kind == TankKindEnum.BUILDER && (HARD_MODE || (_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS)) return; // Maxed out Bases!					
-					if(TypeToMake.Kind == TankKindEnum.TURRET && _TotalTurretBuilt >= MAX_BASE_DEFENSES) return; // Maxed out defenses!			
-					if(TypeToMake.Kind == TankKindEnum.TANK && _TotalSpecials >= MAX_SPECIAL_UNITS) return;
-
-					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
-					Cooldown = Type.CooldownTime;					
+				
+					if (HARD_MODE || (_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS) return; // Maxed out Bases!					
 				}
-				else
-					return; // Maxed out units!
+				
+				if(TypeToMake.Kind == TankKindEnum.TURRET)
+					if (GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7],Team) >= MAX_BASE_DEFENSES) return; // Maxed out defenses!			
+				
+				if(TypeToMake.Special && GetNumOfSpecials() >= MAX_SPECIAL_UNITS) return;
+
+				var angle = Math.random() * 2 * Math.PI;
+				Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
+				Cooldown = Type.CooldownTime;					
 			}
+			else
+				return; // Maxed out units!
 		}
 	}
 	else if(Type.Kind === TankKindEnum.TANK)
