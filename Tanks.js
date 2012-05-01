@@ -1420,7 +1420,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				{
 					/* choose a better target if we found one closer/more damaged */
 					if (Target == null || 
-						(Target.isBase() && !Tanks[n].isBase()) /*attack something else if we are targetting a base*/
+						(Target.isBase() && !Tanks[n].isBase()) ||  /*attack something else if we are targetting a base*/
 						(Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
 						Tanks[n].HitPoints < Target.HitPoints)) /* more damaged */
 					{
