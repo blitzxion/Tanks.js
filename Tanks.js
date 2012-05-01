@@ -5,19 +5,26 @@
 */
 
 
+/* crummy mobile phone detection so we can tweak things for better performance */
+var IS_IPAD = navigator.platform === 'iPad',
+	IS_IPHONE = navigator.platform === 'iPhone',
+	IS_ANDROID = navigator.userAgent.toLowerCase().indexOf("android") != -1,
+	IS_IOS = IS_IPAD || IS_IPHONE || navigator.userAgent.indexOf("iPod") != -1,
+	IS_MOBILE = IS_IOS || IS_ANDROID;
+
 
 /////////////////
 // New Globals //
 /////////////////
 var ROUND = 0; // func RESET() increases this on new rounds.
-var NUM_TEAMS = 4; // This is the max amount on the playing field.
+var NUM_TEAMS = IS_MOBILE ? 2 : 4; // This is the max amount on the playing field.
 var RANDOM_COLORS = true;
 var RANDOM_TERRAIN = true;
 var GOD_MODE = false; // While enabled, click methods will fire
 var DRAW_GOD_MODE_HELP = false;
 
 // Fun stuff!
-var SCORE_TO_WIN = 10000;
+var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000;
 var WINNING_TEAMS = [];
 
 var DAMAGE_MULTIPLIER = 1; // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
@@ -29,12 +36,14 @@ var HARD_MODE_MAX_UNIT_REDUCTION = 2; // Max Units divided by this number
 var IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_PER_FACTION_ON_MAP = (HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * 10 * .5)); // Max units per faction!
+var MAX_UNITS_PER_FACTION_ON_MAP = 
+		(HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : 
+		Math.floor((NUM_TEAMS * (IS_MOBILE ? 2 : 10) * .5)); // Max units per faction!
 var MAX_BASE_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)); // 10% can be bases 
 var MAX_BASE_DEFENSES = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)); // 30% can be defenses
 var MAX_SPECIAL_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2);
 	MAX_SPECIAL_UNITS = (MAX_SPECIAL_UNITS <= 0) ? 1 : MAX_SPECIAL_UNITS; // I required at least one.
-var BASE_HEAL_RADIUS = 65;
+var BASE_HEAL_RADIUS = (IS_MOBILE ? 20 : 65);
 var HEALTH_COOLDOWN = 100;
 
 // DEBUG Stuff
@@ -96,6 +105,7 @@ var MISSLE_ROTATION = 1.5;
 var MAX_MISSLE_ROTATION = .4;
 var MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5);
 var ANIMATION_ID;
+
 //////////
 // Init //
 //////////
@@ -1379,11 +1389,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function die()
 	{
 		var exps = Math.floor(Math.random() * 4 + 8);
+		if (IS_MOBILE) expos = 2;
+
 		for(var i = 0; i < exps; i++) {
 			Explosions.add(new Explosion(X + Math.random() * 14 - 7, Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10));
 		}
 
 		var debris = Math.floor(3 + Math.random() * 4);
+		if (IS_MOBILE) debris = 2;
+
 		for(i = 0; i < debris; i++) {
 			var angle = Math.random() * 2 * Math.PI;
 			var speed = Math.random() * 4 + .2;
@@ -1713,6 +1727,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function Explosion (x, y, preDisplayTime, size) 
 	{
 		var X = x, Y = y, PreDisplayTime = preDisplayTime, TargetSize = size, Size = 0, GrowMode = true;
+
+		if (IS_MOBILE) TargetSize = 3;
 		
 		this.update = function () {
 			if(PreDisplayTime > 0) {
@@ -1752,6 +1768,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function Smoke (x, y, startSize, endSize, time, redness) 
 	{
 		var X = x, Y = y, StartSize = startSize, EndSize = endSize, TotalTime = time, Redness = redness;
+
+		if (IS_MOBILE) TOtalTime = 2;
+
 		var This = this;
 		var Time = 0;
 		this.update = function () {
