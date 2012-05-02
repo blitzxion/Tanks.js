@@ -506,23 +506,23 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 				BulletType : ShotTypeEnum.BOMB,
 				BulletTime :  40, 
 				BulletSpeed : 1, 
-				BulletDamage : 6, 
+				BulletDamage : 6,
 				BarrelLength :  0,
 				DoubleTurret : false,
 				AntiAircraft : false,
-				CanGoEvasive : true,
-				EvaProb : .25};
+				CanGoEvasive : false,
+				EvaProb : 0};
 
 //Fighter
 TankTypes[10] = {Kind : TankKindEnum.PLANE, 
 				Special : false,
 				AttackingUnit : true, 
-				Prob : 20, 
+				Prob : 40, 
 				MoveSpeed : 3.5, 
 				TurnSpeed : .12, 
 				TurretTurnSpeed : .15, 
 				Radius : 12, 
-				HitPoints : 90, 
+				HitPoints : 160, 
 				CooldownTime : 100, 
 				MinRange : 10, 
 				AttackDistance : 350,
@@ -536,8 +536,8 @@ TankTypes[10] = {Kind : TankKindEnum.PLANE,
 				DoubleTurret : true,
 				TurretSeparation : 4,
 				AntiAircraft : true,
-				CanGoEvasive : true,
-				EvaProb : .25};
+				CanGoEvasive : false,
+				EvaProb : 0};
 
 // Special
 TankTypes[11] = {Kind : TankKindEnum.TANK,
@@ -1213,7 +1213,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.lineTo(-20,-5);
 					canvasContext.lineTo(-22,-5);
 					canvasContext.lineTo(-20,0);
-					
+
 				}
 				else /* Scout Plane! */
 				{
