@@ -544,11 +544,11 @@ TankTypes[11] = {Kind : TankKindEnum.TANK,
 				Special : true,
 				AttackingUnit : true,
 				Prob : 20, // 20
-				MoveSpeed : 1.55, 
+				MoveSpeed : 1.35, 
 				TurnSpeed : .12, 
 				TurretTurnSpeed : 0.27, 
 				Radius : 10, 
-				HitPoints : 300, //500 
+				HitPoints : 200, //500 
 				CooldownTime : 40,
 				MinRange : 25,
 				AttackDistance : 130,
@@ -1157,12 +1157,74 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.rotate(BaseAngle);
 				canvasContext.strokeStyle = Team.getColor().getColorString();
 				canvasContext.beginPath();
-				canvasContext.moveTo(-12, 0);
-				canvasContext.lineTo(12, 0);
-				canvasContext.moveTo(0, 0);
-				canvasContext.lineTo(-5, -8);
-				canvasContext.moveTo(0, 0);
-				canvasContext.lineTo(-5, 8);
+
+				if(Type.BulletType == ShotTypeEnum.BOMB)
+				{
+					// Body back
+					canvasContext.lineWidth = 3;
+					canvasContext.moveTo(-11, 0);
+					canvasContext.lineTo(-18,5);
+					canvasContext.moveTo(-11,0);
+					canvasContext.lineTo(-18,-5);
+					canvasContext.stroke();
+
+					// Left Wing
+					canvasContext.lineWidth = 1;
+					canvasContext.moveTo(10, 0);
+					canvasContext.lineTo(-15, -10);
+					canvasContext.lineTo(-10, 0);
+
+					// Right Wing
+					canvasContext.moveTo(10, 0);
+					canvasContext.lineTo(-15, 10);
+					canvasContext.lineTo(-10, 0);
+				}
+				else if(Type.BulletType == ShotTypeEnum.MISSLE)
+				{
+					// F-16 Fighter
+
+					// Nose (backside is -5)
+					canvasContext.lineWidth = 1;
+					canvasContext.moveTo(10,0);
+					canvasContext.lineTo(-5,2);
+					canvasContext.moveTo(10,0);
+					canvasContext.lineTo(-5,-2);
+
+					// Body (backside is -12)
+					canvasContext.moveTo(-5,2);
+					canvasContext.lineTo(-10,10);
+					canvasContext.lineTo(-12,10);
+					canvasContext.lineTo(-12,2);
+
+					canvasContext.moveTo(-5, -2);
+					canvasContext.lineTo(-10,-10);
+					canvasContext.lineTo(-12,-10);
+					canvasContext.lineTo(-12,-2);
+
+					// Tail
+					canvasContext.moveTo(-12,2);
+					canvasContext.lineTo(-17,2);
+					canvasContext.lineTo(-20,5);
+					canvasContext.lineTo(-22,5);
+					canvasContext.lineTo(-20,0);
+
+					canvasContext.moveTo(-12,-2);
+					canvasContext.lineTo(-17,-2);
+					canvasContext.lineTo(-20,-5);
+					canvasContext.lineTo(-22,-5);
+					canvasContext.lineTo(-20,0);
+					
+				}
+				else /* Scout Plane! */
+				{
+					canvasContext.moveTo(-12, 0);
+					canvasContext.lineTo(12, 0);
+					canvasContext.moveTo(0, 0);
+					canvasContext.lineTo(-5, -8);
+					canvasContext.moveTo(0, 0);
+					canvasContext.lineTo(-5, 8);
+				}
+
 				canvasContext.stroke();
 				canvasContext.restore();
 				this.doDebug(canvasContext);
@@ -1523,12 +1585,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 			/* reverse direction if we hit the wall */
 			if(X > WIDTH - 10 || X < 10 || Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT || Y < 10 - DRAW_BANNER_HEIGHT)
-				BaseAngle += Math.PI * Math.random();
-			
-			if (WORLD_WRAP)
 			{
-				X = X % WIDTH - 20;
-				Y = Y % HEIGHT - (DRAW_BANNER_HEIGHT * 2) - 20;
+				BaseAngle += Math.PI * Math.random();
+				
+				if (WORLD_WRAP)
+				{
+					X = Math.abs(X % WIDTH - 20);
+					Y = Math.abs(Y % HEIGHT - (DRAW_BANNER_HEIGHT * 2) - 20);
+				}
 			}
 		}
 	};
