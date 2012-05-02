@@ -12,7 +12,7 @@ var IS_IPAD = navigator.platform === 'iPad',
 	IS_IOS = IS_IPAD || IS_IPHONE || navigator.userAgent.indexOf("iPod") != -1,
 	IS_MOBILE = IS_IOS || IS_ANDROID;
 
-var FPS_TOO_LOW = 40;
+var FPS_TOO_LOW = 45;
 
 /////////////////
 // New Globals //
@@ -1993,7 +1993,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		{
 			var t = Teams[teamnum];
 			var hoff = 5 /* left padding */ + (NUM_TEAMS * (smallscreen ? 20 : 35) * teamnum);
-			if (teamnum > 0) hoff + 10;
+			if (teamnum > 0) hoff + 15;
 			var voff = 14;			
 			ctx.fillStyle = t.getColor().getColorString();
 			ctx.fillText((smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven(),hoff,voff);
