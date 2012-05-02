@@ -1189,24 +1189,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 				if(Type.BulletType == ShotTypeEnum.BOMB)
 				{
-					// Body back
-					canvasContext.lineWidth = 3;
-					canvasContext.moveTo(-11, 0);
-					canvasContext.lineTo(-18,5);
-					canvasContext.moveTo(-11,0);
-					canvasContext.lineTo(-18,-5);
-					canvasContext.stroke();
+					// B-2 Bomber
+					// Inspired by: http://en.wikipedia.org/wiki/File:NORTHROP_B-2.png
 
-					// Left Wing
-					canvasContext.lineWidth = 1;
-					canvasContext.moveTo(10, 0);
-					canvasContext.lineTo(-15, -10);
-					canvasContext.lineTo(-10, 0);
+					// BODY!
+					canvasContext.moveTo(15,0);
+					canvasContext.lineTo(-15,40);
+					canvasContext.lineTo(-22,30);
+					canvasContext.lineTo(-12,15);
+					canvasContext.lineTo(-22,0);
 
-					// Right Wing
-					canvasContext.moveTo(10, 0);
-					canvasContext.lineTo(-15, 10);
-					canvasContext.lineTo(-10, 0);
+
+					canvasContext.moveTo(15,0);
+					canvasContext.lineTo(-15,-40);
+					canvasContext.lineTo(-22,-30);
+					canvasContext.lineTo(-12,-15);
+					canvasContext.lineTo(-22,0);
 				}
 				else if(Type.BulletType == ShotTypeEnum.MISSLE)
 				{
@@ -1253,6 +1251,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.moveTo(0, 0);
 					canvasContext.lineTo(-5, 8);
 				}
+
+				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+				canvasContext.fill();
 
 				canvasContext.stroke();
 				canvasContext.restore();
