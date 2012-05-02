@@ -1522,17 +1522,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			X += Type.MoveSpeed * Math.cos(BaseAngle);
 			Y += Type.MoveSpeed * Math.sin(BaseAngle);
 
-			if(X > WIDTH - 10 || X < 10 || Y > HEIGHT - 10 || Y < 10)
+			if(X > WIDTH - 10 || X < 10 || Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT || Y < 10 - DRAW_BANNER_HEIGHT)
 				BaseAngle += Math.PI;
 			
 			if(X > WIDTH - 10) // If the object reaches a wall...
 				X = (WORLD_WRAP) ? 10 : WIDTH - 10;
 			else if(X < 10)
 				X = 10;
-			if(Y > HEIGHT - 10 - (DRAW_BANNER_HEIGHT * 2))
-				Y = (WORLD_WRAP) ? 10 : HEIGHT - 10 - (DRAW_BANNER_HEIGHT * 2);
-			else if(Y < 10 - (DRAW_BANNER_HEIGHT * 2))
-				Y = 10 - (DRAW_BANNER_HEIGHT * 2);
+			if(Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT)
+				Y = (WORLD_WRAP) ? 10 : HEIGHT - 10 - DRAW_BANNER_HEIGHT;
+			else if(Y < 10 - DRAW_BANNER_HEIGHT)
+				Y = 10 - DRAW_BANNER_HEIGHT;
 		}
 	};
 
