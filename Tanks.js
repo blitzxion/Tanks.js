@@ -1362,20 +1362,19 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	}
 	
 	//Private:
-	function heal()
-	{AreaHeal(X,Y, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS, This);};
+	function heal(){ AreaHeal(X,Y, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS, This); };
 	
 	function die()
 	{
 		var exps = Math.floor(Math.random() * 4 + 8);
-		if (IS_MOBILE) expos = 2;
+		if (IS_MOBILE || getFPS < FPS_TOO_LOW) expos = 2;
 
 		for(var i = 0; i < exps; i++) {
 			Explosions.add(new Explosion(X + Math.random() * 14 - 7, Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10));
 		}
 
 		var debris = Math.floor(3 + Math.random() * 4);
-		if (IS_MOBILE) debris = 2;
+		if (IS_MOBILE || getFPS < FPS_TOO_LOW) debris = 2;
 
 		for(i = 0; i < debris; i++) {
 			var angle = Math.random() * 2 * Math.PI;
@@ -1522,17 +1521,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			X += Type.MoveSpeed * Math.cos(BaseAngle);
 			Y += Type.MoveSpeed * Math.sin(BaseAngle);
 
+			/* reverse direction if we hit the wall */
 			if(X > WIDTH - 10 || X < 10 || Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT || Y < 10 - DRAW_BANNER_HEIGHT)
-				BaseAngle += Math.PI;
+				BaseAngle += Math.PI * Math.random();
 			
-			if(X > WIDTH - 10) // If the object reaches a wall...
-				X = (WORLD_WRAP) ? 10 : WIDTH - 10;
-			else if(X < 10)
-				X = 10;
-			if(Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT)
-				Y = (WORLD_WRAP) ? 10 : HEIGHT - 10 - DRAW_BANNER_HEIGHT;
-			else if(Y < 10 - DRAW_BANNER_HEIGHT)
-				Y = 10 - DRAW_BANNER_HEIGHT;
+			if (WORLD_WRAP)
+			{
+				X = X % WIDTH - 20;
+				Y = Y % HEIGHT - (DRAW_BANNER_HEIGHT * 2) - 20;
+			}
 		}
 	};
 
@@ -1631,9 +1628,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(Target === null || !Tanks.contains(Target)) {
 					var BestDotProduct = -1;
 					for(var n in Tanks) {
-						if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+						if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]) && 
+							Tanks[n].getTeam() != Team && (AirAttack || !Tanks[n].isPlane())) {
+
 							var DistanceMagSquared = Tanks[n].getDistanceSquaredFromPoint(X, Y);
-							if(Tanks[n].getTeam() != Team &&  DistanceMagSquared < 200 * 200 && (AirAttack || !Tanks[n].isPlane())) {
+
+							if(DistanceMagSquared < 200 * 200) {
 								var SpeedMag = Math.sqrt(Dx * Dx + Dy * Dy);
 								var DistanceMag = Math.sqrt(DistanceMagSquared);
 								var DotProduct = (Dx * (Tanks[n].getX() - X) + Dy * (Tanks[n].getY() - Y)) / (SpeedMag * DistanceMag);
@@ -1658,7 +1658,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 					Dx = speed * Math.cos(angle);
 					Dy = speed * Math.sin(angle);
-				} 
+				}
 			}
 	
 	
@@ -1669,9 +1669,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			{
 				for(var n in Tanks) {
 					if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-						if(Tanks[n].getTeam() != Team &&
-							Tanks[n].getDistanceSquaredFromPoint(X, Y) < Math.max(Dx * Dx + Dy * Dy, Tanks[n].getRadiusSquared()) &&
-							(AirAttack || !Tanks[n].isPlane())) {
+						if(Tanks[n].getTeam() != Team && (AirAttack || !Tanks[n].isPlane()) &&
+							Tanks[n].getDistanceSquaredFromPoint(X, Y) < Math.max(Dx * Dx + Dy * Dy, Tanks[n].getRadiusSquared())) {
 								Tanks[n].takeDamage(Damage, Shooter);
 								explode();						
 						}
