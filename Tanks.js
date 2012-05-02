@@ -103,7 +103,8 @@ var WIDTH = window.innerWidth,
 	MISSLE_ROTATION = 1.5,
 	MAX_MISSLE_ROTATION = .4,
 	MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5),
-	ANIMATION_ID = null;
+	ANIMATION_ID = null,
+	DRAW_BANNER_HEIGHT = 20;
 
 //////////
 // Init //
@@ -193,7 +194,7 @@ canvas.addEventListener('mousemove',function(evt){
 		msX = mousePos.x,
 		msY = mousePos.y;
 		
-	DRAW_GOD_MODE_HELP = (msX >= (WIDTH-150) && msX <= (WIDTH-150+105) && msY >= 0 && msY <= 25);
+	DRAW_GOD_MODE_HELP = (msX >= (WIDTH-45) && msX <= (WIDTH-5) && msY >= 0 && msY <= DRAW_BANNER_HEIGHT);
 		
 },false);
 
@@ -206,11 +207,19 @@ canvas.addEventListener('click', function(evt){
 	console.log(msX + "," + msY);
 	
 	// This is where the GOD_MODE button is located.
-	if(msX >= (WIDTH-150) && msX <= (WIDTH-150+105) && msY >= 0 && msY <= 25){GOD_MODE = !GOD_MODE;	return;} 
+	if(msX >= (WIDTH-45) && msX <= (WIDTH-5) && msY >= 0 && msY <= DRAW_BANNER_HEIGHT){GOD_MODE = !GOD_MODE;	return;} 
 	
 	// This is where the Target Line and Radius Circle are located
-	if(msX >= (WIDTH-220) && msX <= (WIDTH-220+20) && msY >= 0 && msY <= 25){DRAW_TARGET_LINE = !DRAW_TARGET_LINE;	return;} 
-	if(msX >= (WIDTH-250) && msX <= (WIDTH-250+20) && msY >= 0 && msY <= 25){DRAW_RANGE_CIRCLE = !DRAW_RANGE_CIRCLE;	return;} 
+	if(msX >= (WIDTH-70) && msX <= (WIDTH-50) && msY >= 0 && msY <= DRAW_BANNER_HEIGHT)
+	{
+		DRAW_TARGET_LINE = !DRAW_TARGET_LINE;	
+		return;
+	} 
+	if(msX >= (WIDTH-95) && msX <= (WIDTH-75) && msY >= 0 && msY <= DRAW_BANNER_HEIGHT)
+	{
+		DRAW_RANGE_CIRCLE = !DRAW_RANGE_CIRCLE;	
+		return;
+	} 
 	
 	if(GOD_MODE)
 	{
@@ -950,7 +959,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				} else {
 					
 					// Need to prevent bases from building so close to the edges!				
-					if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || Y > HEIGHT - BASE_HEAL_RADIUS || Y < BASE_HEAL_RADIUS)
+					if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || Y > HEIGHT - BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2) || Y < BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2) )
 						Cooldown += 5; // Keep going until you're away from the wall jerks...
 					else
 					{					
@@ -1520,10 +1529,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				X = (WORLD_WRAP) ? 10 : WIDTH - 10;
 			else if(X < 10)
 				X = 10;
-			if(Y > HEIGHT - 10)
-				Y = (WORLD_WRAP) ? 10 : HEIGHT - 10;
-			else if(Y < 10)
-				Y = 10;
+			if(Y > HEIGHT - 10 - (DRAW_BANNER_HEIGHT * 2))
+				Y = (WORLD_WRAP) ? 10 : HEIGHT - 10 - (DRAW_BANNER_HEIGHT * 2);
+			else if(Y < 10 - (DRAW_BANNER_HEIGHT * 2))
+				Y = 10 - (DRAW_BANNER_HEIGHT * 2);
 		}
 	};
 
@@ -1902,7 +1911,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		ANIMATION_ID = requestAnimationFrame(animate);
 		draw();
-		ShowFPS();
 	}
 	
 	function pauseAnimation()
@@ -1976,24 +1984,34 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var r = setTimeout(function() {restart();}, 5000);
 		}
 		
-		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (0,0,WIDTH,25);		
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillRect (0,0,WIDTH,DRAW_BANNER_HEIGHT);		
 		ctx.font = "10pt Arial";
 					
-		for ( teamnum in Teams )
+		var smallscreen = (IS_MOBILE || WIDTH < 650);
+		for ( teamnum in Teams)
 		{
 			var t = Teams[teamnum];
-			var hoff = 15 + ((NUM_TEAMS * 10 + 120)*teamnum);
-			var voff = 18;			
+			var hoff = 5 /* left padding */ + (NUM_TEAMS * (smallscreen ? 20 : 35) * teamnum);
+			if (teamnum > 0) hoff + 10;
+			var voff = 14;			
 			ctx.fillStyle = t.getColor().getColorString();
-			ctx.fillText(t.getName() + " - " + t.getScore()+" units, "+t.getGiven(),hoff,voff);
+			ctx.fillText((smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven(),hoff,voff);
 		}
 		
 		// Display What Round it is
-		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (0,HEIGHT-20,135,20);
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillRect (0,HEIGHT-DRAW_BANNER_HEIGHT,WIDTH,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(255,255,255)";
-		ctx.fillText("Round: " + ROUND + "  -  " + Math.round((+new Date - roundStartTime) / 1000)  + " secs",5,HEIGHT - 5);
+
+		var rSecs = (+new Date - roundStartTime) / 1000,
+			rMins = Math.floor(rSecs / 60);
+		rSecs = Math.floor(rSecs % 60);
+		ctx.fillText("Round: " + ROUND + "  -  " + (rMins > 0 ? rMins + " min" + (rMins > 1 ? "s" : "" ) + ", ": "") + 
+			rSecs + " secs",5,HEIGHT - 5);
+
+		// FPS
+		ctx.fillText(getFPS() + " fps",WIDTH-65,HEIGHT - 5);
 		
 		// Show the winners roster 
 		/*
@@ -2029,12 +2047,25 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			}
 		}
 		*/
+
+		/* Show Debug Toggles */
+		{
+			ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+			ctx.fillRect(WIDTH-95,0,20,DRAW_BANNER_HEIGHT);
+			ctx.fillStyle = "rgb(0,0,0)";
+			ctx.fillText("R",WIDTH-90,14);
+			
+			ctx.fillStyle = (!DRAW_TARGET_LINE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+			ctx.fillRect(WIDTH-70,0,20,DRAW_BANNER_HEIGHT);
+			ctx.fillStyle = "rgb(0,0,0)";
+			ctx.fillText("T",WIDTH-65,14);
+		}
 		
 		// Draw button for GOD MODE
 		ctx.fillStyle = (!GOD_MODE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
-		ctx.fillRect(WIDTH-150,0,105,25);
+		ctx.fillRect(WIDTH-45,0,40,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
-		ctx.fillText("GOD MODE",WIDTH-135,18);
+		ctx.fillText("GOD",WIDTH-40,14);
 		
 		// Show a little helper for the GOD_MODE button
 		if(DRAW_GOD_MODE_HELP)
@@ -2050,18 +2081,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.fillText("LClick = Instant Random Unit (for random faction as well)",WIDTH-395,120);
 		}
 		
-		// Show Debug Toggles
-		{
-			ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
-			ctx.fillRect(WIDTH-250,0,20,25);
-			ctx.fillStyle = "rgb(0,0,0)";
-			ctx.fillText("R",WIDTH-245,18);
-			
-			ctx.fillStyle = (!DRAW_TARGET_LINE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
-			ctx.fillRect(WIDTH-220,0,20,25);
-			ctx.fillStyle = "rgb(0,0,0)";
-			ctx.fillText("T",WIDTH-215,18);
-		}
+
 		
 		// Setup for the FPS counter
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
@@ -2099,7 +2119,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				TooClose = false;
 
 				x = rnd(BASE_HEAL_RADIUS, WIDTH - BASE_HEAL_RADIUS);
-				y = rnd(BASE_HEAL_RADIUS, HEIGHT - BASE_HEAL_RADIUS);
+				y = rnd(BASE_HEAL_RADIUS, HEIGHT - BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2));
 
 				for (var n in Tanks) {
 					if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
@@ -2236,14 +2256,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				break;
 			}
 		}
-	}
-	
-	function ShowFPS()
-	{
-		ctx.fillStyle = "rgba(0,0,0,0.5)";
-		ctx.fillRect (WIDTH-70,HEIGHT-20,85,20);
-		ctx.fillStyle = "rgb(255,255,255)";
-		ctx.fillText((1000/frameTime).toFixed(1) + " fps",WIDTH-65,HEIGHT - 5);
 	}
 
 	function getFPS(){ return (1000/frameTime).toFixed(1); }
