@@ -12,6 +12,7 @@ var IS_IPAD = navigator.platform === 'iPad',
 	IS_IOS = IS_IPAD || IS_IPHONE || navigator.userAgent.indexOf("iPod") != -1,
 	IS_MOBILE = IS_IOS || IS_ANDROID;
 
+var FPS_TOO_LOW = 40;
 
 /////////////////
 // New Globals //
@@ -1700,7 +1701,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		var X = x, Y = y, PreDisplayTime = preDisplayTime, TargetSize = size, Size = 0, GrowMode = true;
 
-		if (IS_MOBILE) TargetSize = 3;
+		if (IS_MOBILE || getFPS() < FPS_TOO_LOW) { TargetSize = TargetSize / 5; PreDisplayTime  = PreDisplayTime / 5; }
 		
 		this.update = function () {
 			if(PreDisplayTime > 0) {
@@ -1741,7 +1742,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		var X = x, Y = y, StartSize = startSize, EndSize = endSize, TotalTime = time, Redness = redness;
 
-		if (IS_MOBILE) TOtalTime = 2;
+		if (IS_MOBILE || getFPS() < FPS_TOO_LOW) TotalTime = TotalTime / 5;
 
 		var This = this;
 		var Time = 0;
@@ -1771,6 +1772,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function Debris (x, y, dx, dy, time, redness) 
 	{
 		var X = x, Y = y, Dx = dx, Dy = dy, Time = time, TotalTime = time;
+
+		if (IS_MOBILE || getFPS() < FPS_TOO_LOW) TotalTime = TotalTime / 5;
+
 		var This = this;
 		this.update = function () {
 			if(Time-- > 0) {
@@ -2241,6 +2245,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		ctx.fillStyle = "rgb(255,255,255)";
 		ctx.fillText((1000/frameTime).toFixed(1) + " fps",WIDTH-65,HEIGHT - 5);
 	}
+
+	function getFPS(){ return (1000/frameTime).toFixed(1); }
 	
 	function getMousePos(canvas, evt)
 	{
