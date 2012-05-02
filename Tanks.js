@@ -565,6 +565,22 @@ TankTypes[11] = {Kind : TankKindEnum.TANK,
 				AntiAircraft : true,
 				CanGoEvasive : true,
 				EvaProb : .3};
+
+// UAV (Scout)
+TankTypes[12] = {Kind : TankKindEnum.PLANE, 
+				Special : false,
+				AttackingUnit : false, 
+				Prob : 40, 
+				MoveSpeed : 4.5, 
+				TurnSpeed : .12, 
+				TurretTurnSpeed : .15, 
+				Radius : 12, 
+				HitPoints : 80, // This will automatically drain
+				CooldownTime : 100, 
+				MinRange : 10,
+				SightDistance : 600, 
+				BulletType : ShotTypeEnum.NONE,
+				};
 				
 //Base
 var BaseType = {Kind : TankKindEnum.BASE, 
@@ -1004,11 +1020,24 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						moveForward();
 						if(Math.random() < MOVE_PROB)
 							TargetBaseAngle = 2 * Math.PI * Math.random();
-						turnTurret();
-						findTargets();
+
+						if(Type.BulletType == ShotTypeEnum.NONE) 
+							This.takeDamage(1,null);
+						else
+						{
+							turnTurret();
+							findTargets();
+						}
 						break;
-					case TankStateEnum.TARGET_AQUIRED:					
+					case TankStateEnum.TARGET_AQUIRED:
 						moveForward();
+
+						if(Type.BulletType == ShotTypeEnum.NONE)
+						{
+							State = TankStateEnum.MOVE;
+							return;
+						}
+
 						TurretAngle = BaseAngle;
 						setTargetTurretAngle(Target);
 						if(Math.abs(TargetTurretAngle - TurretAngle) < Type.TurretTurnSpeed)
