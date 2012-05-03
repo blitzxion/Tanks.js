@@ -27,7 +27,7 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 	MAP_MIN_LOC = 20;
 
 // Fun stuff!
-var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000,
+var SCORE_TO_WIN = IS_MOBILE ? 1500 : 30000,
 	WINNING_TEAMS = [],
 	
 	DAMAGE_MULTIPLIER = 1, // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
@@ -519,9 +519,9 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 				AttackRange : 60,
 				SightDistance : 250, 
 				BulletType : ShotTypeEnum.BOMB,
-				BulletTime :  40, 
+				BulletTime :  30, 
 				BulletSpeed : 1, 
-				BulletDamage : 6,
+				BulletDamage : 5,
 				BarrelLength :  0,
 				DoubleTurret : false,
 				AntiAircraft : false,
@@ -607,7 +607,7 @@ var BaseType = {Kind : TankKindEnum.BASE,
 				TurretTurnSpeed : 0, 
 				Radius : 10,
 				HitPoints : 1000, 
-				CooldownTime : 200, 
+				CooldownTime : IS_MOBILE ? 100 : 200, 
 				MinRange : 0, 
 				AttackDistance : 0, 
 				AttackRange : 0, 
