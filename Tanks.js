@@ -22,7 +22,9 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 	RANDOM_COLORS = true,
 	RANDOM_TERRAIN = true,
 	GOD_MODE = false, // While enabled, click methods will fire
-	DRAW_GOD_MODE_HELP = false;
+	DRAW_GOD_MODE_HELP = false,
+	DEFAULT_UAV_COOLDOWN = 15,
+	MAP_MIN_LOC = 20;
 
 // Fun stuff!
 var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000,
@@ -37,7 +39,7 @@ var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000,
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_PER_FACTION_ON_MAP = (HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)),
+var MAX_UNITS_PER_FACTION_ON_MAP = 1; //(HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)),
 	MAX_BASE_UNITS		= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)), 		/* 10% can be bases */
 	MAX_BASE_DEFENSES	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)), 		/* 30% can be defenses */
 	MAX_SPECIAL_UNITS	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2),
@@ -463,7 +465,7 @@ TankTypes[7] = {Kind : TankKindEnum.TURRET,
 				CanGoEvasive : false,
 				EvaProb : 0};				
 
-//Constructor
+//Builder
 TankTypes[8] = {Kind : TankKindEnum.BUILDER, 
 				Special : false,
 				AttackingUnit : false, 
@@ -473,7 +475,7 @@ TankTypes[8] = {Kind : TankKindEnum.BUILDER,
 				TurretTurnSpeed : 0, 
 				Radius : 10, 
 				HitPoints : 100, 
-				CooldownTime : 500, 
+				CooldownTime : 250, 
 				MinRange : 0, 
 				AttackDistance : 0,
 				AttackRange : 0,
@@ -494,7 +496,7 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 				AttackingUnit : true, 
 				Prob : 40, 
 				MoveSpeed : 2.5, 
-				TurnSpeed : .08, 
+				TurnSpeed : .04, 
 				TurretTurnSpeed : .5, 
 				Radius : 12, 
 				HitPoints : 80, 
@@ -570,7 +572,7 @@ TankTypes[11] = {Kind : TankKindEnum.TANK,
 TankTypes[12] = {Kind : TankKindEnum.PLANE, 
 				Special : false,
 				AttackingUnit : false, 
-				Prob : 40, 
+				Prob : 20, 
 				MoveSpeed : 4.5, 
 				TurnSpeed : .12, 
 				TurretTurnSpeed : .15, 
@@ -759,6 +761,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				}
 	
 				if (!TypeToMake) return;
+
+				//console.log((new Date() - Team.getLastTargetFoundDate()) / 1000);
+
+				/* Divide by 1000 to get seconds */ 
+				if(((new Date() - Team.getLastTargetFoundDate()) / 1000 > 10) && Team.setUAVCooldown(-1) <= 0)
+				{
+					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TankTypes[12], teamnum));
+					Team.resetUAVCooldown();
+				}
+
+
 				if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
 				{
 					//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
@@ -809,6 +822,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						findTargets();
 						break;
 					case TankStateEnum.TARGET_AQUIRED:
+						
+						Team.resetLastTargetFoundDate();
+
 						findTargets(); /* see if there is a better target to fire on*/
 											
 						if(Target != null) {
@@ -998,6 +1014,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						findTargets();
 						break;
 					case TankStateEnum.TARGET_AQUIRED:
+						Team.resetLastTargetFoundDate(); // Update the last found time
 						findTargets();
 						this.moveTurretAndAttack();
 						
@@ -1029,6 +1046,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						findTargets();
 						break;
 					case TankStateEnum.TARGET_AQUIRED:
+						Team.resetLastTargetFoundDate(); // Update the last found time
 						moveForward();
 
 						if(Type.BulletType == ShotTypeEnum.NONE)
@@ -1612,31 +1630,35 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			X += Type.MoveSpeed * Math.cos(BaseAngle);
 			Y += Type.MoveSpeed * Math.sin(BaseAngle);
 
-			/* reverse direction if we hit the wall */
-			if(X > WIDTH - 10 || X < 10 || 
-				Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT || Y < 10 + DRAW_BANNER_HEIGHT)
-			{				
-				if (WORLD_WRAP)
-				{
-					if (X > WIDTH - 10) X -= WIDTH;
-					else if (X < 10) X += WIDTH;
+			if (WORLD_WRAP)
+			{
+				if (X > WIDTH) X -= WIDTH; // if you reach the right side
+				else if (X < 0) X += WIDTH; // if you reach the left side
 
-					if (Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT) Y -= HEIGHT - DRAW_BANNER_HEIGHT;
-					else if (Y < 10 + DRAW_BANNER_HEIGHT) Y += HEIGHT - DRAW_BANNER_HEIGHT;
-				}
-				else /* reverse your direction */
-				{
-					BaseAngle += Math.PI + rnd(0, Math.PI * .5); /* do a reverse with some random added in */
+				if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom
+				else if (Y - DRAW_BANNER_HEIGHT < 0) Y += (HEIGHT - DRAW_BANNER_HEIGHT); // If you reach the top (this works)
+			}
+			else
+			{
 
-					if(X > WIDTH - 10)
-						X = WIDTH - 10;
-					else if(X < 10)
-						X = 10;
-					if(Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT)
-						Y = HEIGHT - 10 - DRAW_BANNER_HEIGHT;
-					else if(Y < 10 + DRAW_BANNER_HEIGHT)
-						Y = 10 + DRAW_BANNER_HEIGHT;
+				/* reverse direction if we hit the wall */
+				if(X > WIDTH - MAP_MIN_LOC || X < MAP_MIN_LOC || 
+					Y > HEIGHT - MAP_MIN_LOC - DRAW_BANNER_HEIGHT || Y < MAP_MIN_LOC + DRAW_BANNER_HEIGHT)
+				{				
+					{
+						BaseAngle += Math.PI + rnd(0, Math.PI * .5); /* do a reverse with some random added in */
+
+						if(X > WIDTH - MAP_MIN_LOC)
+							X = WIDTH - MAP_MIN_LOC;
+						else if(X < MAP_MIN_LOC)
+							X = MAP_MIN_LOC;
+						if(Y > HEIGHT - MAP_MIN_LOC - DRAW_BANNER_HEIGHT)
+							Y = HEIGHT - MAP_MIN_LOC - DRAW_BANNER_HEIGHT;
+						else if(Y < MAP_MIN_LOC + DRAW_BANNER_HEIGHT)
+							Y = MAP_MIN_LOC + DRAW_BANNER_HEIGHT;
+					}
 				}
+
 			}
 		}
 	};
@@ -1906,39 +1928,30 @@ function Tank(x_init, y_init, team, type, teamnum) {
 //----- Team class -----
 	function Team (color, name)
 	{
-		var Color = color;
-		var Name = name;
-		var Score = 0;
-		var TotalScore = 0;
-		var Taken = 0;
-		var Given = 0;
-		var UsedTickets = 0; // Used in Hard Mode
+		var Color = color,
+			Name = name,
+			Score = 0,
+			TotalScore = 0,
+			Taken = 0,
+			Given = 0,
+			UsedTickets = 0, // Used in Hard Mode
+			LastTargetFound = new Date(),
+			UAVCooldown = DEFAULT_UAV_COOLDOWN;
 	
-		this.getColor = function() {
-			return Color;
-		}
-		this.getName = function() {
-			return Name;
-		}
-		this.getScore = function() {
-			return Score;
-		}
-		this.getTotalScore = function()
-		{
-			return TotalScore;
-		}
-		this.setScore = function(score) {
-			Score = score;
-		}
-		this.getTaken = function() {
-			return Taken;
-		}
-		this.getGiven = function() {
-			return Given;
-		}
-		this.getUsedTickets = function(){
-			return UsedTickets;
-		}
+		this.getColor = function() {return Color;}
+		this.getName = function() {return Name;}
+		this.getScore = function() {return Score;}
+		this.getTotalScore = function(){return TotalScore;}
+		this.setScore = function(score) {Score = score;}
+		this.getTaken = function() {return Taken;}
+		this.getGiven = function() {return Given;}
+		this.getUsedTickets = function(){return UsedTickets;}
+		this.getUAVCooldown = function(){return UAVCooldown;}
+		this.setUAVCooldown = function(d){UAVCooldown += d; return UAVCooldown;}
+		this.resetUAVCooldown = function(){UAVCooldown == DEFAULT_UAV_COOLDOWN; return UAVCooldown;}
+		this.getLastTargetFoundDate = function(){return LastTargetFound;}
+		this.resetLastTargetFoundDate = function(){LastTargetFound = new Date(); return LastTargetFound;}
+
 		this.addTaken = function(d)
 		{
 			Taken = Taken + d;
@@ -2100,7 +2113,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		{
 			var t = Teams[teamnum];
 			var hoff = 5 /* left padding */ + (NUM_TEAMS * (smallscreen ? 20 : 35) * teamnum);
-			if (teamnum > 0) hoff + 15;
+			if (teamnum > 0) hoff + 23;
 			var voff = 14;			
 			ctx.fillStyle = t.getColor().getColorString();
 			ctx.fillText((smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven(),hoff,voff);
@@ -2205,11 +2218,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		console.log(terrainColors[tcIndex].toString());
 		IN_SPACE=false;
 		
-		if(terrainColors[tcIndex].toString() == '0,0,0')
-			IN_SPACE=true;
-		
-		//SetMapAdjustments();
-		
+		//if(terrainColors[tcIndex].toString() == '0,0,0')
+			//IN_SPACE=true; /* Not Ready yet! */
+				
 		TallyAndSetResults(Teams);
 		countTotalProbability();
 		Tanks.clear();
