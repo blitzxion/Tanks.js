@@ -115,7 +115,7 @@ var WIDTH = window.innerWidth,
 	SHELL_DAMAGE_RADIUS = 30,
 	BOMB_DAMAGE_RADIUS = 20,
 	MISSLE_ACCELERATION = 0.3,
-	MISSLE_ROTATION = 1.5,
+	MISSLE_ROTATION = 2,
 	MAX_MISSLE_ROTATION = .4,
 	MIN_BASE_DISTANCE_SQUARE =  MIN_SEPERATION_OF_STARTING_BASES + (WIDTH / 5),
 	ANIMATION_ID = null,
@@ -1005,7 +1005,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				} else {
 					
 					// Need to prevent bases from building so close to the edges!				
-					if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || Y > HEIGHT - BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2) || Y < BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2) )
+					if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || 
+						Y > HEIGHT - BASE_HEAL_RADIUS + (DRAW_BANNER_HEIGHT * 2) || Y < BASE_HEAL_RADIUS + (DRAW_BANNER_HEIGHT * 2) )
 						Cooldown += 5; // Keep going until you're away from the wall jerks...
 					else
 					{					
