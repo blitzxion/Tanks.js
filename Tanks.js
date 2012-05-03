@@ -1151,12 +1151,46 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.translate(X, Y);
 					canvasContext.rotate(BaseAngle);
 					canvasContext.beginPath();
-					canvasContext.rect (-14, -8, 28, 16);
 					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-					canvasContext.fill();
-					canvasContext.lineWidth = 1;
 					canvasContext.strokeStyle = Team.getColor().getColorString();
-					canvasContext.stroke();								
+
+					if(Type.Special)
+					{
+						canvasContext.moveTo(10,0);
+						canvasContext.lineTo(10,5);
+						canvasContext.lineTo(15,5);
+						canvasContext.lineTo(15,13);
+						canvasContext.lineTo(0,13);
+						canvasContext.lineTo(0,7);
+						canvasContext.lineTo(-5,7);
+						canvasContext.lineTo(-5,13);
+						canvasContext.lineTo(-30,13);
+						canvasContext.lineTo(-30,5);
+						canvasContext.lineTo(-17,5);
+						canvasContext.lineTo(-17,0);
+						canvasContext.moveTo(10,0);
+						canvasContext.lineTo(10,-5);
+						canvasContext.lineTo(15,-5);
+						canvasContext.lineTo(15,-13);
+						canvasContext.lineTo(0,-13);
+						canvasContext.lineTo(0,-7);
+						canvasContext.lineTo(-5,-7);
+						canvasContext.lineTo(-5,-13);
+						canvasContext.lineTo(-30,-13);
+						canvasContext.lineTo(-30,-5);
+						canvasContext.lineTo(-17,-5);
+						canvasContext.lineTo(-17,0);
+						canvasContext.fill();
+					}
+					else
+					{
+						canvasContext.beginPath();
+						canvasContext.rect (-14, -8, 28, 16);
+						canvasContext.lineWidth = 1;
+					}
+
+					canvasContext.fill();
+					canvasContext.stroke();
 					canvasContext.restore();
 				}
 	
@@ -1166,23 +1200,50 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.rotate(TurretAngle);
 				canvasContext.strokeStyle = Team.getColor().getColorString();
 				canvasContext.fillStyle = Team.getColor().getColorString();
-	
-				canvasContext.beginPath();
-				if(Type.DoubleTurret)
+				
+				if(Type.Special)
 				{
-					canvasContext.moveTo(0, Type.TurretSeparation);
-					canvasContext.lineTo(Type.BarrelLength, Type.TurretSeparation);
-					canvasContext.moveTo(0, -Type.TurretSeparation);
-					canvasContext.lineTo(Type.BarrelLength, -Type.TurretSeparation);
-				} 
-				else 
+					// Turret
+					canvasContext.beginPath();
+					canvasContext.arc(-5, 0, 7,Math.PI / 2,Math.PI / -2,false);
+					canvasContext.moveTo(-5,7);
+					canvasContext.lineTo(5,4);
+					canvasContext.lineTo(5,-4);
+					canvasContext.lineTo(-5,-7);
+					canvasContext.stroke();
+					canvasContext.closePath();
+					canvasContext.fill();
+
+					// Cannons
+					canvasContext.beginPath();
+					canvasContext.moveTo(0,2);
+					canvasContext.lineTo(20,2);
+					canvasContext.moveTo(0,-2);
+					canvasContext.lineTo(20,-2);
+					canvasContext.lineWidth = 2;
+					canvasContext.stroke();
+					canvasContext.closePath();
+				}
+				else
 				{
-					canvasContext.moveTo(0, 0);
-					canvasContext.lineTo(Type.BarrelLength, 0);
+					canvasContext.beginPath();
+					if(Type.DoubleTurret)
+					{
+						canvasContext.moveTo(0, Type.TurretSeparation);
+						canvasContext.lineTo(Type.BarrelLength, Type.TurretSeparation);
+						canvasContext.moveTo(0, -Type.TurretSeparation);
+						canvasContext.lineTo(Type.BarrelLength, -Type.TurretSeparation);
+					} 
+					else 
+					{
+						canvasContext.moveTo(0, 0);
+						canvasContext.lineTo(Type.BarrelLength, 0);
+					}
+					canvasContext.stroke();
+					canvasContext.beginPath();
+					canvasContext.arc(0, 0, Type.TurretSize, 0, 2 * Math.PI, false);
 				}			
-				canvasContext.stroke();
-				canvasContext.beginPath();
-				canvasContext.arc(0, 0, Type.TurretSize, 0, 2 * Math.PI, false);
+				
 				canvasContext.fill();
 				canvasContext.restore();
 				this.doDebug(canvasContext);
@@ -2268,9 +2329,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			
 			Tanks.add(new Tank(x, y, Teams[i], BaseType, Teams[i].getName()));
 		}
-		
-		if(WINNING_TEAMS.length > 0)
-			console.log(WINNING_TEAMS);
 		
 		ROUND++; // New Round, increase count
 		RESTARTING = false;
