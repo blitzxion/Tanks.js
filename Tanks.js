@@ -39,7 +39,7 @@ var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000,
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_PER_FACTION_ON_MAP = 1; //(HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)),
+var MAX_UNITS_PER_FACTION_ON_MAP = (HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)),
 	MAX_BASE_UNITS		= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)), 		/* 10% can be bases */
 	MAX_BASE_DEFENSES	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)), 		/* 30% can be defenses */
 	MAX_SPECIAL_UNITS	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2),
