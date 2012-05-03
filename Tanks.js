@@ -27,7 +27,7 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 	MAP_MIN_LOC = 20;
 
 // Fun stuff!
-var SCORE_TO_WIN = IS_MOBILE ? 1500 : 30000,
+var SCORE_TO_WIN = IS_MOBILE ? 2000 : 30000,
 	WINNING_TEAMS = [],
 	
 	DAMAGE_MULTIPLIER = 1, // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
@@ -2123,14 +2123,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		ctx.font = "10pt Arial";
 					
 		var smallscreen = (IS_MOBILE || WIDTH < 650);
+		var padding = 5;
 		for ( teamnum in Teams)
 		{
-			var t = Teams[teamnum];
-			var hoff = 5 /* left padding */ + (NUM_TEAMS * (smallscreen ? 20 : 35) * teamnum);
-			if (teamnum > 0) hoff + 23;
-			var voff = 14;			
+			var t = Teams[teamnum];			
+
 			ctx.fillStyle = t.getColor().getColorString();
-			ctx.fillText((smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven(),hoff,voff);
+
+			var text = (smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven();
+			ctx.fillText(text, padding, 14);
+
+			padding += ctx.measureText(text).width + 10; /* even spacing between teams */
 		}
 		
 		// Display What Round it is
