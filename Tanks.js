@@ -79,13 +79,26 @@ var TankKindEnum = {
 
 var tcIndex,
 	terrainColors = [
-	 [100, 70, 25], // Mud
-	 [0, 100, 0], // Tundra
-	 [191, 142, 76], // Desert
-	 //[255, 250, 250], // Snow
+	 [148, 92, 18], // Mud
+	 [39,40,34], //darkness
+	 [57,118,40], // Tundra
+	 [216, 213, 201], // Desert
+	 [177,173,165], // Snow
+	 [175, 128, 74], //mars
 	 [112, 128, 144],  // Moon
-	 [0,0,0] // space!
-];
+	 [0,0,0], // space!
+	 [98,146,134], //rain
+	 [198, 191, 165], //slate
+	 [117, 113, 75], //field
+	 [181, 144, 92], //wood
+	 [145, 158, 88], //greenish
+	 [32, 22, 12], //darkish brown
+	 [83, 64, 60], //chocolate
+	 [77, 52, 21], //poop
+	 [47, 1, 73], //galaxy purple
+	 [13, 44, 75], //blue ocean
+	 [46, 68, 94] //ocean 2
+	];
 
 /////////////
 // Globals //
