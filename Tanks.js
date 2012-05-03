@@ -1615,14 +1615,26 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Y += Type.MoveSpeed * Math.sin(BaseAngle);
 
 			/* reverse direction if we hit the wall */
-			if(X > WIDTH - 10 || X < 10 || Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT || Y < 10 - DRAW_BANNER_HEIGHT)
-			{
-				BaseAngle += Math.PI * Math.random();
-				
+			if(X > WIDTH - 10 || X < 10 || 
+				Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT || Y < 10 + DRAW_BANNER_HEIGHT)
+			{				
 				if (WORLD_WRAP)
 				{
 					X = Math.abs(X % WIDTH - 20);
 					Y = Math.abs(Y % HEIGHT - (DRAW_BANNER_HEIGHT * 2) - 20);
+				}
+				else /* reverse your direction */
+				{
+					BaseAngle += Math.PI + rnd(0, Math.PI * .5); /* do a reverse with some random added in */
+
+					if(X > WIDTH - 10)
+						X = WIDTH - 10;
+					else if(X < 10)
+						X = 10;
+					if(Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT)
+						Y = HEIGHT - 10 - DRAW_BANNER_HEIGHT;
+					else if(Y < 10 + DRAW_BANNER_HEIGHT)
+						Y = 10 + DRAW_BANNER_HEIGHT;
 				}
 			}
 		}
