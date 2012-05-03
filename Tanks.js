@@ -2240,6 +2240,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		Bullets.clear();
 		Explosions.clear();
 		Smokes.clear();
+
+		/* put opposite corners in this list so bases start opposite each other */
+		var quadrants = 
+			[
+				[0, Math.floor(WIDTH / 2), DRAW_BANNER_HEIGHT, Math.floor(HEIGHT / 2)],
+				[Math.floor(WIDTH / 2), WIDTH, DRAW_BANNER_HEIGHT, Math.floor(HEIGHT / 2)],
+				[0, Math.floor(WIDTH / 2), Math.floor(HEIGHT / 2), HEIGHT - DRAW_BANNER_HEIGHT],
+				[Math.floor(WIDTH / 2), WIDTH, Math.floor(HEIGHT / 2), HEIGHT - DRAW_BANNER_HEIGHT]
+			];
 				
 		for(var i = 0; i < Teams.length; i++) {
 			Teams[i].reset();
@@ -2249,15 +2258,27 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			while(TooClose && attempts++ < 100) {
 				TooClose = false;
 
-				x = rnd(BASE_HEAL_RADIUS, WIDTH - BASE_HEAL_RADIUS);
-				y = rnd(BASE_HEAL_RADIUS, HEIGHT - BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2));
+				var quad = quadrants[i % quadrants.length];
+				x = rnd(quad[0], quad[1]);
+				y = rnd(quad[2], quad[3]);
+
+				//console.log(x +", " + y);
+
+				/*x = rnd(BASE_HEAL_RADIUS, WIDTH - BASE_HEAL_RADIUS);
+				y = rnd(BASE_HEAL_RADIUS, HEIGHT - BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2));*/
+
+				if (x < BASE_HEAL_RADIUS) x += BASE_HEAL_RADIUS;
+				else if (x > WIDTH - BASE_HEAL_RADIUS) x -= BASE_HEAL_RADIUS;
+
+				if (y < BASE_HEAL_RADIUS + DRAW_BANNER_HEIGHT) y += BASE_HEAL_RADIUS;
+				else if (y > HEIGHT - BASE_HEAL_RADIUS - DRAW_BANNER_HEIGHT) y -= BASE_HEAL_RADIUS;
 
 				for (var n in Tanks) {
 					if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 						if(Tanks[n].getDistanceSquaredFromPoint(x, y) < MIN_SEPERATION_OF_STARTING_BASES * MIN_SEPERATION_OF_STARTING_BASES)
 						{
 							TooClose = true;
-							continue;
+							break;
 						}
 					}
 				}
