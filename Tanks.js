@@ -1648,7 +1648,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if (X > WIDTH) X -= WIDTH; // if you reach the right side
 				else if (X < 0) X += WIDTH; // if you reach the left side
 
-				if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom
+				if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y -= HEIGHT - DRAW_BANNER_HEIGHT; // If you reach the bottom
 				else if (Y - DRAW_BANNER_HEIGHT < 0) Y += (HEIGHT - DRAW_BANNER_HEIGHT); // If you reach the top (this works)
 			}
 			else
