@@ -18,7 +18,7 @@ var FPS_TOO_LOW = 45;
 // New Globals //
 /////////////////
 var ROUND = 0, // func RESET() increases this on new rounds.
-	NUM_TEAMS = IS_MOBILE ? 2 : 4, // This is the max amount on the playing field.
+	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 5, // This is the max amount on the playing field.
 	RANDOM_COLORS = true,
 	RANDOM_TERRAIN = true,
 	GOD_MODE = false, // While enabled, click methods will fire
@@ -33,7 +33,7 @@ var SCORE_TO_WIN = IS_MOBILE ? 2000 : 30000,
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_PER_FACTION_ON_MAP = Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)),
+var MAX_UNITS_PER_FACTION_ON_MAP = Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 7) * .5)),
 	MAX_BASE_UNITS		= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)), 		/* 10% can be bases */
 	MAX_BASE_DEFENSES	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)), 		/* 30% can be defenses */
 	MAX_SPECIAL_UNITS	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2),
@@ -257,7 +257,6 @@ var Teams = [],
 		new Color(0, 255, 255),
 		new Color(255, 0, 255),
 		new Color(255, 255, 0),
-		new Color(0, 0, 0),
 		new Color(0, 0, 255),
 		new Color(255, 255, 255)
 	];
@@ -557,7 +556,7 @@ TankTypes[11] = {Kind : TankKindEnum.TANK,
 				TurnSpeed : .12, 
 				TurretTurnSpeed : 0.27, 
 				Radius : 10, 
-				HitPoints : 200, //500 
+				HitPoints : 350, //500 
 				CooldownTime : 40,
 				MinRange : 25,
 				AttackDistance : 130,
@@ -1571,14 +1570,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
 			{
 				if(Tanks[n].getTeam() != Team && 
-					Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance && 
-					(Type.AntiAircraft || !Tanks[n].isPlane()))
+					Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance)
 				{
 					/* choose a better target if we found one closer/more damaged */
 					if (Target == null || 
+						Tanks[n].isSpecial() || /* kill the mammoth tank! */
 						(Target.isBase() && !Tanks[n].isBase()) ||  /*attack something else if we are targetting a base*/
-						(Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
-						Tanks[n].HitPoints < Target.HitPoints)) /* more damaged */
+						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
+						Tanks[n].HitPoints < Target.HitPoints) /* more damaged */
 					{
 						Target = Tanks[n];
 						
@@ -1586,7 +1585,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						if (State != TankStateEnum.EVASIVE_ACTION)
 							State = TankStateEnum.TARGET_AQUIRED;
 
-						if(Type.AntiAircraft && Tanks[n].isPlane()) //AA tanks try to attack planes first of all
+						if (Target.isSpecial()) break; //ATTACK THAT SPECIAL TANK!
+						if (Type.AntiAircraft && Tanks[n].isPlane()) //AA tanks try to attack planes first of all
 							break;
 					}
 				}
