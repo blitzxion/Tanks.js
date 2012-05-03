@@ -575,7 +575,7 @@ TankTypes[12] = {Kind : TankKindEnum.PLANE,
 				TurnSpeed : .12, 
 				TurretTurnSpeed : .15, 
 				Radius : 12, 
-				HitPoints : 800, // This will automatically drain
+				HitPoints : 400, // This will automatically drain
 				CooldownTime : 100, 
 				MinRange : 10,
 				SightDistance : 600, 
@@ -1024,11 +1024,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 						if(Type.BulletType == ShotTypeEnum.NONE) 
 							This.takeDamage(1,null);
-						else
-						{
-							turnTurret();
-							findTargets();
-						}
+
+						turnTurret();
+						findTargets();
 						break;
 					case TankStateEnum.TARGET_AQUIRED:
 						moveForward();
