@@ -23,23 +23,17 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 	RANDOM_TERRAIN = true,
 	GOD_MODE = false, // While enabled, click methods will fire
 	DRAW_GOD_MODE_HELP = false,
-	DEFAULT_UAV_COOLDOWN = 15,
 	MAP_MIN_LOC = 20;
 
 // Fun stuff!
 var SCORE_TO_WIN = IS_MOBILE ? 1500 : 30000,
 	WINNING_TEAMS = [],
-	
 	DAMAGE_MULTIPLIER = 1, // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
 	WORLD_WRAP = true, // AWESOME, when this is off the tanks will bounce on the edges... LEAVE IT ON!
-	HARD_MODE = false, // Experimental!
-	HARD_MODE_TICKETS = 100, // Once this runs out for each faction, no more units can be built
-	HARD_MODE_DAMAGE_REDUCTION = .10, // Reduces damage output by this amount
-	HARD_MODE_MAX_UNIT_REDUCTION = 2, // Max Units divided by this number
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_PER_FACTION_ON_MAP = (HARD_MODE) ? Math.floor((NUM_TEAMS * 10 * .5) / HARD_MODE_MAX_UNIT_REDUCTION) : Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)),
+var MAX_UNITS_PER_FACTION_ON_MAP = Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 10) * .5)),
 	MAX_BASE_UNITS		= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)), 		/* 10% can be bases */
 	MAX_BASE_DEFENSES	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)), 		/* 30% can be defenses */
 	MAX_SPECIAL_UNITS	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2),
@@ -735,27 +729,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			this.doStuff = function() {
 				State = TankStateEnum.IDLE;
 				
-				if(!HARD_MODE)
-				{
-					if(HealCooldown > 0)
-						HealCooldown--;
-					else
-					{
-						heal();
-						HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
-					}
-				}
+				if(HealCooldown > 0)
+					HealCooldown--;
 				else
-					if(Team.getUsedTickets() >= HARD_MODE_TICKETS)
-					{
-						// need to blow up the base if there are no more units to defend it!
-						if(Team.getScore() <= 1)
-						{
-							die();
-							return;
-						}
-					}
-	
+				{
+					heal();
+					HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+				}
+					
 				if(Cooldown > 0)
 				{
 					Cooldown--;
@@ -778,23 +759,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				//console.log((new Date() - Team.getLastTargetFoundDate()) / 1000);
 
 				/* Divide by 1000 to get seconds */ 
-				if(((new Date() - Team.getLastTargetFoundDate()) / 1000 > 10) && Team.setUAVCooldown(-1) <= 0)
+				if(((new Date() - Team.getLastTargetFoundDate()) / 1000 > 10))
 				{
-					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TankTypes[12], teamnum));
-					Team.resetUAVCooldown();
+					var angle = Math.random() * 2 * Math.PI;
+					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TankTypes[12], Teamnum));
+					Team.resetLastTargetFoundDate();
 				}
 
 
 				if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
-				{
-					//console.log(getTeamnum() + "is making a " + TypeToMake.Kind + ". There are " + _TotalOfUnit);
-					
+				{					
 					if(TypeToMake.Kind == TankKindEnum.BUILDER)
 					{ 
 						var _TotalOfUnit = GetNumOfType(TypeToMake,Team);
 						var _TotalBasesBuilt = GetNumOfType(BaseType,Team);
 					
-						if (HARD_MODE || (_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS) return; // Maxed out Bases!					
+						if ((_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS) return; // Maxed out Bases!					
 					}
 					
 					if(TypeToMake.Kind == TankKindEnum.TURRET)
@@ -1218,75 +1198,77 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.strokeStyle = Team.getColor().getColorString();
 				canvasContext.beginPath();
 
-				if(Type.BulletType == ShotTypeEnum.BOMB)
+				//Default Fill Alpha
+				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+
+				switch(Type.BulletType)
 				{
-					// B-2 Bomber
-					// Inspired by: http://en.wikipedia.org/wiki/File:NORTHROP_B-2.png
+					case ShotTypeEnum.BOMB:
+						// B-2 Bomber
+						// Inspired by: http://en.wikipedia.org/wiki/File:NORTHROP_B-2.png
 
-					// BODY!
-					canvasContext.moveTo(15,0);
-					canvasContext.lineTo(-15,40);
-					canvasContext.lineTo(-22,30);
-					canvasContext.lineTo(-12,15);
-					canvasContext.lineTo(-22,0);
+						// BODY!
+						canvasContext.moveTo(15,0);
+						canvasContext.lineTo(-15,40);
+						canvasContext.lineTo(-22,30);
+						canvasContext.lineTo(-12,15);
+						canvasContext.lineTo(-22,0);
+						canvasContext.moveTo(15,0);
+						canvasContext.lineTo(-15,-40);
+						canvasContext.lineTo(-22,-30);
+						canvasContext.lineTo(-12,-15);
+						canvasContext.lineTo(-22,0);
+						break;
+					case ShotTypeEnum.MISSLE:
+						// F-16 Fighter
+						// Nose (backside is -5)
+						canvasContext.lineWidth = 1;
+						canvasContext.moveTo(10,0);
+						canvasContext.lineTo(-5,2);
+						canvasContext.moveTo(10,0);
+						canvasContext.lineTo(-5,-2);
 
+						// Body (backside is -12)
+						canvasContext.moveTo(-5,2);
+						canvasContext.lineTo(-10,10);
+						canvasContext.lineTo(-12,10);
+						canvasContext.lineTo(-12,2);
+						canvasContext.moveTo(-5, -2);
+						canvasContext.lineTo(-10,-10);
+						canvasContext.lineTo(-12,-10);
+						canvasContext.lineTo(-12,-2);
 
-					canvasContext.moveTo(15,0);
-					canvasContext.lineTo(-15,-40);
-					canvasContext.lineTo(-22,-30);
-					canvasContext.lineTo(-12,-15);
-					canvasContext.lineTo(-22,0);
-				}
-				else if(Type.BulletType == ShotTypeEnum.MISSLE)
-				{
-					// F-16 Fighter
+						// Tail
+						canvasContext.moveTo(-12,2);
+						canvasContext.lineTo(-17,2);
+						canvasContext.lineTo(-20,5);
+						canvasContext.lineTo(-22,5);
+						canvasContext.lineTo(-20,0);
+						canvasContext.moveTo(-12,-2);
+						canvasContext.lineTo(-17,-2);
+						canvasContext.lineTo(-20,-5);
+						canvasContext.lineTo(-22,-5);
+						canvasContext.lineTo(-20,0);
+						canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.8); // F-16 body is small, give it fill
+						break;
 
-					// Nose (backside is -5)
-					canvasContext.lineWidth = 1;
-					canvasContext.moveTo(10,0);
-					canvasContext.lineTo(-5,2);
-					canvasContext.moveTo(10,0);
-					canvasContext.lineTo(-5,-2);
+					case ShotTypeEnum.NONE:
+					default:
+						canvasContext.moveTo(-12, 0);
+						canvasContext.lineTo(12, 0);
+						canvasContext.moveTo(0, 0);
+						canvasContext.lineTo(-5, -8);
+						canvasContext.moveTo(0, 0);
+						canvasContext.lineTo(-5, 8);
+						break;
 
-					// Body (backside is -12)
-					canvasContext.moveTo(-5,2);
-					canvasContext.lineTo(-10,10);
-					canvasContext.lineTo(-12,10);
-					canvasContext.lineTo(-12,2);
-
-					canvasContext.moveTo(-5, -2);
-					canvasContext.lineTo(-10,-10);
-					canvasContext.lineTo(-12,-10);
-					canvasContext.lineTo(-12,-2);
-
-					// Tail
-					canvasContext.moveTo(-12,2);
-					canvasContext.lineTo(-17,2);
-					canvasContext.lineTo(-20,5);
-					canvasContext.lineTo(-22,5);
-					canvasContext.lineTo(-20,0);
-
-					canvasContext.moveTo(-12,-2);
-					canvasContext.lineTo(-17,-2);
-					canvasContext.lineTo(-20,-5);
-					canvasContext.lineTo(-22,-5);
-					canvasContext.lineTo(-20,0);
-
-				}
-				else /* Scout Plane! */
-				{
-					canvasContext.moveTo(-12, 0);
-					canvasContext.lineTo(12, 0);
-					canvasContext.moveTo(0, 0);
-					canvasContext.lineTo(-5, -8);
-					canvasContext.moveTo(0, 0);
-					canvasContext.lineTo(-5, 8);
 				}
 
 				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-				canvasContext.fill();
 
+				canvasContext.fill();
 				canvasContext.stroke();
+				canvasContext.closePath();
 				canvasContext.restore();
 				this.doDebug(canvasContext);
 				
@@ -1746,7 +1728,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var This = this;
 		var LastAngle;
 		
-		Damage = (!HARD_MODE) ? (Damage * DAMAGE_MULTIPLIER) : ((Damage * DAMAGE_MULTIPLIER) * HARD_MODE_DAMAGE_REDUCTION);
+		Damage = Damage * DAMAGE_MULTIPLIER;
 		Damage = Math.floor(Damage); // Ensure we are only using whole numbers
 		
 		if(Damage <= 0)
@@ -1949,8 +1931,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Taken = 0,
 			Given = 0,
 			UsedTickets = 0, // Used in Hard Mode
-			LastTargetFound = new Date(),
-			UAVCooldown = DEFAULT_UAV_COOLDOWN;
+			LastTargetFound = new Date();
 	
 		this.getColor = function() {return Color;}
 		this.getName = function() {return Name;}
@@ -1960,9 +1941,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		this.getTaken = function() {return Taken;}
 		this.getGiven = function() {return Given;}
 		this.getUsedTickets = function(){return UsedTickets;}
-		this.getUAVCooldown = function(){return UAVCooldown;}
-		this.setUAVCooldown = function(d){UAVCooldown += d; return UAVCooldown;}
-		this.resetUAVCooldown = function(){UAVCooldown == DEFAULT_UAV_COOLDOWN; return UAVCooldown;}
 		this.getLastTargetFoundDate = function(){return LastTargetFound;}
 		this.resetLastTargetFoundDate = function(){LastTargetFound = new Date(); return LastTargetFound;}
 
