@@ -1076,6 +1076,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 									if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 										if(Tanks[n].getTeam() != Team && Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance 
 											&& (Type.AntiAircraft || !Tanks[n].isPlane())) {
+												if (This.isPlane() && Type.AntiAircraft && Tanks[n].isPlane()) /* AA planes should attack other planes... */
+												{
+													/* get that plane, regardless of the quality */
+													Target = Tanks[n];
+													break;
+												}
 												var quality = TargetQualityFunction(Tanks[n]);
 												if(quality > TargetQuality) {
 													TargetQuality = quality;
@@ -1576,6 +1582,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					/* choose a better target if we found one closer/more damaged */
 					if (Target == null || 
 						Tanks[n].isSpecial() || /* kill the mammoth tank! */
+						(This.isPlane() && Type.AntiAircraft && Tanks[n].isPlane()) || /* AA planes should attack other planes... */
 						(Target.isBase() && !Tanks[n].isBase()) ||  /*attack something else if we are targetting a base*/
 						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
 						Tanks[n].HitPoints < Target.HitPoints) /* more damaged */
@@ -1587,7 +1594,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							State = TankStateEnum.TARGET_AQUIRED;
 
 						if (Target.isSpecial()) break; //ATTACK THAT SPECIAL TANK!
-						if (Type.AntiAircraft && Tanks[n].isPlane()) //AA tanks try to attack planes first of all
+						if (Type.AntiAircraft && Target.isPlane()) //AA tanks try to attack planes first of all
 							break;
 					}
 				}
