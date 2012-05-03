@@ -869,32 +869,31 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						if(IN_SPACE) moveForward();
 						break;
 					case TankStateEnum.EVASIVE_ACTION:
-						if(TargetEvasive === null || !Tanks.contains(TargetEvasive))
-						{
-							var dist = null;
-	
-							// need to get one of the tanks bases and move to it!
-							for(var n in Tanks)
-								if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
-									if(Tanks[n].getTeam() == Team && Tanks[n].isBase())
-									{
-										/* find closest base */
-										var currDist = Tanks[n].getDistanceSquaredFromPoint(X,Y);
-										if (dist == null || currDist < dist) { 
-											TargetEvasive = Tanks[n];
-											dist = currDist;
-										}
-									}
-						}
-						else
-						{
-							findTargets(); /* see if there is a better target to fire on*/
-							if (Target != null)
-							{ 
-								callFriendlies(Target);
-								this.moveTurretAndAttack();
-							}
+
 						
+						// need to get one of the bases and move to it!
+						var dist = null;
+						for(var n in Tanks)
+							if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+								if(Tanks[n].getTeam() == Team && Tanks[n].isBase())
+								{
+									/* find closest base */
+									var currDist = Tanks[n].getDistanceSquaredFromPoint(X,Y);
+									if (dist == null || currDist < dist) { 
+										TargetEvasive = Tanks[n];
+										dist = currDist;
+									}
+								}
+						
+						findTargets(); /* see if there is a better target to fire on*/
+						if (Target != null)
+						{ 
+							callFriendlies(Target);
+							this.moveTurretAndAttack();
+						}
+						
+						if (TargetEvasive != null)
+						{
 							/* keep moving towards base, we havent finished healing */
 							if((HitPoints / Type.HitPoints) <= rnd(.3,.5))
 							{
@@ -907,9 +906,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								else
 									State = TankStateEnum.STOP;
 							}
-							else
-								State = TankStateEnum.IDLE;
+							else State = TankStateEnum.IDLE; /* get out of EVASIVE, random chance */
 						}
+						else
+							State = TankStateEnum.IDLE; /* no base to run to */
 											
 						break;
 					case TankStateEnum.STOP:
