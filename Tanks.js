@@ -1256,6 +1256,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(BaseAngle);
 				canvasContext.strokeStyle = Team.getColor().getColorString();
+				canvasContext.lineWidth = 1;
 				canvasContext.beginPath();
 
 				//Default Fill Alpha
@@ -2095,7 +2096,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		var TankTeam = null;
 		var AllOneTeam = true;
-		
+
 		clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
 		
 		for(var n in Teams)
@@ -2162,7 +2163,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		ctx.font = "10pt Arial";
 					
 		var smallscreen = (IS_MOBILE || WIDTH < 650);
-		var padding = 5;
+		var padding = 5, paddingY = 14;
 		for ( teamnum in Teams)
 		{
 			var t = Teams[teamnum];			
@@ -2170,9 +2171,25 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.fillStyle = t.getColor().getColorString();
 
 			var text = (smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven();
-			ctx.fillText(text, padding, 14);
+			ctx.fillText(text, padding, paddingY);
 
-			padding += ctx.measureText(text).width + 10; /* even spacing between teams */
+			var measured = ctx.measureText(text);
+
+			if (t.getScore() == 0) /* dead team, strike through the team's name */
+			{
+				ctx.save();
+				var strokeY = Math.floor(DRAW_BANNER_HEIGHT / 2); /* plus any starting Y for team text*/
+				ctx.beginPath();
+				ctx.strokeStyle = t.getColor().getColorString();
+				ctx.lineWidth = 3;
+				ctx.moveTo(padding, strokeY);
+				ctx.lineTo(padding + measured.width, strokeY);
+				ctx.stroke();
+				ctx.closePath();
+				ctx.restore();
+			}
+
+			padding += measured.width + 10; /* even spacing between teams */
 		}
 		
 		// Display What Round it is
@@ -2257,13 +2274,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.fillText("LClick = Random Unit",WIDTH-195,120);
 		}
 		
-
-		
 		// Setup for the FPS counter
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
 		frameTime+= (thisFrameTime - frameTime) / filterStrength;
 		lastLoop = thisLoop;
-		
+
 	}
 
 	function restart()
