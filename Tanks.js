@@ -29,7 +29,7 @@ var SCORE_TO_WIN = IS_MOBILE ? 1000 : 30000,
 	WINNING_TEAMS = [],
 	
 	DAMAGE_MULTIPLIER = 1, // 1 is normal, 0 will screw up the unit! increase/decrease for desired output
-	WORLD_WRAP = false, // Experimental!
+	WORLD_WRAP = true, // AWESOME, when this is off the tanks will bounce on the edges... LEAVE IT ON!
 	HARD_MODE = false, // Experimental!
 	HARD_MODE_TICKETS = 100, // Once this runs out for each faction, no more units can be built
 	HARD_MODE_DAMAGE_REDUCTION = .10, // Reduces damage output by this amount
@@ -1620,8 +1620,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			{				
 				if (WORLD_WRAP)
 				{
-					X = Math.abs(X % WIDTH - 20);
-					Y = Math.abs(Y % HEIGHT - (DRAW_BANNER_HEIGHT * 2) - 20);
+					if (X > WIDTH - 10) X -= WIDTH;
+					else if (X < 10) X += WIDTH;
+
+					if (Y > HEIGHT - 10 - DRAW_BANNER_HEIGHT) Y -= HEIGHT - DRAW_BANNER_HEIGHT;
+					else if (Y < 10 + DRAW_BANNER_HEIGHT) Y += HEIGHT - DRAW_BANNER_HEIGHT;
 				}
 				else /* reverse your direction */
 				{
