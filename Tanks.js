@@ -1649,8 +1649,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if (X > WIDTH) X -= WIDTH; // if you reach the right side
 				else if (X < 0) X += WIDTH; // if you reach the left side
 
-				if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y -= HEIGHT - DRAW_BANNER_HEIGHT; // If you reach the bottom
-				else if (Y - DRAW_BANNER_HEIGHT < 0) Y += (HEIGHT - DRAW_BANNER_HEIGHT); // If you reach the top (this works)
+				if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
+				else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT) - 20); // If you reach the top (this works)... set you back at the bottom
 			}
 			else
 			{
@@ -2125,9 +2125,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var smallscreen = (IS_MOBILE || WIDTH < 650);
 		for ( teamnum in Teams)
 		{
-			var t = Teams[teamnum];
-			var hoff = 5 /* left padding */ + (NUM_TEAMS * (smallscreen ? 20 : 35) * teamnum);
-			if (teamnum > 0) hoff + 23;
+			var t = Teams[teamnum],
+				hoff = 5; /* Left padding */
+
+			if(teamnum >= 1)
+				hoff += (smallscreen ? 100 : 175) * teamnum;
+
 			var voff = 14;			
 			ctx.fillStyle = t.getColor().getColorString();
 			ctx.fillText((smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven(),hoff,voff);
@@ -2205,14 +2208,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if(DRAW_GOD_MODE_HELP)
 		{
 			ctx.fillStyle = "rgba(0,0,0,.5)";
-			ctx.fillRect(WIDTH-400,25,400,100);
+			ctx.fillRect(WIDTH-200,DRAW_BANNER_HEIGHT,200,120);
 			ctx.fillStyle = "rgb(255,0,0)";
-			ctx.fillText("GOD MODE is " + ((GOD_MODE) ? "Enabled!" : "Disabled..."),WIDTH-395,36)
+			ctx.fillText("GOD MODE is " + ((GOD_MODE) ? "Enabled!" : "Disabled..."),WIDTH-195,36)
 			ctx.fillStyle = "rgb(255,255,255)";
-			ctx.fillText("Ctrl+LClick = Instant Random Base (for random faction as well)",WIDTH-395,60);
-			ctx.fillText("Shift+LClick = Destroys the unit clicked on.",WIDTH-395,80);
-			ctx.fillText("Alt+LClick = Destroys lots of units within a large radius.",WIDTH-395,100);
-			ctx.fillText("LClick = Instant Random Unit (for random faction as well)",WIDTH-395,120);
+			ctx.fillText("Ctrl+LClick = Random Base",WIDTH-195,60);
+			ctx.fillText("Shift+LClick = Kill unit.",WIDTH-195,80);
+			ctx.fillText("Alt+LClick = Kill lots of units",WIDTH-195,100);
+			ctx.fillText("LClick = Random Unit",WIDTH-195,120);
 		}
 		
 
@@ -2445,7 +2448,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	function ClickCreateUnit(X,Y, makeBase)
 	{		
-		var _randomTeam =  Teams[rnd(0,NUM_TEAMS)];
+		var _randomTeam =  Teams[rnd(0,NUM_TEAMS-1)];
 		if(_randomTeam == undefined || _randomTeam == null) return; // bad team huh...
 		
 		var angle = Math.random() * 2 * Math.PI;
