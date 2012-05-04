@@ -1173,19 +1173,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						canvasContext.lineTo(-30,5);
 						canvasContext.lineTo(-17,5);
 						canvasContext.lineTo(-17,0);
-						canvasContext.moveTo(10,0);
-						canvasContext.lineTo(10,-5);
-						canvasContext.lineTo(15,-5);
-						canvasContext.lineTo(15,-13);
-						canvasContext.lineTo(0,-13);
-						canvasContext.lineTo(0,-7);
-						canvasContext.lineTo(-5,-7);
-						canvasContext.lineTo(-5,-13);
-						canvasContext.lineTo(-30,-13);
-						canvasContext.lineTo(-30,-5);
 						canvasContext.lineTo(-17,-5);
-						canvasContext.lineTo(-17,0);
-						canvasContext.fill();
+						canvasContext.lineTo(-30,-5);
+						canvasContext.lineTo(-30,-13);
+						canvasContext.lineTo(-5,-13);
+						canvasContext.lineTo(-5,-7);
+						canvasContext.lineTo(0,-7);
+						canvasContext.lineTo(0,-13);
+						canvasContext.lineTo(15,-13);
+						canvasContext.lineTo(15,-5);
+						canvasContext.lineTo(10,-5);
 					}
 					else
 					{
@@ -1194,6 +1191,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						canvasContext.lineWidth = 1;
 					}
 
+					canvasContext.closePath();
 					canvasContext.fill();
 					canvasContext.stroke();
 					canvasContext.restore();
@@ -1275,48 +1273,40 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						// Inspired by: http://en.wikipedia.org/wiki/File:NORTHROP_B-2.png
 
 						// BODY!
-						canvasContext.moveTo(15,0);
-						canvasContext.lineTo(-15,40);
-						canvasContext.lineTo(-22,30);
-						canvasContext.lineTo(-12,15);
-						canvasContext.lineTo(-22,0);
-						canvasContext.moveTo(15,0);
-						canvasContext.lineTo(-15,-40);
-						canvasContext.lineTo(-22,-30);
-						canvasContext.lineTo(-12,-15);
-						canvasContext.lineTo(-22,0);
+						canvasContext.moveTo(10, 0);
+						canvasContext.lineTo(-20, 40);
+						canvasContext.lineTo(-27, 30);
+						canvasContext.lineTo(-17, 15);
+						canvasContext.lineTo(-27, 0);
+						canvasContext.lineTo(-17, -15);
+						canvasContext.lineTo(-27, -30);
+						canvasContext.lineTo(-20, -40);
 						break;
 					case ShotTypeEnum.MISSLE:
 						// F-16 Fighter
-						// Nose (backside is -5)
-						canvasContext.lineWidth = 1;
 						canvasContext.moveTo(10,0);
 						canvasContext.lineTo(-5,2);
-						canvasContext.moveTo(10,0);
-						canvasContext.lineTo(-5,-2);
-
-						// Body (backside is -12)
-						canvasContext.moveTo(-5,2);
 						canvasContext.lineTo(-10,10);
 						canvasContext.lineTo(-12,10);
 						canvasContext.lineTo(-12,2);
-						canvasContext.moveTo(-5, -2);
-						canvasContext.lineTo(-10,-10);
-						canvasContext.lineTo(-12,-10);
-						canvasContext.lineTo(-12,-2);
-
-						// Tail
-						canvasContext.moveTo(-12,2);
 						canvasContext.lineTo(-17,2);
 						canvasContext.lineTo(-20,5);
 						canvasContext.lineTo(-22,5);
 						canvasContext.lineTo(-20,0);
-						canvasContext.moveTo(-12,-2);
-						canvasContext.lineTo(-17,-2);
-						canvasContext.lineTo(-20,-5);
+
 						canvasContext.lineTo(-22,-5);
-						canvasContext.lineTo(-20,0);
-						canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.8); // F-16 body is small, give it fill
+						canvasContext.lineTo(-20,-5);
+						canvasContext.lineTo(-17,-2);
+						canvasContext.lineTo(-12,-2);
+						canvasContext.lineTo(-12,-10);
+						canvasContext.lineTo(-10,-10);
+						canvasContext.lineTo(-5,-2);
+						canvasContext.closePath();
+
+						canvasContext.moveTo(-8,-7);
+						canvasContext.lineTo(-3,-7);
+						canvasContext.moveTo(-8,7);
+						canvasContext.lineTo(-3,7);
 						break;
 
 					case ShotTypeEnum.NONE:
@@ -1331,11 +1321,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 				}
 
-				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+				canvasContext.closePath();
 
 				canvasContext.fill();
 				canvasContext.stroke();
-				canvasContext.closePath();
 				canvasContext.restore();
 				this.doDebug(canvasContext);
 				
