@@ -1173,17 +1173,24 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		case TankKindEnum.BASE:
 			this.draw = function(canvasContext) {
-	
-				canvasContext.fillStyle = "rgb(0,0,0)";
-				canvasContext.fillRect (X - 11, Y - 11, 22, 22);
 				
+				canvasContext.save();
+				canvasContext.beginPath();
+				canvasContext.rect(X - 10, Y - 10, 20, 20);
 				canvasContext.fillStyle = Team.getColor().getColorString();
-				canvasContext.fillRect (X - 10, Y - 10, 20, 20);
+				canvasContext.fill();
+				canvasContext.lineWidth = 1.5;
+				canvasContext.strokeStyle = "rgb(0,0,0)";
+				canvasContext.stroke();
+				canvasContext.restore();
 				
+				canvasContext.save();
 				this.drawHPBar(canvasContext,X,Y);
+				canvasContext.restore();
 				
 				// Draw Healing Circle
 				{
+					canvasContext.save();
 					var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
 					canvasContext.beginPath();
 					
@@ -1191,6 +1198,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
 					canvasContext.fill();
 					canvasContext.closePath();
+					canvasContext.restore();
 				}
 							
 			};
