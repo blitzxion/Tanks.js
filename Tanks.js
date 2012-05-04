@@ -34,7 +34,7 @@ var SCORE_TO_WIN = IS_MOBILE ? 2000 : 30000,
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_ON_SCREEN = 100,
+var MAX_UNITS_ON_SCREEN = 80,
 	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return IS_MOBILE ? 5 : Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE) },
 	getMAX_BASE_UNITS		        = function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1)) }, 		/* 10% can be bases */
 	getMAX_BASE_DEFENSES			= function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .3)) }, 		/* 30% can be defenses */
@@ -882,8 +882,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 										if (Tanks[n] != TargetEvasive)
 										{
 											//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
-											var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS);
-											var ylim = Math.sqrt(BASE_HEAL_RADIUS * BASE_HEAL_RADIUS - xRand * xRand);
+											var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS - 4);
+											var ylim = Math.sqrt((BASE_HEAL_RADIUS - 2) * (BASE_HEAL_RADIUS - 2) - xRand * xRand);
 											var yRand = (Math.random() * 2 * ylim - ylim);
 
 											TargetEvasiveLocation.X = Tanks[n].getX() + xRand;
@@ -1359,6 +1359,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.isSpecial = function (){ return Type.Special; }	
 	this.isPlane = function() {return Type.Kind == TankKindEnum.PLANE;};
 	this.isTurret = function() { return Type.Kind == TankKindEnum.TURRET; }
+	this.isEvading = function() { return State === TankStateEnum.EVASIVE_ACTION || State === TankStateEnum.STOP; }
 	this.getKind = function() { return Type.Kind; }
 	this.getTeam = function() {return Team;};
 	this.getTeamnum = function(){return Teamnum;}
@@ -1402,7 +1403,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if(State == TankStateEnum.EVASIVE_ACTION) return true;
 		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
 		{
-			if (CanEvade && (HitPoints / Type.HitPoints) <= rnd(.3,.5) && Math.random() <= EvadeProb)
+			if (CanEvade && (HitPoints / Type.HitPoints) <= rnd(.1,.5) && Math.random() <= EvadeProb)
 			{
 				LastEvadeSwitchDate = new Date();
 				State = TankStateEnum.EVASIVE_ACTION;
@@ -1417,7 +1418,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if (State !== TankStateEnum.EVASIVE_ACTION && State !== TankStateEnum.STOP) return true;
 		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
 		{
-			if ((HitPoints / Type.HitPoints) > rnd(.5,1))
+			if ((HitPoints / Type.HitPoints) > rnd(.4,1)) /* less than start evading for random chance of stop evade */
 			{
 				LastEvadeSwitchDate = new Date();
 				TargetEvasive = null;
@@ -1433,18 +1434,25 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.takeDamage = function(damage, shooter) 
 	{
 		HitPoints -= damage;
+
 		Team.addTaken(damage);
+
+		if(HitPoints <= 0)
+		{	
+			if(Type.Kind === TankKindEnum.PLANE)
+				State = TankStateEnum.CRASH_AND_BURN;
+			else	
+				die();
+		}
 		if(shooter !== null && shooter.getTeam() !== Team)
 		{
 			shooter.getTeam().addGiven(damage);
 
-			if(Tanks.contains(shooter)){ //Make sure the shooter of this bullet isn't already dead!
-				if(Type.AntiAircraft || !shooter.isPlane()) {
-
-					if (State === TankStateEnum.EVASIVE_ACTION) /* random change to leave evasive */
-						this.stopEvading(); /* will set the state  if it stopped evading */
-
-					if(State != TankStateEnum.EVASIVE_ACTION)
+			if(HitPoints > 0 && Tanks.contains(shooter)) //Make sure the shooter of this bullet isn't already dead!
+			{ 
+				if(Type.AntiAircraft || !shooter.isPlane()) 
+				{
+					if(!this.isEvading())
 					{
 						if(Target != null && State == TankStateEnum.TARGET_AQUIRED || State == TankStateEnum.TARGET_IN_RANGE) {
 							/* Don't change targets if the current target is attacking this tank */
@@ -1463,14 +1471,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			}
 			callFriendlies(shooter);
 		}
-
-		if(HitPoints <= 0)
-			if(Type.Kind === TankKindEnum.PLANE)
-				State = TankStateEnum.CRASH_AND_BURN;
-			else	
-				die();
-			
-		
 	};
 			
 	this.moveTurretAndAttack = function()
@@ -1497,9 +1497,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if(!Type.AntiAircraft && target.isPlane()) return;
 		if(this.isTurret()) return; /* wait until Target is in range */
 						
-		if(State == TankStateEnum.IDLE || State == TankStateEnum.MOVE || State == TankStateEnum.EVASIVE_ACTION) {
+		if(State !== TankStateEnum.TARGET_AQUIRED && State !== TankStateEnum.TARGET_IN_RANGE) {
 			Target = target;
-			if(State != TankStateEnum.EVASIVE_ACTION)
+
+			if(!this.isEvading())
 				State = TankStateEnum.TARGET_AQUIRED;
 		}
 	}
