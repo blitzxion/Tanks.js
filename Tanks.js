@@ -2224,6 +2224,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		TEAMS_ALIVE = aliveTeams;
 		
+
 		// Display What Round it is
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillRect (0,HEIGHT-DRAW_BANNER_HEIGHT,WIDTH,DRAW_BANNER_HEIGHT);
@@ -2232,59 +2233,44 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var rSecs = (+new Date - roundStartTime) / 1000,
 			rMins = Math.floor(rSecs / 60);
 		rSecs = Math.floor(rSecs % 60);
-		ctx.fillText("Round: " + ROUND + "  -  " + (rMins > 0 ? rMins + " min" + (rMins > 1 ? "s" : "" ) + ", ": "") + 
-			rSecs + " secs",5,HEIGHT - 5);
+
+		padding = 5;
+		var roundText = "Round: " + ROUND + "  -  " + (rMins > 0 ? rMins + " min" + (rMins > 1 ? "s" : "" ) + ", ": "") + 
+			rSecs + " secs";
+		ctx.fillText(roundText,padding,HEIGHT - 5);
+
+		padding += ctx.measureText(roundText).width + 10;
+		if (WINNING_TEAMS && WINNING_TEAMS.length)
+		{
+			ctx.save();
+
+			var lastwinner = WINNING_TEAMS[WINNING_TEAMS.length - 1];
+
+			var winnerText = "";
+			if (IS_MOBILE) winnerText = "Won Last Round";
+			else winnerText = "Won Last Round (Units: " + lastwinner.score + " Given: " + lastwinner.given + ")";
+
+			if (ctx.measureText(winnerText).width < WIDTH - padding - 65/*fps*/)
+			{
+				ctx.fillStyle = lastwinner.colorstring;
+				ctx.fillText(winnerText, padding, HEIGHT - 5);
+			}
+			ctx.restore();
+		}
 
 		// FPS
 		ctx.fillText(getFPS() + " fps",WIDTH-65,HEIGHT - 5);
-		
-		// Show the winners roster 
-		/*
-		if(WINNING_TEAMS.length >= 1)
-		{
-			winners = WINNING_TEAMS;
-			
-			var bw = WIDTH-250;
-			var bh = 0;
-			
-			ctx.fillStyle = "rgba(0,0,0,0.5)";
-			ctx.fillRect (bw,bh,250,60+(17*NUM_TEAMS));
-			
-			ctx.fillStyle = "rgb(255,255,255)"; //Teams[6].getColor().getColorString();
-			ctx.font = "8pt Arial";
-			ctx.fillText("Winner Roster",bw+10,15);
-			ctx.fillText("Team",bw+10,30);
-			ctx.fillText("Score",bw+70,30);
-			ctx.fillText("Units",bw+120,30);
-			ctx.fillText("Last Standing?",bw+160,30);
-						
-			for(i=0;i<=WINNING_TEAMS.length-1;i++)
-			{				
-				var voff = 30 + (15*(i+1));
-				ctx.fillStyle = WINNING_TEAMS[i][5];
-				
-				var TotalVictory = (WINNING_TEAMS[i][2] < SCORE_TO_WIN) ? "Yes" : "";
-				
-				ctx.fillText(WINNING_TEAMS[i][1],bw+10,voff);
-				ctx.fillText(WINNING_TEAMS[i][2],bw+70,voff);
-				ctx.fillText(WINNING_TEAMS[i][4],bw+120,voff);
-				ctx.fillText(TotalVictory,bw+160,voff);
-			}
-		}
-		*/
 
 		/* Show Debug Toggles */
-		{
-			ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
-			ctx.fillRect(WIDTH-95,0,20,DRAW_BANNER_HEIGHT);
-			ctx.fillStyle = "rgb(0,0,0)";
-			ctx.fillText("R",WIDTH-90,14);
-			
-			ctx.fillStyle = (!DRAW_TARGET_LINE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
-			ctx.fillRect(WIDTH-70,0,20,DRAW_BANNER_HEIGHT);
-			ctx.fillStyle = "rgb(0,0,0)";
-			ctx.fillText("T",WIDTH-65,14);
-		}
+		ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillRect(WIDTH-95,0,20,DRAW_BANNER_HEIGHT);
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillText("R",WIDTH-90,14);
+		
+		ctx.fillStyle = (!DRAW_TARGET_LINE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillRect(WIDTH-70,0,20,DRAW_BANNER_HEIGHT);
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillText("T",WIDTH-65,14);
 		
 		// Draw button for GOD MODE
 		ctx.fillStyle = (!GOD_MODE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
@@ -2473,33 +2459,32 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	function TallyAndSetResults(teamList)
 	{
-		var _team = teamList;
-		var TeamInfo = [];
-		var TeamScores = [];
-		var TeamUnits = [];
+		var _team = teamList,
+			TeamInfo = [],
+			TeamScores = [],
+			TeamUnits = [];
 	
 		for(var i = 0; i < _team.length; i++) {
-			TeamInfo.push([
-				i,										//0
-				_team[i].getName(),						//1
-				_team[i].getGiven(),					//2
-				_team[i].getScore(),					//3
-				_team[i].getTotalScore(),				//4
-				_team[i].getColor().getColorString()	//5
-			]);
+			TeamInfo.push({
+				name: _team[i].getName(),
+				given: _team[i].getGiven(),
+				score: _team[i].getScore(),
+				totalscore: _team[i].getTotalScore(),
+				colorstring: _team[i].getColor().getColorString()
+			});
 			TeamScores.push(_team[i].getGiven()); //Push Scores
 			TeamUnits.push(_team[i].getScore()); //Push Units
 		}
 		
-		var _highScore = Math.max.apply(Math,TeamScores);
-		var _highMax = Math.max.apply(Math,TeamUnits);
+		var _highGiven = Math.max.apply(Math,TeamScores);
+		var _highScore = Math.max.apply(Math,TeamUnits);
 		
 		if(_highScore == 0 || _highScore == undefined)
 			return;
 		
 		for(var i=0;i<TeamInfo.length;i++)
 		{
-			if(TeamInfo[i][2] == _highScore || TeamInfo[i][3] == _highMax)
+			if(TeamInfo[i].given == _highGiven || TeamInfo[i].score == _highScore)
 			{
 				WINNING_TEAMS.push(TeamInfo[i]);
 				break;
