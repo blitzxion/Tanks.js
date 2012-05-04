@@ -899,7 +899,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						break;
 					case TankStateEnum.EVASIVE_ACTION:
 						// need to get one of the bases and move to it!
-						var dist = null;
+						var dist = null, prevTargetEvasive = TargetEvasive;
+
 						for(var n in Tanks)
 							if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
 								if(Tanks[n].getTeam() == Team && Tanks[n].isBase())
@@ -907,22 +908,25 @@ function Tank(x_init, y_init, team, type, teamnum) {
 									/* find closest base */
 									var currDist = Tanks[n].getDistanceSquaredFromPoint(X,Y);
 									if (dist == null || currDist < dist) { 
-										if (Tanks[n] != TargetEvasive)
-										{
-											//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
-											var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS - 4);
-											var ylim = Math.sqrt((BASE_HEAL_RADIUS - 2) * (BASE_HEAL_RADIUS - 2) - xRand * xRand);
-											var yRand = (Math.random() * 2 * ylim - ylim);
-
-											TargetEvasiveLocation.X = Tanks[n].getX() + xRand;
-											TargetEvasiveLocation.Y = Tanks[n].getY() + yRand;
-
-											//console.log("EVASIVE: picking point from " + Tanks[n].getX() + "," + Tanks[n].getY() + "+(" + BASE_HEAL_RADIUS +"): " + TargetEvasiveLocation.X + "," + TargetEvasiveLocation.Y);
-										}
 										TargetEvasive = Tanks[n];
 										dist = currDist;
 									}
 								}
+
+						if (prevTargetEvasive != TargetEvasive)
+						{
+							//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
+							var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS - 4);
+							var ylim = Math.sqrt((BASE_HEAL_RADIUS - 2) * (BASE_HEAL_RADIUS - 2) - xRand * xRand);
+							var yRand = (Math.random() * 2 * ylim - ylim);
+
+							TargetEvasiveLocation.X = TargetEvasive.getX() + xRand;
+							TargetEvasiveLocation.Y = TargetEvasive.getY() + yRand;
+
+							//console.log("EVASIVE: picking point from " + Tanks[n].getX() + "," + Tanks[n].getY() + "+(" + BASE_HEAL_RADIUS +"): " + TargetEvasiveLocation.X + "," + TargetEvasiveLocation.Y);
+						}
+
+
 						
 						findTargets(); /* see if there is a better target to fire on*/
 						if (Target != null)
@@ -1541,6 +1545,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	this.drawHPBar = function (ctx, X,Y)
 	{
+		if (this.isEvading())
+		{
+			ctx.save();
+			
+			ctx.fillStyle = 'rgb(219, 37, 13)'; /* bright red */
+			ctx.font = "15pt Arial";
+			ctx.fillText("+",X-10, Y-19 /* above health bar */);
+
+			ctx.restore();
+		}
 		// Hide the HP bar until units health drops.
 		if(HitPoints < Type.HitPoints && HitPoints != 0)
 		{
@@ -1552,9 +1566,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			else
 				ctx.fillStyle = 'rgb(0, 130, 0)'; /* green */
 			ctx.fill();
-			ctx.lineWidth = 1;
-			ctx.strokeStyle = 'rgb(0, 0, 0)';
-			ctx.stroke();
+
+			if (HitPoints > 0) /* make red stand out! */
+			{
+				ctx.lineWidth = 1;
+				ctx.strokeStyle = 'rgb(0, 0, 0)';
+				ctx.stroke();
+			}
 			ctx.closePath();
 			ctx.restore();
 		}
