@@ -183,6 +183,8 @@ window.onload = function() {
 	*/
 	if (window.devicePixelRatio)
 	{
+		/* http://tripleodeon.com/2011/12/first-understand-your-screen/ */
+		WIDTH = window.outerWidth; /* bug in iOS/mobile devices not reporting correct portrait width */
 		canvas.width =  WIDTH * window.devicePixelRatio;
 		canvas.height = HEIGHT * window.devicePixelRatio;
 		ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
@@ -200,11 +202,12 @@ window.onload = function() {
 		
 		if (window.devicePixelRatio)
 		{
+			WIDTH = window.outerWidth; /* bug in iOS/mobile devices not reporting correct portrait width */
 			canvas.width =  WIDTH * window.devicePixelRatio;
 			canvas.height = HEIGHT * window.devicePixelRatio;
 			canvas.style.width = WIDTH +"px";
 			canvas.style.height = HEIGHT+"px";
-			//ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+			ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 		}
 		else /* non device, scale normally */
 		{
