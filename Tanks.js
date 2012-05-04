@@ -19,6 +19,7 @@ var FPS_TOO_LOW = 45;
 /////////////////
 var ROUND = 0, // func RESET() increases this on new rounds.
 	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 5, // This is the max amount on the playing field.
+	TEAMS_ALIVE = NUM_TEAMS,
 	RANDOM_COLORS = true,
 	RANDOM_TERRAIN = true,
 	GOD_MODE = false, // While enabled, click methods will fire
@@ -33,13 +34,15 @@ var SCORE_TO_WIN = IS_MOBILE ? 2000 : 30000,
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_PER_FACTION_ON_MAP = Math.floor((NUM_TEAMS * (IS_MOBILE ? 5 : 7) * .5)),
-	MAX_BASE_UNITS		= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)), 		/* 10% can be bases */
-	MAX_BASE_DEFENSES	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)), 		/* 30% can be defenses */
-	MAX_SPECIAL_UNITS	= Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2),
-	MAX_SPECIAL_UNITS	= (MAX_SPECIAL_UNITS <= 0) ? 1 : MAX_SPECIAL_UNITS, 	/* I required at least one. */
+var MAX_UNITS_ON_SCREEN = 100,
+	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return IS_MOBILE ? 5 : Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE) },
+	getMAX_BASE_UNITS		        = function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1)) }, 		/* 10% can be bases */
+	getMAX_BASE_DEFENSES			= function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .3)) }, 		/* 30% can be defenses */
+	getMAX_SPECIAL_UNITS			= function() { var max = Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1) / 2); if (max <1) return 1; },
 	BASE_HEAL_RADIUS	= (IS_MOBILE ? 35 : 65),
 	HEALTH_COOLDOWN		= 100;
+
+console.log(getMAX_UNITS_PER_FACTION_ON_MAP());
 
 // DEBUG Stuff
 var DRAW_TARGET_LINE = false,
@@ -632,10 +635,10 @@ animate();
 console.log("Welcome to Tanks!");
 console.log("Number of Teams Playing: " + NUM_TEAMS);
 console.log("Random Map Terrain? " + RANDOM_TERRAIN.toString());
-console.log("Max Units per Faction: " + MAX_UNITS_PER_FACTION_ON_MAP);
-console.log("Max Bases per Faction: " + MAX_BASE_UNITS);
-console.log("Max Bases defenses per Faction: " + MAX_BASE_DEFENSES);
-console.log("Max Special units per Faction: " + MAX_SPECIAL_UNITS);
+console.log("Max Units per Faction: " + getMAX_UNITS_PER_FACTION_ON_MAP());
+console.log("Max Bases per Faction: " + getMAX_BASE_UNITS());
+console.log("Max Bases defenses per Faction: " + getMAX_BASE_DEFENSES());
+console.log("Max Special units per Faction: " + getMAX_SPECIAL_UNITS());
 console.log("Current Healing Radius for Bases: " + BASE_HEAL_RADIUS);
 console.log("Healing Cooldown base value : " + HEALTH_COOLDOWN);
 console.log("Welcoming todays fighters...");
@@ -692,7 +695,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		Teamnum = teamnum,
 		Type = type,
 		Time = 60,
-		TurnSpeed = rnd(Type.TurnSpeed * .7, Type.TurnSpeed * 1.05), /* 70% - 105% */
+		TurnSpeed = rnd(Type.TurnSpeed * .3, Type.TurnSpeed * 1.05), /* 70% - 105% */
 		MoveSpeed = rnd(Type.MoveSpeed * .7, Type.MoveSpeed * 1.05), /* 70% - 105% */
 		HitPoints = Type.HitPoints,
 		Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime,
@@ -767,20 +770,20 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					Team.resetLastTargetFoundDate();
 				}
 
-				if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
+				if(Team.getScore() < getMAX_UNITS_PER_FACTION_ON_MAP())
 				{					
 					if(TypeToMake.Kind == TankKindEnum.BUILDER)
 					{ 
 						var _TotalOfUnit = GetNumOfType(TypeToMake,Team);
 						var _TotalBasesBuilt = GetNumOfType(BaseType,Team);
 					
-						if ((_TotalBasesBuilt + _TotalOfUnit) >= MAX_BASE_UNITS) return; // Maxed out Bases!					
+						if ((_TotalBasesBuilt + _TotalOfUnit) >= getMAX_BASE_UNITS()) return; // Maxed out Bases!					
 					}
 					
 					if(TypeToMake.Kind == TankKindEnum.TURRET)
-						if (GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7],Team) >= MAX_BASE_DEFENSES) return; // Maxed out defenses!			
+						if (GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7],Team) >= getMAX_BASE_DEFENSES()) return; // Maxed out defenses!			
 					
-					if(TypeToMake.Special && GetNumOfSpecials() >= MAX_SPECIAL_UNITS) return;
+					if(TypeToMake.Special && GetNumOfSpecials() >= getMAX_SPECIAL_UNITS()) return;
 	
 					var angle = Math.random() * 2 * Math.PI;
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
@@ -1345,7 +1348,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.getKind = function() { return Type.Kind; }
 	this.getTeam = function() {return Team;};
 	this.getTeamnum = function(){return Teamnum;}
-	this.getDistanceSquaredFromPoint = function(x, y) {return (X - x) * (X - x) + (Y - y) * (Y - y);};
+	this.getDistanceSquaredFromPoint = function(x, y){return (X - x) * (X - x) + (Y - y) * (Y - y);};
 	this.getRadiusSquared = function() {return Type.Radius * Type.Radius;};
 	this.getTurnSpeed = function() { return TurnSpeed; };
 	this.getX = function() {return X;}
@@ -2188,6 +2191,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					
 		var smallscreen = (IS_MOBILE || WIDTH < 650);
 		var padding = 5, paddingY = 14;
+		var aliveTeams = 0;
 		for ( teamnum in Teams)
 		{
 			var t = Teams[teamnum];			
@@ -2212,9 +2216,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				ctx.closePath();
 				ctx.restore();
 			}
+			else aliveTeams++;
 
 			padding += measured.width + 10; /* even spacing between teams */
 		}
+		TEAMS_ALIVE = aliveTeams;
 		
 		// Display What Round it is
 		ctx.fillStyle = "rgb(0,0,0)";
