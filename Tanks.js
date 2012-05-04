@@ -538,7 +538,7 @@ TankTypes[8] = {Kind : TankKindEnum.BUILDER,
 TankTypes[9] = {Kind : TankKindEnum.PLANE, 
 				Special : false,
 				AttackingUnit : true, 
-				Prob : IS_MOBILE ? 15 : 40, 
+				Prob : IS_MOBILE ? 15 : 30, 
 				MoveSpeed : 2.5, 
 				TurnSpeed : .045, 
 				TurretTurnSpeed : .5, 
@@ -563,7 +563,7 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 TankTypes[10] = {Kind : TankKindEnum.PLANE, 
 				Special : false,
 				AttackingUnit : true, 
-				Prob : IS_MOBILE ? 15 : 40, 
+				Prob : IS_MOBILE ? 15 : 30, 
 				MoveSpeed : 3.5, 
 				TurnSpeed : .24, 
 				TurretTurnSpeed : .15, 
@@ -1549,7 +1549,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.drawHPBar = function (ctx, X,Y)
 	{
 		// Hide the HP bar until units health drops.
-		if(HitPoints < Type.HitPoints && Hit != 0)
+		if(HitPoints < Type.HitPoints && HitPoint != 0)
 		{
 			ctx.save();
 			ctx.beginPath();
