@@ -1536,6 +1536,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if(!Type.AttackingUnit) return;
 		if(!Type.AntiAircraft && target.isPlane()) return;
 		if(this.isTurret()) return; /* wait until Target is in range */
+		if (State === TankStateEnum.CRASH_AND_BURN) return; /* plane is kamakaziing */
 						
 		if(State !== TankStateEnum.TARGET_AQUIRED && State !== TankStateEnum.TARGET_IN_RANGE) {
 			Target = target;
@@ -1548,15 +1549,18 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.drawHPBar = function (ctx, X,Y)
 	{
 		// Hide the HP bar until units health drops.
-		if(HitPoints < Type.HitPoints)
+		if(HitPoints < Type.HitPoints && Hit != 0)
 		{
 			ctx.save();
 			ctx.beginPath();
 			ctx.rect(X-10,Y-20,25*(HitPoints/Type.HitPoints),3);
-			ctx.fillStyle = (new Color(0, 130, 0)).getColorString();
+			if (HitPoints < 0)
+				ctx.fillStyle = 'rgb(219, 37, 13)'; /* bright red */
+			else
+				ctx.fillStyle = 'rgb(0, 130, 0)'; /* green */
 			ctx.fill();
 			ctx.lineWidth = 1;
-			ctx.strokeStyle = (new Color(0, 0, 0)).getColorString();
+			ctx.strokeStyle = 'rbg(0, 0, 0)';
 			ctx.stroke();
 			ctx.restore();
 		}
@@ -1667,8 +1671,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 						Target = Tanks[n];
 						
-						/* don't switch state if we are running away */
-						if (State !== TankStateEnum.EVASIVE_ACTION)
+						/* don't switch state if we are running away or dieing */
+						if (!This.isEvading() && State !== TankStateEnum.CRASH_AND_BURN)
 							State = TankStateEnum.TARGET_AQUIRED;
 
 						if (Target.isSpecial()) break; //ATTACK THAT SPECIAL TANK!
