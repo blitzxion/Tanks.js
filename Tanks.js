@@ -768,7 +768,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				//console.log((new Date() - Team.getLastTargetFoundDate()) / 1000);
 
 				/* Divide by 1000 to get seconds */ 
-				if(((new Date() - Team.getLastTargetFoundDate()) / 1000 > 10))
+				if(((new Date().getTime() - Team.getLastTargetFoundDate().getTime()) / 1000 > 10))
 				{
 					var angle = Math.random() * 2 * Math.PI;
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TankTypes[12], Teamnum));
@@ -1400,10 +1400,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	this.startEvading = function()
 	{
-		if(State == TankStateEnum.EVASIVE_ACTION) return true;
+		if (!CanEvade) return false;
+		if (this.isEvading()) return true;
+
 		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
 		{
-			if (CanEvade && (HitPoints / Type.HitPoints) <= rnd(.1,.5) && Math.random() <= EvadeProb)
+			var hitpercent = (HitPoints / Type.HitPoints);
+			if (hitpercent > .15 && hitpercent <= rnd(.15,.45) && Math.random() <= EvadeProb)
 			{
 				LastEvadeSwitchDate = new Date();
 				State = TankStateEnum.EVASIVE_ACTION;
@@ -1415,10 +1418,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.stopEvading = function()
 	{
 		/*tanks go into STOP while healing, so check for that as well */
-		if (State !== TankStateEnum.EVASIVE_ACTION && State !== TankStateEnum.STOP) return true;
+		if (!this.isEvading()) return true;
 		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
 		{
-			if ((HitPoints / Type.HitPoints) > rnd(.4,1)) /* less than start evading for random chance of stop evade */
+			if ((HitPoints / Type.HitPoints) > rnd(.35,1)) /* less than start evading for random chance of stop evade */
 			{
 				LastEvadeSwitchDate = new Date();
 				TargetEvasive = null;
