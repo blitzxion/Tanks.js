@@ -1180,26 +1180,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fillStyle = Team.getColor().getColorString();
 				canvasContext.fillRect (X - 10, Y - 10, 20, 20);
 				
-				this.drawHPBar(canvasContext,X,Y);
-				
 				// Draw Healing Circle
-				{
-					var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
-					canvasContext.beginPath();
-					
-					canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
-					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-					canvasContext.fill();
-					canvasContext.closePath();
-				}
-							
+				var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
+				canvasContext.beginPath();
+				
+				canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
+				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+				canvasContext.fill();
+				canvasContext.closePath();
+
+				this.drawHPBar(canvasContext,X,Y);			
 			};
 			break;
 		case TankKindEnum.TANK:
 		case TankKindEnum.BUILDER:
 		case TankKindEnum.TURRET:
 			this.draw = function(canvasContext) {
-				this.drawHPBar(canvasContext,X,Y);
 				//Base:
 				if(!(Type.Kind === TankKindEnum.TURRET))
 				{
@@ -1301,12 +1297,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fill();
 				canvasContext.restore();
 				this.doDebug(canvasContext);
+
+				this.drawHPBar(canvasContext,X,Y);
 			};
 			break;
 		case TankKindEnum.PLANE:
 			this.draw = function(canvasContext)
 			{
-				this.drawHPBar(canvasContext,X,Y);
 				canvasContext.save();
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(BaseAngle);
@@ -1379,6 +1376,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.restore();
 				this.doDebug(canvasContext);
 				
+				this.drawHPBar(canvasContext,X,Y);
 			}
 			break;
 	}	
@@ -1554,6 +1552,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.lineWidth = 1;
 			ctx.strokeStyle = 'rgb(0, 0, 0)';
 			ctx.stroke();
+			ctx.closePath();
 			ctx.restore();
 		}
 	}
