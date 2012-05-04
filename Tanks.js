@@ -38,7 +38,7 @@ var MAX_UNITS_ON_SCREEN = 100,
 	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return IS_MOBILE ? 5 : Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE) },
 	getMAX_BASE_UNITS		        = function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1)) }, 		/* 10% can be bases */
 	getMAX_BASE_DEFENSES			= function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .3)) }, 		/* 30% can be defenses */
-	getMAX_SPECIAL_UNITS			= function() { var max = Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1) / 2); if (max <1) return 1; },
+	getMAX_SPECIAL_UNITS			= function() { var max = Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1) / 2); if (max <1) return 1; return max; },
 	BASE_HEAL_RADIUS	= (IS_MOBILE ? 35 : 65),
 	HEALTH_COOLDOWN		= 100;
 
