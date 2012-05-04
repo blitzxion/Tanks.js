@@ -181,7 +181,7 @@ window.onload = function() {
 	/* handle retina display:
 	* http://stackoverflow.com/questions/4405710/uiwebview-w-html5-canvas-retina-display
 	*/
-	if (window.devicePixelRatio)
+	if (window.devicePixelRatio && window.devicePixelRatio > 1)
 	{
 		/* http://tripleodeon.com/2011/12/first-understand-your-screen/ */
 		WIDTH = window.outerWidth; /* bug in iOS/mobile devices not reporting correct portrait width */
@@ -197,10 +197,10 @@ window.onload = function() {
 
 		WIDTHPREV = WIDTH;
 		HEIGHTPREV = HEIGHT;
-		WIDTH = window.innerWidth;
-		HEIGHT = window.innerHeight;
+		WIDTH = window.innerWidth; /* big bag of WTF on iOS with orientation changes */
+		HEIGHT = window.innerHeight; /* stable on iOS */
 		
-		if (window.devicePixelRatio)
+		if (window.devicePixelRatio && window.devicePixelRatio > 1)
 		{
 			WIDTH = window.outerWidth; /* bug in iOS/mobile devices not reporting correct portrait width */
 			canvas.width =  WIDTH * window.devicePixelRatio;
