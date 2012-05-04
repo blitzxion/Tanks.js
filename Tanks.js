@@ -1173,41 +1173,29 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		case TankKindEnum.BASE:
 			this.draw = function(canvasContext) {
+	
+				canvasContext.fillStyle = "rgb(0,0,0)";
+				canvasContext.fillRect (X - 11, Y - 11, 22, 22);
 				
-				canvasContext.save();
-				canvasContext.beginPath();
-				canvasContext.rect(X - 10, Y - 10, 20, 20);
 				canvasContext.fillStyle = Team.getColor().getColorString();
-				canvasContext.fill();
-				canvasContext.lineWidth = 1.5;
-				canvasContext.strokeStyle = "rgb(0,0,0)";
-				canvasContext.stroke();
-				canvasContext.restore();
-				
-				canvasContext.save();
-				this.drawHPBar(canvasContext,X,Y);
-				canvasContext.restore();
+				canvasContext.fillRect (X - 10, Y - 10, 20, 20);
 				
 				// Draw Healing Circle
-				{
-					canvasContext.save();
-					var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
-					canvasContext.beginPath();
-					
-					canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
-					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-					canvasContext.fill();
-					canvasContext.closePath();
-					canvasContext.restore();
-				}
-							
+				var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
+				canvasContext.beginPath();
+				
+				canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
+				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+				canvasContext.fill();
+				canvasContext.closePath();
+
+				this.drawHPBar(canvasContext,X,Y);			
 			};
 			break;
 		case TankKindEnum.TANK:
 		case TankKindEnum.BUILDER:
 		case TankKindEnum.TURRET:
 			this.draw = function(canvasContext) {
-				this.drawHPBar(canvasContext,X,Y);
 				//Base:
 				if(!(Type.Kind === TankKindEnum.TURRET))
 				{
@@ -1309,12 +1297,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fill();
 				canvasContext.restore();
 				this.doDebug(canvasContext);
+
+				this.drawHPBar(canvasContext,X,Y);
 			};
 			break;
 		case TankKindEnum.PLANE:
 			this.draw = function(canvasContext)
 			{
-				this.drawHPBar(canvasContext,X,Y);
 				canvasContext.save();
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(BaseAngle);
@@ -1387,6 +1376,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.restore();
 				this.doDebug(canvasContext);
 				
+				this.drawHPBar(canvasContext,X,Y);
 			}
 			break;
 	}	
@@ -1441,13 +1431,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
 		{
-			LastEvadeSwitchDate = new Date(); /* regardless of decision, this is what will stick for the cooldown */
-
 			var hitpercent = (HitPoints / Type.HitPoints);
-			if (hitpercent > .15 && hitpercent <= rnd(.15,.45) && Math.random() <= EvadeProb)
+			if (hitpercent > .15 && hitpercent <= rnd(.15,.45)
 			{
-				State = TankStateEnum.EVASIVE_ACTION;
-				return true;
+				LastEvadeSwitchDate = new Date(); /* regardless of decision, this is what will stick for the cooldown */
+
+				if (Math.random() <= EvadeProb)
+				{
+					State = TankStateEnum.EVASIVE_ACTION;
+					return true;
+				}
 			}
 		}
 		return false;
@@ -1562,6 +1555,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			ctx.lineWidth = 1;
 			ctx.strokeStyle = 'rgb(0, 0, 0)';
 			ctx.stroke();
+			ctx.closePath();
 			ctx.restore();
 		}
 	}
