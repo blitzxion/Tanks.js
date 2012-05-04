@@ -1431,13 +1431,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
 		{
-			LastEvadeSwitchDate = new Date(); /* regardless of decision, this is what will stick for the cooldown */
-
 			var hitpercent = (HitPoints / Type.HitPoints);
-			if (hitpercent > .15 && hitpercent <= rnd(.15,.45) && Math.random() <= EvadeProb)
+			if (hitpercent > .15 && hitpercent <= rnd(.15,.45)
 			{
-				State = TankStateEnum.EVASIVE_ACTION;
-				return true;
+				LastEvadeSwitchDate = new Date(); /* regardless of decision, this is what will stick for the cooldown */
+
+				if (Math.random() <= EvadeProb)
+				{
+					State = TankStateEnum.EVASIVE_ACTION;
+					return true;
+				}
 			}
 		}
 		return false;
