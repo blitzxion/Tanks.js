@@ -991,7 +991,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					
 					// Need to prevent bases from building so close to the edges!				
 					if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS || 
-						Y > HEIGHT - BASE_HEAL_RADIUS + (DRAW_BANNER_HEIGHT * 2) || Y < BASE_HEAL_RADIUS + (DRAW_BANNER_HEIGHT * 2) )
+						Y > HEIGHT - BASE_HEAL_RADIUS - DRAW_BANNER_HEIGHT || Y < BASE_HEAL_RADIUS + DRAW_BANNER_HEIGHT)
 						Cooldown += 5; // Keep going until you're away from the wall jerks...
 					else
 					{					
@@ -2360,8 +2360,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if (x < BASE_HEAL_RADIUS) x += BASE_HEAL_RADIUS;
 				else if (x > WIDTH - BASE_HEAL_RADIUS) x -= BASE_HEAL_RADIUS;
 
-				if (y < BASE_HEAL_RADIUS + DRAW_BANNER_HEIGHT) y += BASE_HEAL_RADIUS;
-				else if (y > HEIGHT - BASE_HEAL_RADIUS - DRAW_BANNER_HEIGHT) y -= BASE_HEAL_RADIUS;
+				if (y < BASE_HEAL_RADIUS + DRAW_BANNER_HEIGHT) y += BASE_HEAL_RADIUS + DRAW_BANNER_HEIGHT;
+				else if (y > HEIGHT - BASE_HEAL_RADIUS - DRAW_BANNER_HEIGHT) y -= BASE_HEAL_RADIUS - DRAW_BANNER_HEIGHT;
 
 				for (var n in Tanks) {
 					if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
