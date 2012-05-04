@@ -1560,7 +1560,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				ctx.fillStyle = 'rgb(0, 130, 0)'; /* green */
 			ctx.fill();
 			ctx.lineWidth = 1;
-			ctx.strokeStyle = 'rbg(0, 0, 0)';
+			ctx.strokeStyle = 'rgb(0, 0, 0)';
 			ctx.stroke();
 			ctx.restore();
 		}
