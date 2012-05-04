@@ -1617,11 +1617,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				{
 					/* choose a better target if we found one closer/more damaged */
 					if (Target == null || 
-						Tanks[n].isSpecial() || /* kill the mammoth tank! */
 						(This.isPlane() && Type.AntiAircraft && Tanks[n].isPlane()) || /* AA planes should attack other planes... */
 						(Target.isBase() && !Tanks[n].isBase()) ||  /*attack something else if we are targetting a base*/
 						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
-						Tanks[n].HitPoints < Target.HitPoints) /* more damaged */
+						Tanks[n].HitPoints / Tanks[n].getKind().HitPoints < Target.HitPoints / Target.getKind().HitPoints || /* more damaged */
+						Tanks[n].isSpecial() /* kill the mammoth tank! */) 
 					{
 						if (Tanks[n].isPlane() && !Type.AntiAircraft) continue; /* non AA can't kill planes */
 
