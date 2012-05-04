@@ -188,6 +188,7 @@ window.onload = function() {
 		ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 	}
 
+	/* scale X Y points of each unit to the new location based on the resize */
 	window.onresize = function(event) {
 
 		pauseAnimation();
@@ -196,8 +197,18 @@ window.onload = function() {
 		HEIGHTPREV = HEIGHT;
 		WIDTH = window.innerWidth;
 		HEIGHT = window.innerHeight;
-		canvas.width = WIDTH;
-		canvas.height = HEIGHT;
+		
+		if (window.devicePixelRatio)
+		{
+			canvas.width =  WIDTH * window.devicePixelRatio;
+			canvas.height = HEIGHT * window.devicePixelRatio;
+			ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+		}
+		else /* non device, scale normally */
+		{
+			canvas.width = WIDTH;
+			canvas.height = HEIGHT;
+		}
 		
 		var xRatio = WIDTH / WIDTHPREV,
 			yRatio = HEIGHT / HEIGHTPREV;
@@ -522,7 +533,7 @@ TankTypes[8] = {Kind : TankKindEnum.BUILDER,
 TankTypes[9] = {Kind : TankKindEnum.PLANE, 
 				Special : false,
 				AttackingUnit : true, 
-				Prob : 40, 
+				Prob : IS_MOBILE ? 15 : 40, 
 				MoveSpeed : 2.5, 
 				TurnSpeed : .045, 
 				TurretTurnSpeed : .5, 
@@ -547,7 +558,7 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 TankTypes[10] = {Kind : TankKindEnum.PLANE, 
 				Special : false,
 				AttackingUnit : true, 
-				Prob : 40, 
+				Prob : IS_MOBILE ? 15 : 40, 
 				MoveSpeed : 3.5, 
 				TurnSpeed : .24, 
 				TurretTurnSpeed : .15, 
