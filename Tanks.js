@@ -204,7 +204,7 @@ window.onload = function() {
 			canvas.height = HEIGHT * window.devicePixelRatio;
 			canvas.style.width = WIDTH +"px";
 			canvas.style.height = HEIGHT+"px";
-			ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+			//ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 		}
 		else /* non device, scale normally */
 		{
