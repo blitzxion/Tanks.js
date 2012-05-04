@@ -54,8 +54,8 @@ var TankStateEnum = {
 	TARGET_AQUIRED : 2,
 	TARGET_IN_RANGE : 3,
 	CRASH_AND_BURN : 4,
-	EVASIVE_ACTION : 5, // New : Moving units can take evasive actions to retreat and heal
-	STOP : 6 // New : Makes the units stop at their position, can start move again if attacked
+	EVADE : 5, // New : Moving units can take evasive actions to retreat and heal
+	STOP_AND_GUARD : 6 // New : Makes the units stop at their position, can start move again if attacked
 }
 
 var ShotTypeEnum = {
@@ -897,7 +897,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						}
 						if(IN_SPACE) moveForward();
 						break;
-					case TankStateEnum.EVASIVE_ACTION:
+					case TankStateEnum.EVADE:
 						// need to get one of the bases and move to it!
 						var dist = null, prevTargetEvasive = TargetEvasive;
 
@@ -948,10 +948,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							moveForward();
 						}
 						else
-							State = TankStateEnum.STOP; /* sit in base heal radius */
+							State = TankStateEnum.STOP_AND_GUARD; /* sit in base heal radius */
 								
 						break;
-					case TankStateEnum.STOP:
+					case TankStateEnum.STOP_AND_GUARD:
 						
 						// Check their HP. If is over 60%, get back out there and fight!
 						if(this.stopEvading())
@@ -1077,7 +1077,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				{
 					case TankStateEnum.IDLE:
 					case TankStateEnum.MOVE:
-					case TankStateEnum.EVASIVE_ACTION:
+					case TankStateEnum.EVADE:
 						moveForward();
 						if(Math.random() < MOVE_PROB)
 							TargetBaseAngle = 2 * Math.PI * Math.random();
@@ -1389,7 +1389,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.isSpecial = function (){ return Type.Special; }	
 	this.isPlane = function() {return Type.Kind == TankKindEnum.PLANE;};
 	this.isTurret = function() { return Type.Kind == TankKindEnum.TURRET; }
-	this.isEvading = function() { return State === TankStateEnum.EVASIVE_ACTION || State === TankStateEnum.STOP; }
+	this.isEvading = function() { return State === TankStateEnum.EVADE || State === TankStateEnum.STOP_AND_GUARD; }
 	this.getKind = function() { return Type.Kind; }
 	this.getTeam = function() {return Team;};
 	this.getTeamnum = function(){return Teamnum;}
@@ -1442,7 +1442,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 				if (Math.random() <= EvadeProb)
 				{
-					State = TankStateEnum.EVASIVE_ACTION;
+					State = TankStateEnum.EVADE;
 					return true;
 				}
 			}
