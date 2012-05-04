@@ -1545,6 +1545,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	this.drawHPBar = function (ctx, X,Y)
 	{
+		if (this.isEvading())
+		{
+			ctx.save();
+			
+			ctx.fillStyle = 'rgb(219, 37, 13)'; /* bright red */
+			ctx.font = "15pt Arial";
+			ctx.fillText("+",X-10, Y-19 /* above health bar */);
+
+			ctx.restore();
+		}
 		// Hide the HP bar until units health drops.
 		if(HitPoints < Type.HitPoints && HitPoints != 0)
 		{
@@ -1556,9 +1566,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			else
 				ctx.fillStyle = 'rgb(0, 130, 0)'; /* green */
 			ctx.fill();
-			ctx.lineWidth = 1;
-			ctx.strokeStyle = 'rgb(0, 0, 0)';
-			ctx.stroke();
+
+			if (HitPoints > 0) /* make red stand out! */
+			{
+				ctx.lineWidth = 1;
+				ctx.strokeStyle = 'rgb(0, 0, 0)';
+				ctx.stroke();
+			}
 			ctx.closePath();
 			ctx.restore();
 		}
