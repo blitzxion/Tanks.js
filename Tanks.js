@@ -1076,12 +1076,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 									if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 										if(Tanks[n].getTeam() != Team && Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance 
 											&& (Type.AntiAircraft || !Tanks[n].isPlane())) {
-												if (This.isPlane() && Type.AntiAircraft && Tanks[n].isPlane()) /* AA planes should attack other planes... */
+												if (This.isPlane() && Tanks[n].isPlane()) /* AA planes should attack other planes... */
 												{
-													/* get that plane, regardless of the quality */
-													Target = Tanks[n];
-													break;
+													if (Type.AntiAircraft)
+													{
+														/* get that plane, regardless of the quality */
+														Target = Tanks[n];
+														break;
+													}
+													continue;
 												}
+
 												var quality = TargetQualityFunction(Tanks[n]);
 												if(quality > TargetQuality) {
 													TargetQuality = quality;
@@ -1343,6 +1348,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.getRadiusSquared = function() {return Type.Radius * Type.Radius;};
 	this.getX = function() {return X;}
 	this.getY = function() {return Y;}	
+	this.getMoveSpeed = function() {return Type.MoveSpeed; }
+	this.getBaseAngle = function(){return BaseAngle; }
 	this.setX = function(x){X = x; return X;};
 	this.setY = function(y){Y = y; return Y;};
 	this.kill = function(){die();}	
@@ -1576,6 +1583,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
 						Tanks[n].HitPoints < Target.HitPoints) /* more damaged */
 					{
+						if (This.isPlane() && Tanks[n].isPlane() && !Type.AntiAircraft) continue; /* bombers can't kill other bombers */
+
 						Target = Tanks[n];
 						
 						/* don't switch state if we are running away */
@@ -1583,7 +1592,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							State = TankStateEnum.TARGET_AQUIRED;
 
 						if (Target.isSpecial()) break; //ATTACK THAT SPECIAL TANK!
-						if (Type.AntiAircraft && Target.isPlane()) //AA tanks try to attack planes first of all
+
+						if (Type.AntiAircraft && Target.isPlane()) //AA try to attack planes first of all
 							break;
 					}
 				}
@@ -1681,8 +1691,23 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		//Move along current heading:
 		if(Math.abs(TargetBaseAngle - BaseAngle) < MAX_MOVE_ANGLE || Type.Kind == TankKindEnum.PLANE)
 		{
-			X += Type.MoveSpeed * Math.cos(BaseAngle);
-			Y += Type.MoveSpeed * Math.sin(BaseAngle);
+			var movespeed = Type.MoveSpeed;
+
+			if(This.isPlane() && Target != null && Target.isPlane() && Target.getMoveSpeed() < movespeed 
+				&& This.getDistanceSquaredFromPoint(X,Y) < Type.MinRange * Type.MinRange)
+			{
+				/* if the target is within 30* of our angle, slow down so we can attack... otherwise circle around */
+				if(BaseAngle > Target.getBaseAngle() - (Math.PI / 15) && BaseAngle < Target.getBaseAngle() + (Math.PI / 15))
+				{
+					//console.log("going to slow down: " + BaseAngle + " : " + Target.getBaseAngle());
+					movespeed = Target.getMoveSpeed();
+				}
+				//else
+				//	console.log(BaseAngle + " : " + Target.getBaseAngle() + ", " + (Target.getBaseAngle() - (Math.PI / 15)) + " : " + (Target.getBaseAngle() + (Math.PI / 15)));
+			}
+
+			X += movespeed * Math.cos(BaseAngle);
+			Y += movespeed * Math.sin(BaseAngle);
 
 			if (WORLD_WRAP)
 			{
@@ -2511,7 +2536,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		var _teamNum = _randomTeam.getName();
 			
-		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
+		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TankTypes[Math.floor(rnd(9,10))]/*TypeToMake*/, _teamNum);
 		Tanks.add(_NewTank);
 	}
 	
