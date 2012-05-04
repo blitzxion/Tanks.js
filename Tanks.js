@@ -1541,7 +1541,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.drawHPBar = function (ctx, X,Y)
 	{
 		// Hide the HP bar until units health drops.
-		if(HitPoints < Type.HitPoints && Hit != 0)
+		if(HitPoints < Type.HitPoints && HitPoint != 0)
 		{
 			ctx.save();
 			ctx.beginPath();
