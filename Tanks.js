@@ -502,7 +502,7 @@ TankTypes[9] = {Kind : TankKindEnum.PLANE,
 				AttackingUnit : true, 
 				Prob : 40, 
 				MoveSpeed : 2.5, 
-				TurnSpeed : .065, 
+				TurnSpeed : .045, 
 				TurretTurnSpeed : .5, 
 				Radius : 12, 
 				HitPoints : 80, 
@@ -527,7 +527,7 @@ TankTypes[10] = {Kind : TankKindEnum.PLANE,
 				AttackingUnit : true, 
 				Prob : 40, 
 				MoveSpeed : 3.5, 
-				TurnSpeed : .12, 
+				TurnSpeed : .24, 
 				TurretTurnSpeed : .15, 
 				Radius : 12, 
 				HitPoints : 160, 
@@ -692,6 +692,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		Teamnum = teamnum,
 		Type = type,
 		Time = 60,
+		TurnSpeed = rnd(Type.TurnSpeed * .7, Type.TurnSpeed * 1.05), /* 70% - 105% */
+		MoveSpeed = rnd(Type.MoveSpeed * .7, Type.MoveSpeed * 1.05), /* 70% - 105% */
 		HitPoints = Type.HitPoints,
 		Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime,
 		Target = null,
@@ -764,7 +766,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TankTypes[12], Teamnum));
 					Team.resetLastTargetFoundDate();
 				}
-
 
 				if(Team.getScore() < MAX_UNITS_PER_FACTION_ON_MAP)
 				{					
@@ -1346,6 +1347,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.getTeamnum = function(){return Teamnum;}
 	this.getDistanceSquaredFromPoint = function(x, y) {return (X - x) * (X - x) + (Y - y) * (Y - y);};
 	this.getRadiusSquared = function() {return Type.Radius * Type.Radius;};
+	this.getTurnSpeed = function() { return TurnSpeed; };
 	this.getX = function() {return X;}
 	this.getY = function() {return Y;}	
 	this.getMoveSpeed = function() {return Type.MoveSpeed; }
@@ -1358,7 +1360,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		if(State === TankStateEnum.MOVE || State === TankStateEnum.TARGET_AQUIRED || State === TankStateEnum.CRASH_AND_BURN) {
 			if(Math.abs(TargetBaseAngle - BaseAngle) < MAX_MOVE_ANGLE)
-				return Type.MoveSpeed * Math.cos(BaseAngle);
+				return MoveSpeed * Math.cos(BaseAngle);
 			else
 				return 0;
 		} else {
@@ -1370,7 +1372,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 		if(State === TankStateEnum.MOVE || State === TankStateEnum.TARGET_AQUIRED || State === TankStateEnum.CRASH_AND_BURN) {
 			if(Math.abs(TargetBaseAngle - BaseAngle) < MAX_MOVE_ANGLE)
-				return Type.MoveSpeed * Math.sin(BaseAngle);
+				return MoveSpeed * Math.sin(BaseAngle);
 			else
 				return 0;
 		} else {
@@ -1583,7 +1585,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
 						Tanks[n].HitPoints < Target.HitPoints) /* more damaged */
 					{
-						if (This.isPlane() && Tanks[n].isPlane() && !Type.AntiAircraft) continue; /* bombers can't kill other bombers */
+						if (Tanks[n].isPlane() && !Type.AntiAircraft) continue; /* non AA can't kill planes */
 
 						Target = Tanks[n];
 						
@@ -1592,8 +1594,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							State = TankStateEnum.TARGET_AQUIRED;
 
 						if (Target.isSpecial()) break; //ATTACK THAT SPECIAL TANK!
-
-						if (Type.AntiAircraft && Target.isPlane()) //AA try to attack planes first of all
+						else if (Type.AntiAircraft && Target.isPlane()) //AA GO KILL THAT PLANE!
 							break;
 					}
 				}
@@ -1659,6 +1660,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function moveForward()
 	{
+		var turnspeed = TurnSpeed;
+
 		//Find heading towards destination:
 		
 		while(TargetBaseAngle > Math.PI)
@@ -1670,31 +1673,33 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		angleDiff = TargetBaseAngle - BaseAngle;
 		if(Math.abs(angleDiff) > Math.PI) {
 			if(angleDiff > 0)
-				BaseAngle -= Type.TurnSpeed;
+				BaseAngle -= turnspeed;
 			else
-				BaseAngle += Type.TurnSpeed;
+				BaseAngle += turnspeed;
 		} else {
-			if(Math.abs(angleDiff) > Type.TurnSpeed) {
+			if(Math.abs(angleDiff) > turnspeed) {
 				if(angleDiff > 0)
-					BaseAngle += Type.TurnSpeed;
+					BaseAngle += turnspeed;
 				else
-					BaseAngle -= Type.TurnSpeed;
+					BaseAngle -= turnspeed;
 			} else {
 				BaseAngle = TargetBaseAngle;
 			}
 		}
+
 		if(BaseAngle > Math.PI)
-			BaseAngle -=  2 * Math.PI;
+			BaseAngle -= 2 * Math.PI;
 		if(BaseAngle < -Math.PI)
 			BaseAngle += 2 * Math.PI;
 
 		//Move along current heading:
 		if(Math.abs(TargetBaseAngle - BaseAngle) < MAX_MOVE_ANGLE || Type.Kind == TankKindEnum.PLANE)
 		{
-			var movespeed = Type.MoveSpeed;
+			var movespeed = MoveSpeed;
 
 			if(This.isPlane() && Target != null && Target.isPlane() && Target.getMoveSpeed() < movespeed 
-				&& This.getDistanceSquaredFromPoint(X,Y) < Type.MinRange * Type.MinRange)
+				&& This.getDistanceSquaredFromPoint(X,Y) < Type.MinRange * Type.MinRange &&
+				Type.Kind != Target.getKind())
 			{
 				/* if the target is within 30* of our angle, slow down so we can attack... otherwise circle around */
 				if(BaseAngle > Target.getBaseAngle() - (Math.PI / 15) && BaseAngle < Target.getBaseAngle() + (Math.PI / 15))
@@ -1723,19 +1728,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				/* reverse direction if we hit the wall */
 				if(X > WIDTH - MAP_MIN_LOC || X < MAP_MIN_LOC || 
 					Y > HEIGHT - MAP_MIN_LOC - DRAW_BANNER_HEIGHT || Y < MAP_MIN_LOC + DRAW_BANNER_HEIGHT)
-				{				
-					{
-						BaseAngle += Math.PI + rnd(0, Math.PI * .5); /* do a reverse with some random added in */
+				{		
+					BaseAngle += Math.PI + rnd(0, Math.PI * .5); /* do a reverse with some random added in */
 
-						if(X > WIDTH - MAP_MIN_LOC)
-							X = WIDTH - MAP_MIN_LOC;
-						else if(X < MAP_MIN_LOC)
-							X = MAP_MIN_LOC;
-						if(Y > HEIGHT - MAP_MIN_LOC - DRAW_BANNER_HEIGHT)
-							Y = HEIGHT - MAP_MIN_LOC - DRAW_BANNER_HEIGHT;
-						else if(Y < MAP_MIN_LOC + DRAW_BANNER_HEIGHT)
-							Y = MAP_MIN_LOC + DRAW_BANNER_HEIGHT;
-					}
+					if(X > WIDTH - MAP_MIN_LOC)
+						X = WIDTH - MAP_MIN_LOC;
+					else if(X < MAP_MIN_LOC)
+						X = MAP_MIN_LOC;
+					if(Y > HEIGHT - MAP_MIN_LOC - DRAW_BANNER_HEIGHT)
+						Y = HEIGHT - MAP_MIN_LOC - DRAW_BANNER_HEIGHT;
+					else if(Y < MAP_MIN_LOC + DRAW_BANNER_HEIGHT)
+						Y = MAP_MIN_LOC + DRAW_BANNER_HEIGHT;
 				}
 
 			}
@@ -2389,8 +2392,18 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}              
 		return points;            
 	}
-		
-	function rnd(minv, maxv)
+	/**
+	* Returns a random number between min and max
+ 	*/
+	function rnd(min, max)
+	{
+		return Math.random() * (max - min) + min;
+	}
+	/**
+	 * Returns a random integer between min and max
+	 * Using Math.round() will give you a non-uniform distribution!
+	 */
+	function rndInt(minv, maxv)
 	{
 		if (maxv < minv) return 0;
 		return Math.floor(Math.random()*(maxv-minv+1)) + minv;
@@ -2429,7 +2442,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			}
 			else touse = allchars;
 			//pick a random character from the set we are goin to use.
-			c = touse.charAt(rnd(0, touse.length - 1));
+			c = touse.charAt(rndInt(0, touse.length - 1));
 			name = name + c;
 			if (cons.indexOf(c) != -1) consnum++;
 		}
@@ -2520,7 +2533,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	
 	function ClickCreateUnit(X,Y, makeBase)
 	{		
-		var _randomTeam =  Teams[rnd(0,NUM_TEAMS-1)];
+		var _randomTeam =  Teams[rndInt(0,NUM_TEAMS-1)];
 		if(_randomTeam == undefined || _randomTeam == null) return; // bad team huh...
 		
 		var angle = Math.random() * 2 * Math.PI;
@@ -2536,7 +2549,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		var _teamNum = _randomTeam.getName();
 			
-		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TankTypes[Math.floor(rnd(9,10))]/*TypeToMake*/, _teamNum);
+		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
+		//console.log("turn speed: " + _NewTank.getTurnSpeed());
 		Tanks.add(_NewTank);
 	}
 	
