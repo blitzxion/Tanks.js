@@ -42,7 +42,7 @@ var MAX_UNITS_ON_SCREEN = 100,
 	BASE_HEAL_RADIUS	= (IS_MOBILE ? 35 : 65),
 	HEALTH_COOLDOWN		= 100;
 
-console.log(getMAX_UNITS_PER_FACTION_ON_MAP());
+console.log("MAX Units (of all teams): " + getMAX_UNITS_PER_FACTION_ON_MAP());
 
 // DEBUG Stuff
 var DRAW_TARGET_LINE = false,
@@ -264,8 +264,10 @@ var Teams = [],
 		new Color(255, 255, 255)
 	];
 
-for(i=0;i<=NUM_TEAMS-1;i++)
-	Teams[i] = new Team(TeamColors[i],getName(4,7,null,null));
+//create teams
+var currcolor = rndInt(0,TeamColors.length-1); /* gotta set here, not after i in for loop... wtf JS ? */
+for(var i=0; i<=NUM_TEAMS-1; i++, currcolor= (currcolor +1) % TeamColors.length)
+	Teams[i] = new Team(TeamColors[currcolor],getName(4,7,null,null));
 
 var TankTypes = [];
 //Small Tank:
@@ -2316,7 +2318,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		roundStartTime = new Date;
 
 		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
-		console.log(terrainColors[tcIndex].toString());
+		console.log("BG Color: " + terrainColors[tcIndex].toString());
 		IN_SPACE=false;
 		
 		//if(terrainColors[tcIndex].toString() == '0,0,0')
@@ -2394,7 +2396,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				theta2 = alpha * (i+1);
 			
 			points.push({x : (Math.cos(theta) * rad) + cx, y : (Math.sin(theta) * rad) + cy, ex : (Math.cos(theta2) * rad) + cx, ey : (Math.sin(theta2) * rad) + cy});
-	   i+=2;
+	   		i+=2;
 		}              
 		return points;            
 	}
@@ -2412,7 +2414,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function rndInt(minv, maxv)
 	{
 		if (maxv < minv) return 0;
-		return Math.floor(Math.random()*(maxv-minv+1)) + minv;
+		return +Math.floor(Math.random()*(maxv-minv+1)) + minv;
 	}
 	
 	function getName(minlength, maxlength, prefix, suffix)
