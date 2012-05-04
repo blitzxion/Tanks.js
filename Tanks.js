@@ -156,30 +156,6 @@ var ctx = canvas.getContext("2d");
         };
 }());
 
-window.onresize = function(event) {
-
-	pauseAnimation();
-
-	WIDTHPREV = WIDTH;
-	HEIGHTPREV = HEIGHT;
-	WIDTH = window.innerWidth;
-	HEIGHT = window.innerHeight;
-	canvas.width = WIDTH;
-	canvas.height = HEIGHT;
-	
-	var xRatio = WIDTH / WIDTHPREV,
-		yRatio = HEIGHT / HEIGHTPREV;
-
-	for(var n in Tanks)
-		if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
-		{
-			var t = Tanks[n];
-			t.setX(t.getX() * xRatio);	/* adjust every object to a given resize ratio */
-			t.setY(t.getY() * yRatio);
-		}
-
-	animate();
-};
 window.onkeydown = function(event) {
   if(event == null) keyCode = window.event.keyCode; 
   else keyCode = event.keyCode; 
@@ -200,6 +176,46 @@ window.onkeydown = function(event) {
 		break;
   	default: break;
   }
+};
+window.onload = function() { 
+	/* handle retina display:
+	* http://stackoverflow.com/questions/4405710/uiwebview-w-html5-canvas-retina-display
+	*/
+	if (window.devicePixelRatio)
+	{
+		canvas.width =  WIDTH * window.devicePixelRatio;
+		canvas.height = HEIGHT * window.devicePixelRatio;
+		ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+	}
+
+	window.onresize = function(event) {
+
+		pauseAnimation();
+
+		WIDTHPREV = WIDTH;
+		HEIGHTPREV = HEIGHT;
+		WIDTH = window.innerWidth;
+		HEIGHT = window.innerHeight;
+		canvas.width = WIDTH;
+		canvas.height = HEIGHT;
+		
+		var xRatio = WIDTH / WIDTHPREV,
+			yRatio = HEIGHT / HEIGHTPREV;
+
+		for(var n in Tanks)
+			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+			{
+				var t = Tanks[n];
+				t.setX(t.getX() * xRatio);	/* adjust every object to a given resize ratio */
+				t.setY(t.getY() * yRatio);
+			}
+
+		animate();
+	};
+
+	//Start:
+	restart();
+	animate();
 };
 
 canvas.addEventListener('mousemove',function(evt){
@@ -630,10 +646,6 @@ var Bullets = new Set("bulletIndex");
 var Explosions = new Set("explosionIndex");
 var Smokes = new Set("smokeIndex");
 var DebrisSet = new Set("debrisIndex");
-
-//Start:
-restart();
-animate();
 
 console.log("Welcome to Tanks!");
 console.log("Number of Teams Playing: " + NUM_TEAMS);
