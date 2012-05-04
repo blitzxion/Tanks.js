@@ -108,6 +108,7 @@ var WIDTH = window.innerWidth,
 	MOVE_PROB = 0.01,
 	RESTARTING = false,
 	MAX_MOVE_ANGLE = 2,
+	EVADE_SWITCH_COOLDOWN_SECS = 3,
 	MIN_SEPERATION_OF_STARTING_BASES = (BASE_HEAL_RADIUS * 2) + 30,
 	SHELL_DAMAGE_RADIUS = 30,
 	BOMB_DAMAGE_RADIUS = 20,
@@ -703,6 +704,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime,
 		Target = null,
 		TargetEvasive = null,
+		TargetEvasiveLocation = { X: 0, Y:0},
+		LastEvadeSwitchDate = new Date(),
 		Specail = false,
 		BaseAngle = 0,
 		TargetBaseAngle = 0,
@@ -867,8 +870,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						if(IN_SPACE) moveForward();
 						break;
 					case TankStateEnum.EVASIVE_ACTION:
-
-						
 						// need to get one of the bases and move to it!
 						var dist = null;
 						for(var n in Tanks)
@@ -878,6 +879,18 @@ function Tank(x_init, y_init, team, type, teamnum) {
 									/* find closest base */
 									var currDist = Tanks[n].getDistanceSquaredFromPoint(X,Y);
 									if (dist == null || currDist < dist) { 
+										if (Tanks[n] != TargetEvasive)
+										{
+											//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
+											var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS);
+											var ylim = Math.sqrt(BASE_HEAL_RADIUS * BASE_HEAL_RADIUS - xRand * xRand);
+											var yRand = (Math.random() * 2 * ylim - ylim);
+
+											TargetEvasiveLocation.X = Tanks[n].getX() + xRand;
+											TargetEvasiveLocation.Y = Tanks[n].getY() + yRand;
+
+											//console.log("EVASIVE: picking point from " + Tanks[n].getX() + "," + Tanks[n].getY() + "+(" + BASE_HEAL_RADIUS +"): " + TargetEvasiveLocation.X + "," + TargetEvasiveLocation.Y);
+										}
 										TargetEvasive = Tanks[n];
 										dist = currDist;
 									}
@@ -890,37 +903,33 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							this.moveTurretAndAttack();
 						}
 						
-						if (TargetEvasive != null)
+						if (TargetEvasive == null || this.stopEvading())
 						{
-							/* keep moving towards base, we havent finished healing */
-							if((HitPoints / Type.HitPoints) <= rnd(.3,.5))
-							{
-								var TargetEvasiveDistanceSquared = TargetEvasive.getDistanceSquaredFromPoint(X, Y);
-								if(TargetEvasiveDistanceSquared > (BASE_HEAL_RADIUS * BASE_HEAL_RADIUS) - rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS))
-								{
-									TargetBaseAngle = Math.atan2(TargetEvasive.getY() - Y, TargetEvasive.getX() - X);
-									moveForward();
-								}
-								else
-									State = TankStateEnum.STOP;
-							}
-							else State = TankStateEnum.IDLE; /* get out of EVASIVE, random chance */
+							State = TankStateEnum.IDLE; /* no base or we stopped evading ... FIGHT! */
+							return;
+						}
+
+						/* keep moving towards base, we havent finished healing */
+						if (Math.floor(X) != Math.floor(TargetEvasiveLocation.X) || Math.floor(Y) != Math.floor(TargetEvasiveLocation.Y))
+						{
+							TargetBaseAngle = Math.atan2(TargetEvasiveLocation.Y - Y, TargetEvasiveLocation.X - X);
+							moveForward();
 						}
 						else
-							State = TankStateEnum.IDLE; /* no base to run to */
-											
+							State = TankStateEnum.STOP; /* sit in base heal radius */
+								
 						break;
 					case TankStateEnum.STOP:
 						
 						// Check their HP. If is over 60%, get back out there and fight!
-						if((HitPoints / Type.HitPoints) >= rnd(.6,1))
+						if(this.stopEvading())
 							State = TankStateEnum.IDLE;
 						else
 						{
 							/* move randomly in the healing circle */
 							if(false && Math.random() < MOVE_PROB) {
 	
-								if(Math.random() < MOVE_PROB)
+								if(Math.random() < MOVE_PROB && Math.random() < MOVE_PROB) /* pick a new random point */
 									TargetBaseAngle = Math.atan2(TargetEvasive.getY() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - Y, 
 										TargetEvasive.getX() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS) - X)
 								moveForward();
@@ -932,15 +941,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							}
 	
 							findTargets();
-							/* Look for a target to help shoot */							
+							/* Look for a target to help friendlies shoot at */							
 							if(Target != null && !Target.isBase())						
 								this.moveTurretAndAttack();
-							else if(Math.random() < MOVE_PROB)
+
+							/* causes random turret twitching during stop? */
+							/*else if(Math.random() < MOVE_PROB) 
 							{
 								TargetBaseAngle = 2 * Math.PI * Math.random();
 								TargetTurretAngle = TargetBaseAngle;
 								turnTurret();
-							}
+							}*/
 						}
 	
 						break;
@@ -1034,6 +1045,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				{
 					case TankStateEnum.IDLE:
 					case TankStateEnum.MOVE:
+					case TankStateEnum.EVASIVE_ACTION:
 						moveForward();
 						if(Math.random() < MOVE_PROB)
 							TargetBaseAngle = 2 * Math.PI * Math.random();
@@ -1170,7 +1182,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
 					canvasContext.strokeStyle = Team.getColor().getColorString();
 
-					if(Type.Special)
+					if(Type.Special) /* MAMMOTH TANK! */
 					{
 						canvasContext.moveTo(10,0);
 						canvasContext.lineTo(10,5);
@@ -1388,10 +1400,30 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.startEvading = function()
 	{
 		if(State == TankStateEnum.EVASIVE_ACTION) return true;
-		if (CanEvade && (HitPoints / Type.HitPoints) <= rnd(.1,.5) && Math.random() <= EvadeProb)
+		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
 		{
-			State = TankStateEnum.EVASIVE_ACTION;
-			return true;
+			if (CanEvade && (HitPoints / Type.HitPoints) <= rnd(.3,.5) && Math.random() <= EvadeProb)
+			{
+				LastEvadeSwitchDate = new Date();
+				State = TankStateEnum.EVASIVE_ACTION;
+				return true;
+			}
+		}
+		return false;
+	}
+	this.stopEvading = function()
+	{
+		/*tanks go into STOP while healing, so check for that as well */
+		if (State !== TankStateEnum.EVASIVE_ACTION && State !== TankStateEnum.STOP) return true;
+		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
+		{
+			if ((HitPoints / Type.HitPoints) > rnd(.5,1))
+			{
+				LastEvadeSwitchDate = new Date();
+				TargetEvasive = null;
+				State = TankStateEnum.IDLE;
+				return true;
+			}
 		}
 		return false;
 	}
@@ -1410,7 +1442,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(Type.AntiAircraft || !shooter.isPlane()) {
 
 					if (State === TankStateEnum.EVASIVE_ACTION) /* random change to leave evasive */
-						if (Math.random() < EvadeProb) State = TankStateEnum.IDLE;
+						this.stopEvading(); /* will set the state  if it stopped evading */
 
 					if(State != TankStateEnum.EVASIVE_ACTION)
 					{
@@ -1595,7 +1627,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						Target = Tanks[n];
 						
 						/* don't switch state if we are running away */
-						if (State != TankStateEnum.EVASIVE_ACTION)
+						if (State !== TankStateEnum.EVASIVE_ACTION)
 							State = TankStateEnum.TARGET_AQUIRED;
 
 						if (Target.isSpecial()) break; //ATTACK THAT SPECIAL TANK!
