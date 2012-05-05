@@ -895,7 +895,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				//console.log((new Date() - Team.getLastTargetFoundDate()) / 1000);
 
 				/* Divide by 1000 to get seconds */
-				if ((new Date().getTime() - Team.getLastTargetFoundDate().getTime()) / 1000 > 10)
+				if ((new Date().getTime() - Team.getLastTargetFoundDate().getTime()) / 1000 > 5)
 				{
 					var angle = Math.random() * 2 * Math.PI;
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TankTypes[12], Teamnum));
@@ -963,7 +963,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						break;
 					case TankStateEnum.TARGET_AQUIRED:
 
-						Team.resetLastTargetFoundDate();
+						if (!This.isHealer())
+							Team.resetLastTargetFoundDate();
 
 						findTargets(); /* see if there is a better target to fire on*/
 
@@ -1000,7 +1001,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							DestY = Y;
 							Target = null;
 						} else {
-							Team.resetLastTargetFoundDate();
+							if (!This.isHealer())
+								Team.resetLastTargetFoundDate();
+
 							if(Target.getDistanceSquaredFromPoint(X, Y) > Type.AttackDistance * Type.AttackDistance) {
 								State = TankStateEnum.TARGET_AQUIRED;
 							} else {
