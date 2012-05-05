@@ -1042,7 +1042,21 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 						if (prevTargetEvasive != TargetEvasive || TargetEvasive.isHealer())
 						{
-							if (TargetEvasive.isHealer())
+							if (TargetEvasive.isBase())
+							{
+								TargetEvasiveLocation.XOffset = TargetEvasiveLocation.YOffest = 0; /* reset offest used for randomly picking in a healer() */
+
+								//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
+								var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS - 4);
+								var ylim = Math.sqrt((BASE_HEAL_RADIUS - 2) * (BASE_HEAL_RADIUS - 2) - xRand * xRand);
+								var yRand = (Math.random() * 2 * ylim - ylim);
+
+								TargetEvasiveLocation.X = TargetEvasive.getX() + xRand;
+								TargetEvasiveLocation.Y = TargetEvasive.getY() + yRand;
+
+								//console.log("EVASIVE: picking point from " + TargetEvasive.getX() + "," + TargetEvasive.getY() + "+(" + BASE_HEAL_RADIUS +"): " + TargetEvasiveLocation.X + "," + TargetEvasiveLocation.Y);
+							}
+							else
 							{
 								if (TargetEvasiveLocation.XOffset == 0 && TargetEvasiveLocation.YOffest == 0) /* calculate a random point in the healer */
 								{
@@ -1055,26 +1069,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								TargetEvasiveLocation.X = TargetEvasive.getX() + TargetEvasiveLocation.XOffset;
 								TargetEvasiveLocation.Y = TargetEvasive.getY() + TargetEvasiveLocation.YOffest;
 							}
-							else
-							{
-								TargetEvasiveLocation.XOffset = TargetEvasiveLocation.YOffest = 0; /* reset offest used for randomly picking in a healer() */
-
-								//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
-								var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS - 4);
-								var ylim = Math.sqrt((BASE_HEAL_RADIUS - 2) * (BASE_HEAL_RADIUS - 2) - xRand * xRand);
-								var yRand = (Math.random() * 2 * ylim - ylim);
-
-								TargetEvasiveLocation.X = TargetEvasive.getX() + xRand;
-								TargetEvasiveLocation.Y = TargetEvasive.getY() + yRand;
-
-								//console.log("EVASIVE: picking point from " + Tanks[n].getX() + "," + Tanks[n].getY() + "+(" + BASE_HEAL_RADIUS +"): " + TargetEvasiveLocation.X + "," + TargetEvasiveLocation.Y);
-							}
+							
 						}
 
 						/* keep moving towards base, we havent finished healing */
 						if (Math.floor(X) != Math.floor(TargetEvasiveLocation.X) || Math.floor(Y) != Math.floor(TargetEvasiveLocation.Y))
 						{
-                            TargetBaseAngle = this.getAngleFromPoint(TargetEvasive.X, TargetEvasive.Y);
+                            TargetBaseAngle = this.getAngleFromPoint(TargetEvasiveLocation.X, TargetEvasiveLocation.Y);
 							moveForward();
 						}
 						else
