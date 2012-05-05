@@ -33,8 +33,6 @@ var SCORE_TO_WIN = IS_MOBILE ? 2000 : 30000,
 	WORLD_WRAP = true, // AWESOME, when this is off the tanks will bounce on the edges... LEAVE IT ON!
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
-if (IS_MOBILE) WORLD_WRAP = false; /* too small of screen to allow them to wrap around without knowing how to target correctly */
-
 // Important (can be changed from above)
 var MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 80,
 	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE) },
