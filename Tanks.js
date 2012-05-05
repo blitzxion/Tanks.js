@@ -1175,7 +1175,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			};
 			break;
 		case TankKindEnum.BUILDER:
-		Cooldown = 1;
 			this.doStuff = function() {
 				switch (State)
 				{
@@ -1451,6 +1450,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						canvasContext.lineTo(2,0);
 						canvasContext.stroke();
 					}
+					else if(Type.BulletType == ShotTypeEnum.SHELL) /*Artillery*/
+					{
+						canvasContext.beginPath();
+						canvasContext.rect(-9, -8, 28, 16);
+					}
 					else
 					{
 						canvasContext.beginPath();
@@ -1490,6 +1494,19 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.moveTo(0,-2);
 					canvasContext.lineTo(20,-2);
 					canvasContext.lineWidth = 2;
+					canvasContext.stroke();
+				}
+				else if(Type.BulletType == ShotTypeEnum.SHELL) /*Artillery*/
+				{
+					canvasContext.beginPath();
+					canvasContext.rect(-5, -6, 13, 12);
+					canvasContext.fill();
+					canvasContext.stroke();
+
+					canvasContext.beginPath();
+					canvasContext.lineWidth = 3;
+					canvasContext.moveTo(00,0);
+					canvasContext.lineTo(25,0);
 					canvasContext.stroke();
 				}
 				else
@@ -3001,7 +3018,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		var _teamNum = _randomTeam.getName();
 
-		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TankTypes[8], _teamNum);
+		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
 		//console.log("turn speed: " + _NewTank.getTurnSpeed());
 		Tanks.add(_NewTank);
 	}
