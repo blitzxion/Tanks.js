@@ -2404,6 +2404,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			LastTargetFound = new Date();
 
 		this.getColor = function() {return Color;}
+		this.setColor = function(c) { Color = c; }
 		this.getName = function() {return Name;}
 		this.getScore = function() {return Score;}
 		this.getTotalScore = function(){return TotalScore;}
@@ -2706,8 +2707,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				[0, Math.floor(WIDTH / 2), Math.floor(HEIGHT / 2), HEIGHT - DRAW_BANNER_HEIGHT] /* left bottom */
 			];
 
-		for(var i = 0; i < Teams.length; i++) {
+		var currcolor = rndInt(0,TeamColors.length-1); /* gotta set here, not after i in for loop... wtf JS ? */
+		for(var i = 0; i < Teams.length; i++, currcolor= (currcolor +1) % TeamColors.length) {
 			Teams[i].reset();
+			Teams[i].setColor(TeamColors[currcolor]); /* don't use same colors! */
+
 			//MIN_SEPERATION_OF_STARTING_BASES
 			var TooClose = true;
 			var attempts = 0;
