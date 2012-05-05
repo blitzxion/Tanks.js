@@ -2156,6 +2156,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Y += Dy;
 			Time--;
 
+			if (WORLD_WRAP)
+			{
+				if (X > WIDTH) X -= WIDTH; // if you reach the right side
+				else if (X < 0) X += WIDTH; // if you reach the left side
+
+				if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
+				else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT) - 20); // If you reach the top (this works)... set you back at the bottom
+			}
+
 			if(Type === ShotTypeEnum.MISSLE) {
 				Smokes.add(new Smoke(X, Y, 2, 3, 20, 150));
 				Smokes.add(new Smoke((X + LastX) / 2, (Y + LastY) / 2, 1, 3, 20, 150));
@@ -2216,6 +2225,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				}
 			}
 		};
+		this.getAngleFromPoint = function(x, y) {
+	        return getAngleFromPoint(x, y, X, Y);
+	    }
 
 		this.draw = function(canvasContext)
 		{
@@ -2326,6 +2338,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			if(Time-- > 0) {
 				X += Dx;
 				Y += Dy;
+
+				if (WORLD_WRAP)
+				{
+					if (X > WIDTH) X -= WIDTH; // if you reach the right side
+					else if (X < 0) X += WIDTH; // if you reach the left side
+
+					if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
+					else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT) - 20); // If you reach the top (this works)... set you back at the bottom
+				}
+				
 				Smokes.add(new Smoke(X, Y, 1, 7, 15, 150 * (Time / TotalTime)));
 			} else {
 				DebrisSet.remove(This);
