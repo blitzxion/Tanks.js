@@ -895,7 +895,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				//console.log((new Date() - Team.getLastTargetFoundDate()) / 1000);
 
 				/* Divide by 1000 to get seconds */
-				if ((new Date().getTime() - Team.getLastTargetFoundDate().getTime()) / 1000 > 5)
+				if ((new Date().getTime() - Team.getLastTargetFoundDate().getTime()) / 1000 > 10)
 				{
 					var angle = Math.random() * 2 * Math.PI;
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TankTypes[12], Teamnum));
