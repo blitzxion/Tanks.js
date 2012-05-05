@@ -2436,7 +2436,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Taken = 0;
 			Given = 0;
 			UsedTickets = 0;
-			resetLastTargetFoundDate();
+			this.resetLastTargetFoundDate();
 		}
 	}
 
