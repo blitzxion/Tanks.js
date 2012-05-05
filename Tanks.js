@@ -1175,6 +1175,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			};
 			break;
 		case TankKindEnum.BUILDER:
+		Cooldown = 1;
 			this.doStuff = function() {
 				switch (State)
 				{
@@ -1204,19 +1205,32 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				var dontBuild = false;
 				for(var n in Tanks) {
 					if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
-						if(Tanks[n].isBase() && Tanks[n].getDistanceSquaredFromPoint(X, Y) < MIN_BASE_DISTANCE_SQUARE) {
+						// Prevents the builder from building too close to enemies
+						if(Tanks[n].getTeam() != Team && Tanks[n].getDistanceSquaredFromPoint(X, Y) < MIN_BASE_DISTANCE_SQUARE * 60){
+							dontBuild = true;
+							break;
+						}
+
+						// Prevents the builder from building too close to each other (including other team bases)
+						if(Tanks[n].isBase() && Tanks[n].getDistanceSquaredFromPoint(X, Y) < MIN_BASE_DISTANCE_SQUARE * 10) {
 							dontBuild = true;
 							break;
 						}
 					}
 				}
+
+				/* Um, no bases left and i'm the only one? build wherever! */
+				if(GetNumOfType(BaseType,Team) < 1)
+					dontBuild = false; // Build anyways
+
 				if(dontBuild) {
 					Cooldown += 5;
 				} else {
 
 					// Need to prevent bases from building so close to the edges!
 					if(X > WIDTH - BASE_HEAL_RADIUS || X < BASE_HEAL_RADIUS ||
-						Y > HEIGHT - BASE_HEAL_RADIUS - DRAW_BANNER_HEIGHT || Y < BASE_HEAL_RADIUS + DRAW_BANNER_HEIGHT)
+						Y > HEIGHT - BASE_HEAL_RADIUS - DRAW_BANNER_HEIGHT || Y < BASE_HEAL_RADIUS + DRAW_BANNER_HEIGHT
+						)
 						Cooldown += 5; // Keep going until you're away from the wall jerks...
 					else
 					{
@@ -1712,7 +1726,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 			if(HitPoints > 0 && Tanks.contains(shooter)) //Make sure the shooter of this bullet isn't already dead!
 			{
-				if (this.isHealer())
+				if (this.isHealer() || Type.Kind == TankKindEnum.BUILDER)
 				{
 					/* not really sure how to handle this; should the healer instantly reverse directions? if so, it shouldn't go here... */
 
@@ -2987,7 +3001,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		var _teamNum = _randomTeam.getName();
 
-		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
+		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TankTypes[8], _teamNum);
 		//console.log("turn speed: " + _NewTank.getTurnSpeed());
 		Tanks.add(_NewTank);
 	}
