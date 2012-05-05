@@ -181,9 +181,10 @@ window.onkeydown = function(event) {
   }
 };
 
-
+/* IE Hates that this was in onload() and FireFox/Chrome just don't care. */
 canvas = document.getElementById("canvas");
-	ctx = canvas.getContext("2d");
+ctx = canvas.getContext("2d");
+
 window.onload = function() {
 
 	WIDTH = window.innerWidth; /* big bag of WTF on iOS with orientation changes */
@@ -963,6 +964,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		case TankKindEnum.TANK:
 			this.doStuff = function() {
 
+				/* If things need to be done all the time, no matter when, they go here */
+				// If the unit is a healer, throttle the healing attempts
 				if(This.isHealer())
 				{
 					if(HealCooldown > 0)
@@ -973,6 +976,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
 					}
 				}
+
+				// If the unit is a mammoth tank, check and throttle the healing attempts
+				if(This.isSpecial())
+				{
+					if(HealCooldown > 0)
+						HealCooldown--;
+					else
+					{
+						if((HitPoints / Type.HitPoints) < .5)
+						{
+							this.recoverHitPoints(null,This);
+							HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+						}
+					}
+				}
+
 
 				switch (State)
 				{
