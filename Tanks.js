@@ -1462,7 +1462,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					// Turret
 					canvasContext.beginPath();
 					canvasContext.arc(-5, 0, 7,Math.PI / 2,Math.PI / -2,false);
-					canvasContext.moveTo(-5,7);
+					canvasContext.lineTo(-5,7);
 					canvasContext.lineTo(5,4);
 					canvasContext.lineTo(5,-4);
 					canvasContext.lineTo(-5,-7);
