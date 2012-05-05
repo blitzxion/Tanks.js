@@ -2339,6 +2339,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 
 		this.draw = function (canvasContext) {
+			if (IS_MOBILE && getFPS() < FPS_TOO_LOW) return; /* don't show smoke, we are going too slow */
+
 			var TimeRatio = Time / TotalTime;
 			var color = Math.floor(25 + 75 * TimeRatio);
 			var red = Math.floor(Redness * (1 - 4 * TimeRatio));
