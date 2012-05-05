@@ -47,7 +47,7 @@ console.log("MAX Units (of all teams): " + getMAX_UNITS_PER_FACTION_ON_MAP());
 // DEBUG Stuff
 var DRAW_TARGET_LINE = false,
 	DRAW_RANGE_CIRCLE = false,
-	DRAW_DISTANCE_LINE = false;
+	DRAW_DISTANCE_CIRCLE = false;
 
 var TankStateEnum = {
 	IDLE : 0,
@@ -161,12 +161,10 @@ window.onkeydown = function(event) {
 
   switch (keyCode)
   {
-  	// Catch Shift Events
   	case 115:
   	case 83:
-  		DRAW_DISTANCE_LINE = !DRAW_DISTANCE_LINE;
+  		DRAW_DISTANCE_CIRCLE = !DRAW_DISTANCE_CIRCLE;
   		break;
-
   	case 116:
   	case 84: /*T*/
   		DRAW_TARGET_LINE = !DRAW_TARGET_LINE;
@@ -285,6 +283,11 @@ canvas.addEventListener('click', function(evt){
 	if(msX >= (WIDTH-95) && msX <= (WIDTH-75) && msY >= 0 && msY <= DRAW_BANNER_HEIGHT)
 	{
 		DRAW_RANGE_CIRCLE = !DRAW_RANGE_CIRCLE;
+		return;
+	}
+	if(msX >= (WIDTH-120) && msX <= (WIDTH-100) && msY >= 0 && msY <= DRAW_BANNER_HEIGHT)
+	{
+		DRAW_DISTANCE_CIRCLE = ! DRAW_DISTANCE_CIRCLE;
 		return;
 	}
 
@@ -1801,7 +1804,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			canvasContext.closePath();
 		}
 
-		if(DRAW_DISTANCE_LINE)
+		if(DRAW_DISTANCE_CIRCLE)
 		{
 			var pointArray = calcPointsCirc(X, Y, Type.SightDistance,1);
 			canvasContext.beginPath();
@@ -2643,6 +2646,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		ctx.fillText(getFPS() + " fps",WIDTH-65,HEIGHT - 5);
 
 		/* Show Debug Toggles */
+
+		ctx.fillStyle = (!DRAW_DISTANCE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillRect(WIDTH-120,0,20,DRAW_BANNER_HEIGHT);
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillText("S",WIDTH-115,14);
+
 		ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
 		ctx.fillRect(WIDTH-95,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
