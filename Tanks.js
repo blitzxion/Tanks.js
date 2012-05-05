@@ -1630,9 +1630,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if (!this.isEvading()) return true;
 		if ((new Date().getTime() - LastEvadeSwitchDate.getTime()) / 1000 > EVADE_SWITCH_COOLDOWN_SECS)
 		{
-			if ((HitPoints / Type.HitPoints) > rnd(.35,1)) /* less than start evading for random chance of stop evade */
-			{
-				LastEvadeSwitchDate = new Date();
+			LastEvadeSwitchDate = new Date();
+
+			if ((HitPoints / Type.HitPoints) > rnd(.4,1)) /* less than start evading for random chance of stop evade */
+			{	
 				TargetEvasive = null;
 				State = TankStateEnum.IDLE;
 				return true;
