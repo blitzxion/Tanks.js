@@ -1626,7 +1626,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		{
 			LastEvadeSwitchDate = new Date();
 
-			if ((HitPoints / Type.HitPoints) > rnd(.4,1)) /* less than start evading for random chance of stop evade */
+			if ((HitPoints / Type.HitPoints) > rnd(.37,1)) /* less than start evading for random chance of stop evade */
 			{	
 				TargetEvasive = null;
 				State = TankStateEnum.IDLE;
