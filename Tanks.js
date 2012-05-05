@@ -816,6 +816,31 @@ function Set(indexName)
 		delete this[item[IndexName]];
 		delete item[IndexName];
 	};
+
+	// http://www.tutorialspoint.com/javascript/array_filter.htm
+	this.filter = function(fun /*, thisp*/)
+	{
+		var len = 0;
+		for(var n in this)
+			if(this.contains(this[n]))
+				len++;
+		
+		if (typeof fun != "function")
+			throw new TypeError();
+
+		var res = new Array();
+		var thisp = arguments[1];
+		for (var i = 0; i < len; i++)
+			if (i in this)
+			{
+				var val = this[i]; // in case fun mutates this
+				if (fun.call(thisp, val, i, this))
+					res.push(val);
+			}
+
+		return res;
+	}
+
 }
 
 //----- Tank class -----
@@ -919,6 +944,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						if (GetNumOfType(TankTypes[6]) + GetNumOfType(TankTypes[7],Team) >= getMAX_BASE_DEFENSES()) return; // Maxed out defenses!
 
 					if(TypeToMake.Special && GetNumOfSpecials() >= getMAX_SPECIAL_UNITS()) return;
+
+					/* Checking if there are any other units out there before building a healer tank. */
+					if(TypeToMake.Kind == TankKindEnum.TANK && TypeToMake.BulletType == ShotTypeEnum.HEAL 
+						&& Tanks.filter(function(element,index,array){if(element.getTeam()==team&&element.isAttacker())return element;}) <= 0)
+							return;
 
 					var angle = Math.random() * 2 * Math.PI;
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TypeToMake, teamnum));
@@ -1543,6 +1573,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.isTurret = function() { return Type.Kind == TankKindEnum.TURRET; }
 	this.isHealer = function(){return Type.BulletType == ShotTypeEnum.HEAL;};
 	this.isEvading = function() { return State === TankStateEnum.EVADE || State === TankStateEnum.STOP_AND_GUARD; }
+	this.isAttacker = function(){return Type.AttackingUnit;}
 	this.getKind = function() { return Type.Kind; }
 	this.getTeam = function() {return Team;};
 	this.getTeamnum = function(){return Teamnum;}
