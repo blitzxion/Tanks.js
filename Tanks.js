@@ -272,7 +272,7 @@ canvas.addEventListener('click', function(evt){
 		msX = mousePos.x,
 		msY = mousePos.y;
 
-	console.log(msX + "," + msY);
+	//console.log(msX + "," + msY);
 
 	// This is where the GOD_MODE button is located.
 	if(msX >= (WIDTH-45) && msX <= (WIDTH-5) && msY >= 0 && msY <= DRAW_BANNER_HEIGHT){GOD_MODE = !GOD_MODE;	return;}
@@ -2718,7 +2718,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 			var winnerText = "";
 			if (IS_MOBILE) winnerText = "Won Last Round";
-			else winnerText = "Won Last Round (Units: " + lastwinner.score + " Given: " + lastwinner.given + ")";
+			else winnerText = "Won Last Round (Units: " + lastwinner.totalscore + " Given: " + lastwinner.given + ")";
 
 			if (ctx.measureText(winnerText).width < WIDTH - padding - 65/*fps*/)
 			{
@@ -2780,7 +2780,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		roundStartTime = new Date;
 
 		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
-		console.log("BG Color: " + terrainColors[tcIndex].toString());
+		//console.log("BG Color: " + terrainColors[tcIndex].toString());
 		IN_SPACE=false;
 
 		//if(terrainColors[tcIndex].toString() == '0,0,0')
@@ -2963,12 +2963,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		for(var i=0;i<TeamInfo.length;i++)
 		{
+			if(TeamInfo[i].score == 0) continue; // If you have no score left, you lost...
+
 			if(TeamInfo[i].given == _highGiven || TeamInfo[i].score == _highScore)
 			{
 				WINNING_TEAMS.push(TeamInfo[i]);
 				break;
 			}
 		}
+		
 	}
 
 	function getFPS(){ return (1000/frameTime).toFixed(1); }
