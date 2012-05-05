@@ -2216,6 +2216,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				}
 			}
 		};
+		this.getAngleFromPoint = function(x, y) {
+	        return getAngleFromPoint(x, y, X, Y);
+	    }
 
 		this.draw = function(canvasContext)
 		{
