@@ -34,12 +34,12 @@ var SCORE_TO_WIN = IS_MOBILE ? 2000 : 30000,
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Important (can be changed from above)
-var MAX_UNITS_ON_SCREEN = 80,
-	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return IS_MOBILE ? 5 : Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE) },
+var MAX_UNITS_ON_SCREEN = IS_MOBILE ? 15 : 80,
+	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE) },
 	getMAX_BASE_UNITS		        = function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1)) }, 		/* 10% can be bases */
 	getMAX_BASE_DEFENSES			= function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .3)) }, 		/* 30% can be defenses */
 	getMAX_SPECIAL_UNITS			= function() { var max = Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1) / 2); if (max <1) return 1; return max; },
-	BASE_HEAL_RADIUS	= (IS_MOBILE ? 35 : 65),
+	BASE_HEAL_RADIUS	= (IS_MOBILE ? 45 : 65),
 	HEALTH_COOLDOWN		= 100;
 
 console.log("MAX Units (of all teams): " + getMAX_UNITS_PER_FACTION_ON_MAP());
