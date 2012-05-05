@@ -1819,9 +1819,30 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		if(DRAW_TARGET_LINE && Target != null && Tanks.contains(Target))
 		{
+			var x = Target.getX(), y = Target.getY(),
+				dx = X - x, dy = Y - y,
+				w2 = WIDTH * 0.5,
+				h2 = HEIGHT * 0.5,
+				wrap = false;;
+
+			if (dx < -w2) {
+				x -= WIDTH;
+				wrap = true;
+			} else if (dx > w2) {
+				x += WIDTH;
+				wrap = true;
+			}
+			if (dy < -h2) {
+				y -= HEIGHT;
+				wrap = true;
+			} else if (dy > h2) {
+				y += HEIGHT;
+				wrap = true;
+			}
+
 			canvasContext.beginPath();
 			canvasContext.moveTo(X, Y);
-			canvasContext.lineTo(Target.getX(), Target.getY());
+			canvasContext.lineTo(x, y);
 			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
 			canvasContext.stroke();
 			canvasContext.closePath();
@@ -2347,7 +2368,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
 					else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT) - 20); // If you reach the top (this works)... set you back at the bottom
 				}
-				
+
 				Smokes.add(new Smoke(X, Y, 1, 7, 15, 150 * (Time / TotalTime)));
 			} else {
 				DebrisSet.remove(This);
