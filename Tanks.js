@@ -2226,7 +2226,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if(Type.BulletType == ShotTypeEnum.HEAL)return;
 
 		if(Cooldown <= 0) {
-			if(TurretAngle === TargetTurretAngle || Type.BulletType === ShotTypeEnum.MISSLE) {
+			if(TurretAngle === TargetTurretAngle || 
+				TurretAngle < (TargetTurretAngle - (Math.PI / 22.5)) && TurretAngle > (Target.getBaseAngle() + (Math.PI / 22.5)) // Makes sure we can hit the target 30* from firing
+				)
+			{
 				var speed = Type.BulletSpeed;
 				if(Type.BulletType === ShotTypeEnum.SHELL) {
 					speed = (0.95 + Math.random() * .1) * (Math.sqrt(Target.getDistanceSquaredFromPoint(X, Y)) - Type.BarrelLength) / Type.BulletTime;
