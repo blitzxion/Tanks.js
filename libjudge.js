@@ -40,6 +40,9 @@ V2.scale = function V2_scale(a, k, r) {
     r[1] = k * a[1];
     return r;
 }
+V2.dot = function(a, b) {
+    return a[0] * b[0] + a[1] * b[1];
+}
 V2.lengthSquared = function V2_lengthSquared(a) {
     return a[0] * a[0] + a[1] * a[1];
 }
