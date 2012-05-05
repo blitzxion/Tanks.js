@@ -46,7 +46,8 @@ console.log("MAX Units (of all teams): " + getMAX_UNITS_PER_FACTION_ON_MAP());
 
 // DEBUG Stuff
 var DRAW_TARGET_LINE = false,
-	DRAW_RANGE_CIRCLE = false;
+	DRAW_RANGE_CIRCLE = false,
+	DRAW_DISTANCE_LINE = false;
 
 var TankStateEnum = {
 	IDLE : 0,
@@ -163,6 +164,12 @@ window.onkeydown = function(event) {
 
   switch (keyCode)
   {
+  	// Catch Shift Events
+  	case 115:
+  	case 83:
+  		DRAW_DISTANCE_LINE = !DRAW_DISTANCE_LINE;
+  		break;
+
   	case 116:
   	case 84: /*T*/
   		DRAW_TARGET_LINE = !DRAW_TARGET_LINE;
@@ -1743,6 +1750,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
+
+		if(DRAW_DISTANCE_LINE)
+		{
+			var pointArray = calcPointsCirc(X, Y, Type.SightDistance,1);
+			canvasContext.beginPath();
+			canvasContext.arc(X, Y, Type.SightDistance, 0, 2 * Math.PI, false)
+			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.2);
+			canvasContext.stroke();
+			canvasContext.closePath();
+		}
 		
 		if(DRAW_TARGET_LINE && Target != null && Tanks.contains(Target))
 		{
@@ -2034,7 +2051,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function attack()
 	{
 		if(Type.BulletType == ShotTypeEnum.HEAL)return;
-		
+
 		if(Cooldown <= 0) {
 			if(TurretAngle === TargetTurretAngle || Type.BulletType === ShotTypeEnum.MISSLE) {
 				var speed = Type.BulletSpeed;
