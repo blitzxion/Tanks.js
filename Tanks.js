@@ -1820,8 +1820,37 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		if(DRAW_TARGET_LINE && Target != null && Tanks.contains(Target))
 		{
 			canvasContext.beginPath();
+
 			canvasContext.moveTo(X, Y);
-			canvasContext.lineTo(Target.getX(), Target.getY());
+
+			if (WORLD_WRAP)
+			{
+				var x = Target.getX(), y = Target.getY();
+				var dx = x - X,
+		            dy = y - Y,
+		            w2 = WIDTH * 0.5,
+		            h2 = HEIGHT * 0.5;
+
+		        var x2 = x, y2 = y;
+
+		        if (dx < -w2) x2 = x + WIDTH;
+		        if (dx > w2)  x2 = x - WIDTH;
+		        if (dy < -h2) y2 = y + HEIGHT;
+		        if (dy > h2)  y2 = y - HEIGHT;
+
+		        /* if line cuts through edge of world we need to draw two lines on each side of screen to simulate
+		        *  target wrapping.  law of sines to figure out what the lines will be (creating triangles) */
+		        if (x == x2 && y == y2) canvasContext.lineTo(x, y);
+		        else
+		        {
+		        	canvasContext.lineTo(x2, y2);
+		        	var degrees = getAngleFromPoint(x2,y2,X,Y)/(Math.PI/180) + 180;
+		        	//var xdist = 
+		        }
+			}
+			else
+				canvasContext.lineTo(Target.getX(), Target.getY());
+
 			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
 			canvasContext.stroke();
 			canvasContext.closePath();
@@ -2347,7 +2376,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
 					else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT) - 20); // If you reach the top (this works)... set you back at the bottom
 				}
-				
+
 				Smokes.add(new Smoke(X, Y, 1, 7, 15, 150 * (Time / TotalTime)));
 			} else {
 				DebrisSet.remove(This);
