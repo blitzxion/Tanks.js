@@ -1453,7 +1453,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 				canvasContext.fill();
 				canvasContext.restore();
-				this.doDebug(canvasContext);
+				this.drawDebugExtras(canvasContext);
 
 				if(Type.BulletType == ShotTypeEnum.HEAL)
 					this.drawCircle(canvasContext,Type.AttackRange,.1);
@@ -1534,7 +1534,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fill();
 				canvasContext.stroke();
 				canvasContext.restore();
-				this.doDebug(canvasContext);
+				this.drawDebugExtras(canvasContext);
 
 				this.drawHPBar(canvasContext,X,Y);
 			}
@@ -1794,7 +1794,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		canvasContext.closePath();
 	}
 
-	this.doDebug = function(canvasContext)
+	this.drawDebugExtras = function(canvasContext)
 	{
 		// Draw ATTACK RANGE Circle
 		if(DRAW_RANGE_CIRCLE)
