@@ -1089,21 +1089,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							State = TankStateEnum.IDLE;
 						else
 						{
-							/* move randomly in the healing circle */
-							if(false && Math.random() < MOVE_PROB) {
-
-                                /* pick a new random point */
-								if(Math.random() < MOVE_PROB && Math.random() < MOVE_PROB) {
-                                    TargetBaseAngle = this.getAngleFromPoint(
-                                        TargetEvasive.getX() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS),
-                                        TargetEvasive.getY() + rnd(-1 * BASE_HEAL_RADIUS, BASE_HEAL_RADIUS));
-                                }
+							/* ensure we are still at our heal spot */
+							if (Math.floor(X) != Math.floor(TargetEvasiveLocation.X) || Math.floor(Y) != Math.floor(TargetEvasiveLocation.Y))
+							{
+	                            TargetBaseAngle = this.getAngleFromPoint(TargetEvasiveLocation.X, TargetEvasiveLocation.Y);
 								moveForward();
-
-								/* moved outside of circle randomly, get back into fight! */
-								if (X > TargetEvasive.X + BASE_HEAL_RADIUS || X < TargetEvasive.X - BASE_HEAL_RADIUS ||
-									Y > TargetEvasive.Y + BASE_HEAL_RADIUS || Y < TargetEvasive.Y - BASE_HEAL_RADIUS)
-									State = TankStateEnum.IDLE;
 							}
 
 							findTargets();
