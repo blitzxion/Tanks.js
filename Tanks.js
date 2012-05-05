@@ -2265,7 +2265,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		{
 			canvasContext.beginPath();
 			canvasContext.fillStyle = "rgb(255, 255,0)";
-			canvasContext.fillRect (X - .5, Y -.5, 1.5, 1.5);
+			canvasContext.fillRect (X, Y, 1.5, 1.5);
+			canvasContext.fillStyle = "rgb(10, 10,0)";
+			canvasContext.fillRect (X + 1, Y +1, 1.5, 1.5);
 		};
 
 		//Private:
