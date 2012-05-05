@@ -123,10 +123,7 @@ var WIDTH = window.innerWidth,
 //////////
 // Init //
 //////////
-var canvas = document.getElementById("canvas");
-canvas.width = WIDTH;
-canvas.height = HEIGHT;
-var ctx = canvas.getContext("2d");
+var canvas, ctx;
 
 /* shim to allow us to use request animation frame intelligently for max FPS and no painting when tab isn't active...
 * http://paulirish.com/2011/requestanimationframe-for-smart-animating/
@@ -179,16 +176,31 @@ window.onkeydown = function(event) {
   }
 };
 window.onload = function() { 
+	canvas = document.getElementById("canvas");
+	ctx = canvas.getContext("2d");
+
+	WIDTH = window.innerWidth; /* big bag of WTF on iOS with orientation changes */
+	HEIGHT = window.innerHeight; /* stable on iOS */
+
 	/* handle retina display:
 	* http://stackoverflow.com/questions/4405710/uiwebview-w-html5-canvas-retina-display
 	*/
 	if (window.devicePixelRatio && window.devicePixelRatio > 1)
 	{
 		/* http://tripleodeon.com/2011/12/first-understand-your-screen/ */
-		WIDTH = window.outerWidth; /* bug in iOS/mobile devices not reporting correct portrait width */
+		/* Don't USE: *///WIDTH = window.outerWidth; /* bug in iOS/mobile devices not reporting correct portrait width */
+		canvas.style.width = WIDTH +"px";
+		canvas.style.height = HEIGHT+"px";
 		canvas.width =  WIDTH * window.devicePixelRatio;
 		canvas.height = HEIGHT * window.devicePixelRatio;
 		ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+	}
+	else
+	{
+		canvas.style.width = WIDTH +"px";
+		canvas.style.height = HEIGHT+"px";
+		canvas.width = WIDTH;
+		canvas.height = HEIGHT;
 	}
 
 	/* scale X Y points of each unit to the new location based on the resize */
@@ -203,7 +215,7 @@ window.onload = function() {
 		
 		if (window.devicePixelRatio && window.devicePixelRatio > 1)
 		{
-			WIDTH = window.outerWidth; /* bug in iOS/mobile devices not reporting correct portrait width */
+			/* Don't USE: *///WIDTH = window.outerWidth; /* bug in iOS/mobile devices not reporting correct portrait width */
 			canvas.width =  WIDTH * window.devicePixelRatio;
 			canvas.height = HEIGHT * window.devicePixelRatio;
 			canvas.style.width = WIDTH +"px";
@@ -212,6 +224,8 @@ window.onload = function() {
 		}
 		else /* non device, scale normally */
 		{
+			canvas.style.width = WIDTH +"px";
+			canvas.style.height = HEIGHT+"px";
 			canvas.width = WIDTH;
 			canvas.height = HEIGHT;
 		}
