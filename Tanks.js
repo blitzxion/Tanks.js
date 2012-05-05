@@ -1000,6 +1000,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 							DestY = Y;
 							Target = null;
 						} else {
+							Team.resetLastTargetFoundDate();
 							if(Target.getDistanceSquaredFromPoint(X, Y) > Type.AttackDistance * Type.AttackDistance) {
 								State = TankStateEnum.TARGET_AQUIRED;
 							} else {
@@ -2435,6 +2436,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Taken = 0;
 			Given = 0;
 			UsedTickets = 0;
+			resetLastTargetFoundDate();
 		}
 	}
 
