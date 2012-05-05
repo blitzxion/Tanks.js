@@ -63,7 +63,8 @@ var ShotTypeEnum = {
 	BULLET : 1,
 	SHELL  : 2,
 	MISSLE : 3,
-	BOMB   : 4
+	BOMB   : 4,
+	HEAL   : 5
 }
 
 var TankKindEnum = {
@@ -304,354 +305,413 @@ for(var i=0; i<=NUM_TEAMS-1; i++, currcolor= (currcolor +1) % TeamColors.length)
 
 var TankTypes = [];
 //Small Tank:
-TankTypes[0] = {Kind : TankKindEnum.TANK, 
-				Special : false,
-				AttackingUnit :  true, 
-				Prob : 120, 
-				MoveSpeed : 1.4, 
-				TurnSpeed : .18, 
-				TurretTurnSpeed : .19, 
-				Radius : 10, 
-				HitPoints : 30, 
-				CooldownTime :  25,
-				MinRange : 10, 
-				AttackDistance : 100, 
-				AttackRange : 125, 
-				SightDistance : 200, 
-				BulletType : ShotTypeEnum.BULLET,
-				BulletTime : 30, 
-				BulletSpeed : 6, 
-				BulletDamage : 3, 
-				TurretSize : 5, 
-				BarrelLength : 10,
-				DoubleTurret : false,
-				AntiAircraft : false,
-				CanGoEvasive : true,
-				EvaProb : .25};
+TankTypes[0] = {
+	Kind : TankKindEnum.TANK, 
+	Special : false,
+	AttackingUnit :  true, 
+	Prob : 120, 
+	MoveSpeed : 1.4, 
+	TurnSpeed : .18, 
+	TurretTurnSpeed : .19, 
+	Radius : 10, 
+	HitPoints : 30, 
+	CooldownTime :  25,
+	MinRange : 10, 
+	AttackDistance : 100, 
+	AttackRange : 125, 
+	SightDistance : 200, 
+	BulletType : ShotTypeEnum.BULLET,
+	BulletTime : 30, 
+	BulletSpeed : 6, 
+	BulletDamage : 3, 
+	TurretSize : 5, 
+	BarrelLength : 10,
+	DoubleTurret : false,
+	AntiAircraft : false,
+	CanGoEvasive : true,
+	EvaProb : .25
+};
+
 //Medium Tank
-TankTypes[1] = {Kind : TankKindEnum.TANK, 
-				Special : false,
-				AttackingUnit :  true, 
-				Prob : 120, 
-				MoveSpeed : 1.0, 
-				TurnSpeed : .13, 
-				TurretTurnSpeed : .16, 
-				Radius : 10, 
-				HitPoints : 50, 
-				CooldownTime : 35, 
-				MinRange : 25, 
-				AttackDistance : 115, 
-				AttackRange : 140, 
-				SightDistance : 200, 
-				BulletType : ShotTypeEnum.BULLET,
-				BulletTime : 34, 
-				BulletSpeed : 6, 
-				BulletDamage : 4, 
-				TurretSize : 6, 
-				BarrelLength : 12,
-				DoubleTurret : false,
-				AntiAircraft : false,
-				CanGoEvasive : true,
-				EvaProb : .25};
+TankTypes[1] = {
+	Kind : TankKindEnum.TANK, 
+	Special : false,
+	AttackingUnit :  true, 
+	Prob : 120, 
+	MoveSpeed : 1.0, 
+	TurnSpeed : .13, 
+	TurretTurnSpeed : .16, 
+	Radius : 10, 
+	HitPoints : 50, 
+	CooldownTime : 35, 
+	MinRange : 25, 
+	AttackDistance : 115, 
+	AttackRange : 140, 
+	SightDistance : 200, 
+	BulletType : ShotTypeEnum.BULLET,
+	BulletTime : 34, 
+	BulletSpeed : 6, 
+	BulletDamage : 4, 
+	TurretSize : 6, 
+	BarrelLength : 12,
+	DoubleTurret : false,
+	AntiAircraft : false,
+	CanGoEvasive : true,
+	EvaProb : .25
+};
+
 //Large Tank
-TankTypes[2] = {Kind : TankKindEnum.TANK, 
-				Special : false,
-				AttackingUnit : true,
-				Prob : 120,
-				MoveSpeed : 0.8, 
-				TurnSpeed : .09, 
-				TurretTurnSpeed : .14,
-				Radius : 10, 
-				HitPoints : 75,
-				CooldownTime : 50, 
-				MinRange : 25, 
-				AttackDistance : 130, 
-				AttackRange : 155, 
-				SightDistance : 200, 
-				BulletType : ShotTypeEnum.BULLET,
-				BulletTime : 38, 
-				BulletSpeed : 6, 
-				BulletDamage : 6, 
-				TurretSize : 7,
-				BarrelLength : 14,
-				DoubleTurret : false,
-				AntiAircraft : false,
-				CanGoEvasive : true,
-				EvaProb : .25};
+TankTypes[2] = {
+	Kind : TankKindEnum.TANK, 
+	Special : false,
+	AttackingUnit : true,
+	Prob : 120,
+	MoveSpeed : 0.8, 
+	TurnSpeed : .09, 
+	TurretTurnSpeed : .14,
+	Radius : 10, 
+	HitPoints : 75,
+	CooldownTime : 50, 
+	MinRange : 25, 
+	AttackDistance : 130, 
+	AttackRange : 155, 
+	SightDistance : 200, 
+	BulletType : ShotTypeEnum.BULLET,
+	BulletTime : 38, 
+	BulletSpeed : 6, 
+	BulletDamage : 6, 
+	TurretSize : 7,
+	BarrelLength : 14,
+	DoubleTurret : false,
+	AntiAircraft : false,
+	CanGoEvasive : true,
+	EvaProb : .25
+};
+
 //Artillery
-TankTypes[3] = {Kind : TankKindEnum.TANK, 
-				Special : false,
-				AttackingUnit : true, 
-				Prob : 60, 
-				MoveSpeed : 0.9, 
-				TurnSpeed : .07, 
-				TurretTurnSpeed : 0.12, 
-				Radius : 10, 
-				HitPoints : 25, 
-				CooldownTime : 75, 
-				MinRange : 50, 
-				AttackDistance : 175,
-				AttackRange : 180,
-				SightDistance : 180, 
-				BulletType : ShotTypeEnum.SHELL,
-				BulletTime :  41, 
-				BulletSpeed : 4, 
-				BulletDamage : 15, 
-				TurretSize : 0, 
-				BarrelLength :  16,
-				DoubleTurret : false,
-				AntiAircraft : false,
-				CanGoEvasive : true,
-				EvaProb : .25};
+TankTypes[3] = {
+	Kind : TankKindEnum.TANK, 
+	Special : false,
+	AttackingUnit : true, 
+	Prob : 60, 
+	MoveSpeed : 0.9, 
+	TurnSpeed : .07, 
+	TurretTurnSpeed : 0.12, 
+	Radius : 10, 
+	HitPoints : 25, 
+	CooldownTime : 75, 
+	MinRange : 50, 
+	AttackDistance : 175,
+	AttackRange : 180,
+	SightDistance : 180, 
+	BulletType : ShotTypeEnum.SHELL,
+	BulletTime :  41, 
+	BulletSpeed : 4, 
+	BulletDamage : 15, 
+	TurretSize : 0, 
+	BarrelLength :  16,
+	DoubleTurret : false,
+	AntiAircraft : false,
+	CanGoEvasive : true,
+	EvaProb : .25
+};
+
 //Double Tank
-TankTypes[4] = {Kind : TankKindEnum.TANK,
-				Special : false,
-				AttackingUnit : true,
-				Prob : 80,
-				MoveSpeed : 0.7,
-				TurnSpeed : .07, 
-				TurretTurnSpeed : 0.12, 
-				Radius : 10, 
-				HitPoints : 85, 
-				CooldownTime : 70,
-				MinRange : 25,
-				AttackDistance : 130,
-				AttackRange : 155,
-				SightDistance : 200,
-				BulletType : ShotTypeEnum.BULLET,
-				BulletTime : 42, 
-				BulletSpeed : 6, 
-				BulletDamage : 5,
-				TurretSize : 7,
-				BarrelLength : 14,
-				DoubleTurret : true,
-				TurretSeparation : 1.25,
-				AntiAircraft : false,
-				CanGoEvasive : true,
-				EvaProb : .25};
+TankTypes[4] = {
+	Kind : TankKindEnum.TANK,
+	Special : false,
+	AttackingUnit : true,
+	Prob : 80,
+	MoveSpeed : 0.7,
+	TurnSpeed : .07, 
+	TurretTurnSpeed : 0.12, 
+	Radius : 10, 
+	HitPoints : 85, 
+	CooldownTime : 70,
+	MinRange : 25,
+	AttackDistance : 130,
+	AttackRange : 155,
+	SightDistance : 200,
+	BulletType : ShotTypeEnum.BULLET,
+	BulletTime : 42, 
+	BulletSpeed : 6, 
+	BulletDamage : 5,
+	TurretSize : 7,
+	BarrelLength : 14,
+	DoubleTurret : true,
+	TurretSeparation : 1.25,
+	AntiAircraft : false,
+	CanGoEvasive : true,
+	EvaProb : .25
+};
 
 //Missle Launcher
-TankTypes[5] = {Kind : TankKindEnum.TANK,
-				Special : false,
-				AttackingUnit : true,
-				Prob : 90,
-				MoveSpeed : 1.0,
-				TurnSpeed : .07, 
-				TurretTurnSpeed : 0.13, 
-				Radius : 10, 
-				HitPoints : 35, 
-				CooldownTime : 70,
-				MinRange : 25,
-				AttackDistance : 130,
-				AttackRange : 155,
-				SightDistance : 200,
-				BulletType : ShotTypeEnum.MISSLE,
-				BulletTime : 40, 
-				BulletSpeed : 6, 
-				BulletDamage : 8,
-				TurretSize : 0,
-				BarrelLength : 5,
-				DoubleTurret : true,
-				TurretSeparation : 2.5,
-				AntiAircraft : true,
-				CanGoEvasive : true,
-				EvaProb : .7
-				};
+TankTypes[5] = {
+	Kind : TankKindEnum.TANK,
+	Special : false,
+	AttackingUnit : true,
+	Prob : 90,
+	MoveSpeed : 1.0,
+	TurnSpeed : .07, 
+	TurretTurnSpeed : 0.13, 
+	Radius : 10, 
+	HitPoints : 35, 
+	CooldownTime : 70,
+	MinRange : 25,
+	AttackDistance : 130,
+	AttackRange : 155,
+	SightDistance : 200,
+	BulletType : ShotTypeEnum.MISSLE,
+	BulletTime : 40, 
+	BulletSpeed : 6, 
+	BulletDamage : 8,
+	TurretSize : 0,
+	BarrelLength : 5,
+	DoubleTurret : true,
+	TurretSeparation : 2.5,
+	AntiAircraft : true,
+	CanGoEvasive : true,
+	EvaProb : .7
+};
+
 //Turret
-TankTypes[6] = {Kind : TankKindEnum.TURRET,
-				Special : false,
-				AttackingUnit : true,
-				Prob : 40,
-				MoveSpeed : 0,
-				TurnSpeed : 0, 
-				TurretTurnSpeed : 0.16, 
-				Radius : 7, 
-				HitPoints : 200, 
-				CooldownTime : 25,
-				MinRange : 10,
-				AttackDistance : 150,
-				AttackRange : 150,
-				SightDistance : 150,
-				BulletType : ShotTypeEnum.BULLET,
-				BulletTime : 30, 
-				BulletSpeed : 6, 
-				BulletDamage : 4,
-				TurretSize : 6,
-				BarrelLength : 12,
-				DoubleTurret : false,
-				AntiAircraft : false,
-				CanGoEvasive : false,
-				EvaProb : 0};				
+TankTypes[6] = {
+	Kind : TankKindEnum.TURRET,
+	Special : false,
+	AttackingUnit : true,
+	Prob : 40,
+	MoveSpeed : 0,
+	TurnSpeed : 0, 
+	TurretTurnSpeed : 0.16, 
+	Radius : 7, 
+	HitPoints : 200, 
+	CooldownTime : 25,
+	MinRange : 10,
+	AttackDistance : 150,
+	AttackRange : 150,
+	SightDistance : 150,
+	BulletType : ShotTypeEnum.BULLET,
+	BulletTime : 30, 
+	BulletSpeed : 6, 
+	BulletDamage : 4,
+	TurretSize : 6,
+	BarrelLength : 12,
+	DoubleTurret : false,
+	AntiAircraft : false,
+	CanGoEvasive : false,
+	EvaProb : 0
+};
+
 //AA Turret
-TankTypes[7] = {Kind : TankKindEnum.TURRET,
-				Special : false,
-				AttackingUnit : true,
-				Prob : 70,
-				MoveSpeed : 0,
-				TurnSpeed : 0, 
-				TurretTurnSpeed : 0.14, 
-				Radius : 7, 
-				HitPoints : 45, 
-				CooldownTime : 7,
-				MinRange : 10,
-				AttackDistance : 130, //130
-				AttackRange : 130, //130
-				SightDistance : 130, //130
-				BulletType : ShotTypeEnum.BULLET,
-				BulletTime : 30, 
-				BulletSpeed : 10, 
-				BulletDamage : 1,
-				TurretSize : 4,
-				BarrelLength : 6,
-				DoubleTurret : true,
-				TurretSeparation : 4,
-				AntiAircraft : true,
-				CanGoEvasive : false,
-				EvaProb : 0};				
+TankTypes[7] = {
+	Kind : TankKindEnum.TURRET,
+	Special : false,
+	AttackingUnit : true,
+	Prob : 70,
+	MoveSpeed : 0,
+	TurnSpeed : 0, 
+	TurretTurnSpeed : 0.14, 
+	Radius : 7, 
+	HitPoints : 45, 
+	CooldownTime : 7,
+	MinRange : 10,
+	AttackDistance : 130, //130
+	AttackRange : 130, //130
+	SightDistance : 130, //130
+	BulletType : ShotTypeEnum.BULLET,
+	BulletTime : 30, 
+	BulletSpeed : 10, 
+	BulletDamage : 1,
+	TurretSize : 4,
+	BarrelLength : 6,
+	DoubleTurret : true,
+	TurretSeparation : 4,
+	AntiAircraft : true,
+	CanGoEvasive : false,
+	EvaProb : 0
+};				
 
 //Builder
-TankTypes[8] = {Kind : TankKindEnum.BUILDER, 
-				Special : false,
-				AttackingUnit : false, 
-				Prob : 15, 
-				MoveSpeed : 1.05, 
-				TurnSpeed : .13, 
-				TurretTurnSpeed : 0, 
-				Radius : 10, 
-				HitPoints : 100, 
-				CooldownTime : 250, 
-				MinRange : 0, 
-				AttackDistance : 0,
-				AttackRange : 0,
-				SightDistance : 200, 
-				BulletType : ShotTypeEnum.NONE,
-				BulletTime :  0, 
-				BulletSpeed : 0, 
-				BulletDamage : 0, 
-				TurretSize : 0, 
-				BarrelLength :  0,
-				DoubleTurret : false,
-				CanGoEvasive : true,
-				EvaProb : .8};
+TankTypes[8] = {
+	Kind : TankKindEnum.BUILDER, 
+	Special : false,
+	AttackingUnit : false, 
+	Prob : 15, 
+	MoveSpeed : 1.05, 
+	TurnSpeed : .13, 
+	TurretTurnSpeed : 0, 
+	Radius : 10, 
+	HitPoints : 100, 
+	CooldownTime : 250, 
+	MinRange : 0, 
+	AttackDistance : 0,
+	AttackRange : 0,
+	SightDistance : 200, 
+	BulletType : ShotTypeEnum.NONE,
+	BulletTime :  0, 
+	BulletSpeed : 0, 
+	BulletDamage : 0, 
+	TurretSize : 0, 
+	BarrelLength :  0,
+	DoubleTurret : false,
+	CanGoEvasive : true,
+	EvaProb : .8
+};
 
 //Bomber
-TankTypes[9] = {Kind : TankKindEnum.PLANE, 
-				Special : false,
-				AttackingUnit : true, 
-				Prob : IS_MOBILE ? 15 : 30, 
-				MoveSpeed : 2.5, 
-				TurnSpeed : .045, 
-				TurretTurnSpeed : .5, 
-				Radius : 12, 
-				HitPoints : 80, 
-				CooldownTime : 6, 
-				MinRange : 10, 
-				AttackDistance : 60,
-				AttackRange : 60,
-				SightDistance : 250, 
-				BulletType : ShotTypeEnum.BOMB,
-				BulletTime :  30, 
-				BulletSpeed : 1, 
-				BulletDamage : 5,
-				BarrelLength :  0,
-				DoubleTurret : false,
-				AntiAircraft : false,
-				CanGoEvasive : false,
-				EvaProb : 0};
+TankTypes[9] = {
+	Kind : TankKindEnum.PLANE, 
+	Special : false,
+	AttackingUnit : true, 
+	Prob : IS_MOBILE ? 15 : 30, 
+	MoveSpeed : 2.5, 
+	TurnSpeed : .045, 
+	TurretTurnSpeed : .5, 
+	Radius : 12, 
+	HitPoints : 80, 
+	CooldownTime : 6, 
+	MinRange : 10, 
+	AttackDistance : 60,
+	AttackRange : 60,
+	SightDistance : 250, 
+	BulletType : ShotTypeEnum.BOMB,
+	BulletTime :  30, 
+	BulletSpeed : 1, 
+	BulletDamage : 5,
+	BarrelLength :  0,
+	DoubleTurret : false,
+	AntiAircraft : false,
+	CanGoEvasive : false,
+	EvaProb : 0
+};
 
 //Fighter
-TankTypes[10] = {Kind : TankKindEnum.PLANE, 
-				Special : false,
-				AttackingUnit : true, 
-				Prob : IS_MOBILE ? 15 : 30, 
-				MoveSpeed : 3.5, 
-				TurnSpeed : .24, 
-				TurretTurnSpeed : .15, 
-				Radius : 12, 
-				HitPoints : 160, 
-				CooldownTime : 100, 
-				MinRange : 10, 
-				AttackDistance : 350,
-				AttackRange : 350,
-				SightDistance : 500, 
-				BulletType : ShotTypeEnum.MISSLE,
-				BulletTime :  60, 
-				BulletSpeed : 10, 
-				BulletDamage : 10, 
-				BarrelLength :  0,
-				DoubleTurret : true,
-				TurretSeparation : 4,
-				AntiAircraft : true,
-				CanGoEvasive : false,
-				EvaProb : 0};
+TankTypes[10] = {
+	Kind : TankKindEnum.PLANE, 
+	Special : false,
+	AttackingUnit : true, 
+	Prob : IS_MOBILE ? 15 : 30, 
+	MoveSpeed : 3.5, 
+	TurnSpeed : .24, 
+	TurretTurnSpeed : .15, 
+	Radius : 12, 
+	HitPoints : 160, 
+	CooldownTime : 100, 
+	MinRange : 10, 
+	AttackDistance : 350,
+	AttackRange : 350,
+	SightDistance : 500, 
+	BulletType : ShotTypeEnum.MISSLE,
+	BulletTime :  60, 
+	BulletSpeed : 10, 
+	BulletDamage : 10, 
+	BarrelLength :  0,
+	DoubleTurret : true,
+	TurretSeparation : 4,
+	AntiAircraft : true,
+	CanGoEvasive : false,
+	EvaProb : 0
+};
 
-// Special
-TankTypes[11] = {Kind : TankKindEnum.TANK,
-				Special : true,
-				AttackingUnit : true,
-				Prob : 20, // 20
-				MoveSpeed : 1.29, 
-				TurnSpeed : .09, 
-				TurretTurnSpeed : 0.19, 
-				Radius : 10, 
-				HitPoints : 350, //500 
-				CooldownTime : 80,
-				MinRange : 15,
-				AttackDistance : 130,
-				AttackRange : 135,
-				SightDistance : 300,
-				BulletType : ShotTypeEnum.MISSLE,
-				BulletTime : 50, 
-				BulletSpeed : 10, 
-				BulletDamage : 8, // 20
-				TurretSize : 10,
-				BarrelLength : 20,
-				DoubleTurret : true,
-				TurretSeparation : 3.5,
-				AntiAircraft : true,
-				CanGoEvasive : true,
-				EvaProb : .3};
+// Mammoth Tank
+TankTypes[11] = {
+	Kind : TankKindEnum.TANK,
+	Special : true,
+	AttackingUnit : true,
+	Prob : 20, // 20
+	MoveSpeed : 1.29, 
+	TurnSpeed : .09, 
+	TurretTurnSpeed : 0.19, 
+	Radius : 10, 
+	HitPoints : 350, //500 
+	CooldownTime : 80,
+	MinRange : 15,
+	AttackDistance : 130,
+	AttackRange : 135,
+	SightDistance : 300,
+	BulletType : ShotTypeEnum.MISSLE,
+	BulletTime : 50, 
+	BulletSpeed : 10, 
+	BulletDamage : 8, // 20
+	TurretSize : 10,
+	BarrelLength : 20,
+	DoubleTurret : true,
+	TurretSeparation : 3.5,
+	AntiAircraft : true,
+	CanGoEvasive : true,
+	EvaProb : .3
+};
 
 // UAV (Scout)
-TankTypes[12] = {Kind : TankKindEnum.PLANE, 
-				Special : false,
-				AttackingUnit : false, 
-				Prob : 5, 
-				MoveSpeed : 4.5, 
-				TurnSpeed : .12, 
-				TurretTurnSpeed : .15, 
-				Radius : 12, 
-				HitPoints : 400, // This will automatically drain
-				CooldownTime : 100, 
-				MinRange : 10,
-				SightDistance : 600, 
-				BulletType : ShotTypeEnum.NONE,
-				};
+TankTypes[12] = {
+	Kind : TankKindEnum.PLANE, 
+	Special : false,
+	AttackingUnit : false, 
+	Prob : 5, 
+	MoveSpeed : 4.5, 
+	TurnSpeed : .12, 
+	TurretTurnSpeed : .15, 
+	Radius : 12, 
+	HitPoints : 400, // This will automatically drain
+	CooldownTime : 100, 
+	MinRange : 10,
+	SightDistance : 600, 
+	BulletType : ShotTypeEnum.NONE,
+};
+
+// Heal Tank
+TankTypes[13] = {
+	Kind : TankKindEnum.TANK, 
+	Special : false,
+	AttackingUnit : false, 
+	Prob : 30, 
+	MoveSpeed : 1.05, 
+	TurnSpeed : .13, 
+	TurretTurnSpeed : 0, 
+	Radius : 10, 
+	HitPoints : 100, 
+	CooldownTime : 250, 
+	MinRange : 40, /* make it same as attack distance so he gets just close enough for a heal */
+	AttackDistance : 50, /* the attack distance needs to be less than attack range as this will get the healer tank closer to the target */
+	AttackRange : 50,
+	SightDistance : 200, 
+	BulletType : ShotTypeEnum.HEAL,
+	BulletTime :  0, 
+	BulletSpeed : 0, 
+	BulletDamage : 0, 
+	TurretSize : 0, 
+	BarrelLength :  0,
+	DoubleTurret : false,
+	CanGoEvasive : false,
+	EvaProb : 0
+};
 				
 //Base
-var BaseType = {Kind : TankKindEnum.BASE, 
-				Special : false,
-				AttackingUnit : false, 
-				Prob : 0, 
-				MoveSpeed : 0, 
-				TurnSpeed : 0, 
-				TurretTurnSpeed : 0, 
-				Radius : 10,
-				HitPoints : 1000, 
-				CooldownTime : IS_MOBILE ? 100 : 200, 
-				MinRange : 0, 
-				AttackDistance : 0, 
-				AttackRange : 0, 
-				SightDistance : 200, 
-				BulletType : ShotTypeEnum.NONE,
-				BulletTime : 0, 
-				BulletSpeed : 0, 
-				BulletDamage : 0, 
-				TurretSize : 0, 
-				BarrelLength :  0,
-				DoubleTurret : false,
-				CanGoEvasive : false,
-				EvaProb : 0};
+var BaseType = {
+	Kind : TankKindEnum.BASE, 
+	Special : false,
+	AttackingUnit : false, 
+	Prob : 0, 
+	MoveSpeed : 0, 
+	TurnSpeed : 0, 
+	TurretTurnSpeed : 0, 
+	Radius : 10,
+	HitPoints : 1000, 
+	CooldownTime : IS_MOBILE ? 100 : 200, 
+	MinRange : 0, 
+	AttackDistance : 0, 
+	AttackRange : 0, 
+	SightDistance : 200, 
+	BulletType : ShotTypeEnum.NONE,
+	BulletTime : 0, 
+	BulletSpeed : 0, 
+	BulletDamage : 0, 
+	TurretSize : 0, 
+	BarrelLength :  0,
+	DoubleTurret : false,
+	CanGoEvasive : false,
+	EvaProb : 0
+};
 
 
 var TotalProb;
@@ -732,7 +792,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		Cooldown = Type.Kind === TankKindEnum.BASE ? Math.random() * Type.CooldownTime : Type.CooldownTime,
 		Target = null,
 		TargetEvasive = null,
-		TargetEvasiveLocation = { X: 0, Y:0},
+		TargetEvasiveLocation = { X: 0, Y:0, XOffset: 0, YOffest: 0},
 		LastEvadeSwitchDate = new Date(),
 		Specail = false,
 		BaseAngle = 0,
@@ -770,7 +830,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					HealCooldown--;
 				else
 				{
-					heal();
+					heal(BASE_HEAL_RADIUS);
 					HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
 				}
 					
@@ -828,6 +888,18 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			break;
 		case TankKindEnum.TANK:
 			this.doStuff = function() {
+
+				if(This.isHealer()) 
+				{
+					if(HealCooldown > 0)
+						HealCooldown--;
+					else 
+					{ 
+						heal(Type.AttackRange);
+						HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+					}
+				}
+
 				switch (State)
 				{
 					case TankStateEnum.IDLE:
@@ -899,34 +971,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						break;
 					case TankStateEnum.EVADE:
 						// need to get one of the bases and move to it!
+
 						var dist = null, prevTargetEvasive = TargetEvasive;
+
+						TargetEvasive = null; /* reset the evasive target (where to heal), we will re-evaluate the closest one */
 
 						for(var n in Tanks)
 							if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
-								if(Tanks[n].getTeam() == Team && Tanks[n].isBase())
+								if(Tanks[n].getTeam() == Team && (Tanks[n].isBase() || Tanks[n].isHealer()))
 								{
-									/* find closest base */
+									/* find closest base/healer */
 									var currDist = Tanks[n].getDistanceSquaredFromPoint(X,Y);
 									if (dist == null || currDist < dist) { 
 										TargetEvasive = Tanks[n];
 										dist = currDist;
 									}
 								}
-
-						if (prevTargetEvasive != TargetEvasive)
-						{
-							//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
-							var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS - 4);
-							var ylim = Math.sqrt((BASE_HEAL_RADIUS - 2) * (BASE_HEAL_RADIUS - 2) - xRand * xRand);
-							var yRand = (Math.random() * 2 * ylim - ylim);
-
-							TargetEvasiveLocation.X = TargetEvasive.getX() + xRand;
-							TargetEvasiveLocation.Y = TargetEvasive.getY() + yRand;
-
-							//console.log("EVASIVE: picking point from " + Tanks[n].getX() + "," + Tanks[n].getY() + "+(" + BASE_HEAL_RADIUS +"): " + TargetEvasiveLocation.X + "," + TargetEvasiveLocation.Y);
-						}
-
-
 						
 						findTargets(); /* see if there is a better target to fire on*/
 						if (Target != null)
@@ -939,6 +999,37 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						{
 							State = TankStateEnum.IDLE; /* no base or we stopped evading ... FIGHT! */
 							return;
+						}
+
+						if (prevTargetEvasive != TargetEvasive || TargetEvasive.isHealer())
+						{
+							if (TargetEvasive.isHealer())
+							{
+								if (TargetEvasiveLocation.XOffset == 0 && TargetEvasiveLocation.YOffest == 0) /* calculate a random point in the healer */
+								{
+									//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
+									var xRand = (Math.random() * 2 * TargetEvasive.getKind().AttackRange - TargetEvasive.getKind().AttackRange - 4);
+									var ylim = Math.sqrt((TargetEvasive.getKind().AttackRange - 2) * (TargetEvasive.getKind().AttackRange - 2) - xRand * xRand);
+									var yRand = (Math.random() * 2 * ylim - ylim);
+								}
+
+								TargetEvasiveLocation.X = TargetEvasive.getX() + TargetEvasiveLocation.XOffset;
+								TargetEvasiveLocation.Y = TargetEvasive.getY() + TargetEvasiveLocation.YOffest;
+							}
+							else 
+							{
+								TargetEvasiveLocation.XOffset = TargetEvasiveLocation.YOffest = 0; /* reset offest used for randomly picking in a healer() */
+
+								//http://stackoverflow.com/questions/4707796/use-x-y-coordinates-to-plot-points-inside-a-circle
+								var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS - 4);
+								var ylim = Math.sqrt((BASE_HEAL_RADIUS - 2) * (BASE_HEAL_RADIUS - 2) - xRand * xRand);
+								var yRand = (Math.random() * 2 * ylim - ylim);
+
+								TargetEvasiveLocation.X = TargetEvasive.getX() + xRand;
+								TargetEvasiveLocation.Y = TargetEvasive.getY() + yRand;
+
+								//console.log("EVASIVE: picking point from " + Tanks[n].getX() + "," + Tanks[n].getY() + "+(" + BASE_HEAL_RADIUS +"): " + TargetEvasiveLocation.X + "," + TargetEvasiveLocation.Y);
+							}
 						}
 
 						/* keep moving towards base, we havent finished healing */
@@ -1185,14 +1276,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fillRect (X - 10, Y - 10, 20, 20);
 				
 				// Draw Healing Circle
-				var pointArray = calcPointsCirc(X, Y, BASE_HEAL_RADIUS,1);
-				canvasContext.beginPath();
-				
-				canvasContext.arc(X, Y, BASE_HEAL_RADIUS-4, 0, 2 * Math.PI, false)
-				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-				canvasContext.fill();
-				canvasContext.closePath();
-
+				this.drawCircle(canvasContext,BASE_HEAL_RADIUS-4,.2);
 				this.drawHPBar(canvasContext,X,Y);			
 			};
 			break;
@@ -1235,6 +1319,33 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						canvasContext.lineTo(15,-5);
 						canvasContext.lineTo(10,-5);
 					}
+					else if(Type.BulletType == ShotTypeEnum.HEAL) /* The Heal Tank! */
+					{
+						// Healing Tank
+						// Body
+						canvasContext.rect(-14, -8, 18, 16); // back
+						canvasContext.fill();
+						canvasContext.rect(-14, -8, 28, 16); // front/entire body
+						canvasContext.stroke();
+						canvasContext.fill();
+
+						canvasContext.beginPath();
+						canvasContext.moveTo(4, -3); // Hood!
+						canvasContext.lineTo(14, -4);
+						canvasContext.moveTo(4, 3);
+						canvasContext.lineTo(14, 4);
+						canvasContext.stroke();
+
+						// The PLUS!
+						canvasContext.beginPath();
+						canvasContext.strokeStyle = "rgb(255,255,255)";
+						canvasContext.lineWidth = 4;
+						canvasContext.moveTo(-5,7);
+						canvasContext.lineTo(-5,-7);
+						canvasContext.moveTo(-12,0);
+						canvasContext.lineTo(2,0);
+						canvasContext.stroke();
+					}
 					else
 					{
 						canvasContext.beginPath();
@@ -1265,7 +1376,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.lineTo(5,-4);
 					canvasContext.lineTo(-5,-7);
 					canvasContext.stroke();
-					canvasContext.closePath();
 					canvasContext.fill();
 
 					// Cannons
@@ -1276,7 +1386,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.lineTo(20,-2);
 					canvasContext.lineWidth = 2;
 					canvasContext.stroke();
-					canvasContext.closePath();
 				}
 				else
 				{
@@ -1301,6 +1410,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fill();
 				canvasContext.restore();
 				this.doDebug(canvasContext);
+
+				if(Type.BulletType == ShotTypeEnum.HEAL)
+					this.drawCircle(canvasContext,Type.AttackRange,.1);
 
 				this.drawHPBar(canvasContext,X,Y);
 			};
@@ -1389,6 +1501,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	this.isSpecial = function (){ return Type.Special; }	
 	this.isPlane = function() {return Type.Kind == TankKindEnum.PLANE;};
 	this.isTurret = function() { return Type.Kind == TankKindEnum.TURRET; }
+	this.isHealer = function(){return Type.BulletType == ShotTypeEnum.HEAL;};
 	this.isEvading = function() { return State === TankStateEnum.EVADE || State === TankStateEnum.STOP_AND_GUARD; }
 	this.getKind = function() { return Type.Kind; }
 	this.getTeam = function() {return Team;};
@@ -1468,7 +1581,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	this.attackingTarget = function(target){return Type.AttackingUnit ? target === Target : false;}
 	
-	this.takeDamage = function(damage, shooter) 
+	this.takeDamage = function(damage, shooter)
 	{
 		HitPoints -= damage;
 
@@ -1487,7 +1600,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 			if(HitPoints > 0 && Tanks.contains(shooter)) //Make sure the shooter of this bullet isn't already dead!
 			{ 
-				if(Type.AntiAircraft || !shooter.isPlane()) 
+				if (this.isHealer())
+				{
+					/* not really sure how to handle this; should the healer instantly reverse directions? if so, it shouldn't go here... */
+
+					if(Target == null || (State !== TankStateEnum.TARGET_AQUIRED && State !== TankStateEnum.TARGET_IN_RANGE)) /* currently healing someone */
+						State = TankStateEnum.MOVE; /* RUN! RANDOMLY! */
+				}
+				else if(Type.AntiAircraft || !shooter.isPlane())
 				{
 					if(!this.isEvading())
 					{
@@ -1601,6 +1721,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 	};
 	
+	this.drawCircle = function(canvasContext, radius, alpha)
+	{
+		var pointArray = calcPointsCirc(X, Y, radius,1);
+		canvasContext.beginPath();
+		canvasContext.arc(X, Y, radius, 0, 2 * Math.PI, false)
+		canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(alpha);
+		canvasContext.fill();
+		canvasContext.closePath();
+	}
+
 	this.doDebug = function(canvasContext)
 	{
 		// Draw ATTACK RANGE Circle
@@ -1626,7 +1756,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	}
 	
 	//Private:
-	function heal(){ AreaHeal(X,Y, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS, This); };
+	function heal(radius){ AreaHeal(X,Y, radius * radius, This); };
 	
 	function die()
 	{
@@ -1664,7 +1794,35 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function findTargets()
 	{
 		if (Target != null && !Tanks.contains(Target)) Target = null;
-		
+	
+		if (This.isHealer())
+		{
+			for(var n in Tanks) {
+				if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
+				{
+					if(Tanks[n].getTeam() === Team &&  							/* can only heal the same team */
+						Tanks[n] !== This && 									/* don't heal myself*/
+						!Tanks[n].isHealer() && 								/* don't heal another healer *sigh* */
+						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Type.SightDistance * Type.SightDistance)
+					{
+						if (Tanks[n].isPlane()) continue; 						/* can't heal a plane */
+						if (Tanks[n].isBase() || Tanks[n].isTurret()) continue; /* can't heal a base/item */
+
+						if(Target == null ||									/* don't have a target yet */
+							Tanks[n].HitPoints < Target.HitPoints)	 			/* more damaged than my target */ 
+						{
+							Target = Tanks[n];
+
+							/* don't switch state if we are running away or dieing */
+							if (!This.isEvading() && State !== TankStateEnum.CRASH_AND_BURN)
+								State = TankStateEnum.TARGET_AQUIRED;
+						}
+					}
+				}
+			}			
+			return; /* don't target an enemy with the below code */
+		}
+
 		for(var n in Tanks) {
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]))
 			{
@@ -1673,13 +1831,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				{
 					/* choose a better target if we found one closer/more damaged */
 					if (Target == null || 
-						(This.isPlane() && Type.AntiAircraft && Tanks[n].isPlane()) || /* AA planes should attack other planes... */
-						(Target.isBase() && !Tanks[n].isBase()) ||  /*attack something else if we are targetting a base*/
+						(This.isPlane() && Type.AntiAircraft && Tanks[n].isPlane()) || 	/* AA planes should attack other planes... */
+						(Target.isBase() && !Tanks[n].isBase()) ||  					/*attack something else if we are targetting a base*/
+						Tanks[n].HitPoints < Target.HitPoints || 						/* more damaged than my target */ 
 						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
-						Tanks[n].HitPoints / Tanks[n].getKind().HitPoints < Target.HitPoints / Target.getKind().HitPoints || /* more damaged */
-						Tanks[n].isSpecial() /* kill the mammoth tank! */) 
+						Tanks[n].isSpecial() 											/* kill the mammoth tank! */) 
 					{
-						if (Tanks[n].isPlane() && !Type.AntiAircraft) continue; /* non AA can't kill planes */
+						if (Tanks[n].isPlane() && !Type.AntiAircraft) continue; 		/* non AA can't kill planes */
 
 						Target = Tanks[n];
 						
@@ -1875,6 +2033,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function attack()
 	{
+		if(Type.BulletType == ShotTypeEnum.HEAL)return;
+		
 		if(Cooldown <= 0) {
 			if(TurretAngle === TargetTurretAngle || Type.BulletType === ShotTypeEnum.MISSLE) {
 				var speed = Type.BulletSpeed;
