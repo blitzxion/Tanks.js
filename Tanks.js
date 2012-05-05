@@ -180,9 +180,11 @@ window.onkeydown = function(event) {
   	default: break;
   }
 };
-window.onload = function() {
-	canvas = document.getElementById("canvas");
+
+
+canvas = document.getElementById("canvas");
 	ctx = canvas.getContext("2d");
+window.onload = function() {
 
 	WIDTH = window.innerWidth; /* big bag of WTF on iOS with orientation changes */
 	HEIGHT = window.innerHeight; /* stable on iOS */
