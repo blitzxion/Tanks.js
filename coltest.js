@@ -24,7 +24,8 @@ function Box(x, y) {
 
     state.position[0] = x;
     state.position[1] = y;
-    state.momentum[1] = 100.0 * Math.random();
+    state.momentum[0] = 40.0 * Math.random() - 20.0;
+    state.momentum[1] = -90.0 * Math.random() - 45.0;
     state.recalculate();
 
     this.color = getNextColor();
@@ -73,8 +74,8 @@ Box.prototype = {
 
         function update() {
             timer += dt;
-            if (0.01 < timer) {
-                boxes.push(new Box(Math.random() * canvas.width, 10.0));
+            if (0.5 < timer) {
+                boxes.push(new Box(canvas.width * 0.5, canvas.height - 10.0));
                 timer = 0.0;
             }
 
