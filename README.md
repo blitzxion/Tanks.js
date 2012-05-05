@@ -9,7 +9,7 @@ Using Javascript and HTML5, watch the AI build up their army and battle each oth
 
 The mobile version of this app exists, but is not stable on any device other than an iPhone 4S.  We are working towards 30FPS+ battles on mobile.  Desktop machines are tweaked for 60FPS+.
 
-Google Chrome or Mozilla Firefox is recommended for this demo.  OSX tends to run Tanks.js better in Safari than Chrome.  IE is now partially supported due to a lack of Canvas.
+Google Chrome or Mozilla Firefox is recommended for this demo.  OSX tends to run Tanks.js better in Safari than Chrome.  IE is now partially supported.
 
 
 ###Special Credit goes out to:
