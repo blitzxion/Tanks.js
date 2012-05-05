@@ -895,7 +895,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				//console.log((new Date() - Team.getLastTargetFoundDate()) / 1000);
 
 				/* Divide by 1000 to get seconds */
-				if(((new Date().getTime() - Team.getLastTargetFoundDate().getTime()) / 1000 > 10))
+				if ((new Date().getTime() - Team.getLastTargetFoundDate().getTime()) / 1000 > 10)
 				{
 					var angle = Math.random() * 2 * Math.PI;
 					Tanks.add(new Tank(X + 25 * Math.cos(angle), Y + 25 * Math.sin(angle), Team, TankTypes[12], Teamnum));
@@ -1455,7 +1455,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				this.drawDebugExtras(canvasContext);
 
 				if(Type.BulletType == ShotTypeEnum.HEAL)
-					this.drawCircle(canvasContext,Type.AttackRange,.1);
+					this.drawCircle(canvasContext,Type.AttackRange,.075);
 
 				this.drawHPBar(canvasContext,X,Y);
 			};
@@ -1888,6 +1888,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
 				if(Tanks[n].getTeam() == Team) {
 					Tanks[n].callToAttack(target);
+
+					/* We should ask a friendly healer to head our way, but this violates the healer's validation 
+					* in findTargets */
+					/*if (Tanks[n].isHealer() && Tanks[n].Target == null)
+					{
+						Tanks[n].Target = This;
+						Tanks[n].State = TankStateEnum.TARGET_AQUIRED;
+					}*/
 				}
 			}
 		}
@@ -1934,8 +1942,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					/* choose a better target if we found one closer/more damaged */
 					if (Target == null ||
 						(This.isPlane() && Type.AntiAircraft && Tanks[n].isPlane()) || 	/* AA planes should attack other planes... */
-						(Target.isBase() && !Tanks[n].isBase()) ||  					/*attack something else if we are targetting a base*/
+						(Target.isBase() && !Tanks[n].isBase()) ||  					/* attack something else if we are targetting a base*/
 						Tanks[n].HitPoints < Target.HitPoints || 						/* more damaged than my target */
+						Tanks[n].isHealer() || 											/* kill their healer! * */
 						Tanks[n].getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y) ||  /* closer*/
 						Tanks[n].isSpecial() 											/* kill the mammoth tank! */)
 					{
