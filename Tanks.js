@@ -79,6 +79,7 @@ var ShotType = {
 		damage : 5,
 		timetolive : 30,
 		speed : 5,
+		reloadtime : 1,
 		splashDamage : false
 	},
 	SHELL  : {
@@ -86,12 +87,14 @@ var ShotType = {
 		timetolive : 30,
 		speed : 3,
 		splashDamage : true,
+		reloadtime : 10,
 		splashRadius : 10
 	},
 	MISSLE : {
 		damage : 15,
 		timetolive : 60,
 		speed : 6,
+		reloadtime : 5,
 		splashDamage : false
 	},
 	BOMB   : {
@@ -99,6 +102,7 @@ var ShotType = {
 		timetolive : 30,
 		speed : 1,
 		splashDamage : true,
+		reloadtime : 10,
 		splashRadius : 15
 	},
 	HEAL   : {
@@ -666,8 +670,8 @@ TankTypes[10] = {
 	AttackDistance : 350,
 	AttackRange : 350,
 	SightDistance : 500,
-	BulletType : [ShotType.MISSLE],
-	BulletAdjust : [{damage:-5,speed :4}],
+	BulletType : [ShotType.MISSLE, ShotType.SHELL],
+	BulletAdjust : [{damage:-5,speed :4,attackaironly:true},{damage:0,speed :0,timetolive:1}],
 	BarrelLength :  0,
 	DoubleTurret : true,
 	TurretSeparation : 4,
@@ -737,9 +741,6 @@ TankTypes[13] = {
 	AttackRange : 50,
 	SightDistance : 200,
 	BulletType : [ShotType.HEAL],
-	// BulletTime :  0,
-	// BulletSpeed : 0,
-	// BulletDamage : 0,
 	TurretSize : 0,
 	BarrelLength :  0,
 	DoubleTurret : false,
@@ -764,9 +765,6 @@ var BaseType = {
 	AttackRange : 0,
 	SightDistance : 200,
 	BulletType : [ShotType.NONE],
-	// BulletTime : 0,
-	// BulletSpeed : 0,
-	// BulletDamage : 0,
 	TurretSize : 0,
 	BarrelLength :  0,
 	DoubleTurret : false,
@@ -1974,7 +1972,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			speed : 0,
 			splashDamage : false,
 			attackaironly : false,
-			instantkill : false
+			attackgroundonly: false,
+			instantkill : false,
+			reloadtime : 0
 		};
 
 		// Current Guns
@@ -2306,31 +2306,38 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 				if(gun == ShotType.HEAL) continue; // Not likely, but if unit can heal and fire, may want to fire other gun
 
-					gunAmmo = Type.Gun[b]; // This lines up the BulletType wih the updated Gun
+				gunAmmo = Type.Gun[b]; // This lines up the BulletType wih the updated Gun
 
-					if(!gunAmmo.attackaironly && Target.isPlane() && !Type.AntiAircraft) continue;
-					if(gunAmmo.attackaironly && !Target.isPlane()) continue;
+				// if(gunAmmo.reloadtime > 0)
+				// {
+				// 	Type.Gun[b].reloadtime--;
+				// 	continue;
+				// }
 
-					if(TurretAngle === TargetTurretAngle || 
-					TurretAngle < (TargetTurretAngle - (Math.PI / 22.5)) && TurretAngle > (Target.getBaseAngle() + (Math.PI / 22.5))) // Makes sure we can hit the target 30* from firing
-					{
-						var speed = gunAmmo.speed; // Get the gun speed
+				if(!gunAmmo.attackaironly && Target.isPlane() && !Type.AntiAircraft) continue;
+				if(gunAmmo.attackaironly && !Target.isPlane()) continue;
+				if(!gunAmmo.attackaironly && Target.isPlane()) continue;
 
-						// Special occasion for SHELL like gun
-						if(gun == ShotType.SHELL)
-						 	speed = (0.95 + Math.random() * .1) * (Math.sqrt(Target.getDistanceSquaredFromPoint(X, Y)) - Type.BarrelLength) / gunAmmo.timetolive;
+				if(TurretAngle === TargetTurretAngle || 
+				TurretAngle < (TargetTurretAngle - (Math.PI / 22.5)) && TurretAngle > (Target.getBaseAngle() + (Math.PI / 22.5))) // Makes sure we can hit the target 30* from firing
+				{
+					var speed = gunAmmo.speed; // Get the gun speed
 
-						if(Type.DoubleTurret) {
-							//TurretSeparation
-							Bullets.add(new Bullet(X + Math.cos(TurretAngle) * Type.BarrelLength + Math.cos(TurretAngle + Math.PI / 4) * Type.TurretSeparation, Y + Math.sin(TurretAngle) * Type.BarrelLength + Math.sin(TurretAngle + Math.PI / 4) * Type.TurretSeparation, speed * Math.cos(TurretAngle), speed * Math.sin(TurretAngle), gunAmmo.timetolive, Team, gunAmmo.damage, This, gun, Target, Type.AntiAircraft));
-							Bullets.add(new Bullet(X + Math.cos(TurretAngle) * Type.BarrelLength + Math.cos(TurretAngle - Math.PI / 4) * Type.TurretSeparation, Y + Math.sin(TurretAngle) * Type.BarrelLength + Math.sin(TurretAngle - Math.PI / 4) * Type.TurretSeparation, speed * Math.cos(TurretAngle), speed * Math.sin(TurretAngle), gunAmmo.timetolive, Team, gunAmmo.damage, This, gun, Target, Type.AntiAircraft));
+					// Special occasion for SHELL like gun
+					if(gun == ShotType.SHELL)
+					 	speed = (0.95 + Math.random() * .1) * (Math.sqrt(Target.getDistanceSquaredFromPoint(X, Y)) - Type.BarrelLength) / gunAmmo.timetolive;
 
-						} else {
-							Bullets.add(new Bullet(X + Math.cos(TurretAngle) * Type.BarrelLength, Y + Math.sin(TurretAngle) * Type.BarrelLength, speed * Math.cos(TurretAngle), speed * Math.sin(TurretAngle), gunAmmo.timetolive, Team, gunAmmo.damage, This, gun, Target, Type.AntiAircraft));
-						}
-						Cooldown = Type.CooldownTime;
+					if(Type.DoubleTurret) {
+						//TurretSeparation
+						Bullets.add(new Bullet(X + Math.cos(TurretAngle) * Type.BarrelLength + Math.cos(TurretAngle + Math.PI / 4) * Type.TurretSeparation, Y + Math.sin(TurretAngle) * Type.BarrelLength + Math.sin(TurretAngle + Math.PI / 4) * Type.TurretSeparation, speed * Math.cos(TurretAngle), speed * Math.sin(TurretAngle), gunAmmo.timetolive, Team, gunAmmo.damage, This, gun, Target, Type.AntiAircraft));
+						Bullets.add(new Bullet(X + Math.cos(TurretAngle) * Type.BarrelLength + Math.cos(TurretAngle - Math.PI / 4) * Type.TurretSeparation, Y + Math.sin(TurretAngle) * Type.BarrelLength + Math.sin(TurretAngle - Math.PI / 4) * Type.TurretSeparation, speed * Math.cos(TurretAngle), speed * Math.sin(TurretAngle), gunAmmo.timetolive, Team, gunAmmo.damage, This, gun, Target, Type.AntiAircraft));
 
+					} else {
+						Bullets.add(new Bullet(X + Math.cos(TurretAngle) * Type.BarrelLength, Y + Math.sin(TurretAngle) * Type.BarrelLength, speed * Math.cos(TurretAngle), speed * Math.sin(TurretAngle), gunAmmo.timetolive, Team, gunAmmo.damage, This, gun, Target, Type.AntiAircraft));
 					}
+					Cooldown = Type.CooldownTime;
+					//Type.Gun[b].reloadtime = 100;
+				}
 			}
 		}
 	};
