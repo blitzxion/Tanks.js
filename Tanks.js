@@ -2901,14 +2901,20 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			while(TooClose && attempts++ < 100) {
 				TooClose = false;
 
-				var quad = quadrants[i % quadrants.length];
-				x = rnd(quad[0], quad[1]);
-				y = rnd(quad[2], quad[3]);
+				if (WORLD_WRAP) /* choose inside the map */
+				{
+					x = rnd(BASE_HEAL_RADIUS, WIDTH - BASE_HEAL_RADIUS);
+					y = rnd(BASE_HEAL_RADIUS, HEIGHT - BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2));
+				}
+				else /* try to get further away */
+				{
+					var quad = quadrants[i % quadrants.length];
+					x = rnd(quad[0], quad[1]);
+					y = rnd(quad[2], quad[3]);
+				}
 
 				//console.log(x +", " + y);
 
-				/*x = rnd(BASE_HEAL_RADIUS, WIDTH - BASE_HEAL_RADIUS);
-				y = rnd(BASE_HEAL_RADIUS, HEIGHT - BASE_HEAL_RADIUS - (DRAW_BANNER_HEIGHT * 2));*/
 
 				if (x < BASE_HEAL_RADIUS) x += BASE_HEAL_RADIUS;
 				else if (x > WIDTH - BASE_HEAL_RADIUS) x -= BASE_HEAL_RADIUS;
