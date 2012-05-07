@@ -33,8 +33,6 @@ var SCORE_TO_WIN = IS_MOBILE ? 2000 : 30000,
 	WORLD_WRAP = true, // AWESOME, when this is off the tanks will bounce on the edges... LEAVE IT ON!
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
-if (IS_MOBILE) WORLD_WRAP = false; /* too small of screen to allow them to wrap around without knowing how to target correctly */
-
 // Important (can be changed from above)
 var MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 80,
 	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE) },
@@ -1453,7 +1451,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 				canvasContext.fill();
 				canvasContext.restore();
-				this.doDebug(canvasContext);
+				this.drawDebugExtras(canvasContext);
 
 				if(Type.BulletType == ShotTypeEnum.HEAL)
 					this.drawCircle(canvasContext,Type.AttackRange,.1);
@@ -1534,7 +1532,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fill();
 				canvasContext.stroke();
 				canvasContext.restore();
-				this.doDebug(canvasContext);
+				this.drawDebugExtras(canvasContext);
 
 				this.drawHPBar(canvasContext,X,Y);
 			}
@@ -1794,7 +1792,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		canvasContext.closePath();
 	}
 
-	this.doDebug = function(canvasContext)
+	this.drawDebugExtras = function(canvasContext)
 	{
 		// Draw ATTACK RANGE Circle
 		if(DRAW_RANGE_CIRCLE)
@@ -1819,30 +1817,38 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		if(DRAW_TARGET_LINE && Target != null && Tanks.contains(Target))
 		{
-			var x = Target.getX(), y = Target.getY(),
-				dx = X - x, dy = Y - y,
-				w2 = WIDTH * 0.5,
-				h2 = HEIGHT * 0.5,
-				wrap = false;;
-
-			if (dx < -w2) {
-				x -= WIDTH;
-				wrap = true;
-			} else if (dx > w2) {
-				x += WIDTH;
-				wrap = true;
-			}
-			if (dy < -h2) {
-				y -= HEIGHT;
-				wrap = true;
-			} else if (dy > h2) {
-				y += HEIGHT;
-				wrap = true;
-			}
-
 			canvasContext.beginPath();
+
 			canvasContext.moveTo(X, Y);
-			canvasContext.lineTo(x, y);
+
+			if (WORLD_WRAP)
+			{
+				var x = Target.getX(), y = Target.getY();
+				var dx = x - X,
+		            dy = y - Y,
+		            w2 = WIDTH * 0.5,
+		            h2 = HEIGHT * 0.5;
+
+		        var x2 = x, y2 = y;
+
+		        if (dx < -w2) x2 = x + WIDTH;
+		        if (dx > w2)  x2 = x - WIDTH;
+		        if (dy < -h2) y2 = y + HEIGHT;
+		        if (dy > h2)  y2 = y - HEIGHT;
+
+		        /* if line cuts through edge of world we need to draw two lines on each side of screen to simulate
+		        *  target wrapping.  law of sines to figure out what the lines will be (creating triangles) */
+		        if (x == x2 && y == y2) canvasContext.lineTo(x, y);
+		        else
+		        {
+		        	canvasContext.lineTo(x2, y2);
+		        	var degrees = getAngleFromPoint(x2,y2,X,Y)/(Math.PI/180) + 180;
+		        	//var xdist =
+		        }
+			}
+			else
+				canvasContext.lineTo(Target.getX(), Target.getY());
+
 			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
 			canvasContext.stroke();
 			canvasContext.closePath();
@@ -2333,6 +2339,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 
 		this.draw = function (canvasContext) {
+			if (IS_MOBILE && getFPS() < FPS_TOO_LOW) return; /* don't show smoke, we are going too slow */
+
 			var TimeRatio = Time / TotalTime;
 			var color = Math.floor(25 + 75 * TimeRatio);
 			var red = Math.floor(Redness * (1 - 4 * TimeRatio));
