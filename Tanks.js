@@ -1945,7 +1945,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		        {
 		        	canvasContext.lineTo(x2, y2);
 		        	var degrees = getAngleFromPoint(x2,y2,X,Y)/(Math.PI/180) + 180;
-		        	//var xdist = 
+		        	//var xdist =
 		        }
 			}
 			else
