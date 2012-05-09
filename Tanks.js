@@ -2379,7 +2379,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				else if (X < 0) X += WIDTH; // if you reach the left side
 
 				if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
-				else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT) - 20); // If you reach the top (this works)... set you back at the bottom
+				else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT)); // If you reach the top (this works)... set you back at the bottom
 			}
 
 			if(Type === ShotType.MISSLE) {
