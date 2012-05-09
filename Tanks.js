@@ -1160,6 +1160,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 						break;
 					case TankStateEnum.STOP_AND_GUARD:
+						/* did we loose our healer/base?  Go back to evade to pick a new evasive target! */
+						if (TargetEvasive != null && !Tanks.contains(TargetEvasive)) State = TankStateEnum.EVADE;
 
 						// Check their HP. If is over 60%, get back out there and fight!
 						if(this.stopEvading())
