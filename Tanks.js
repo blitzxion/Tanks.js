@@ -55,18 +55,9 @@ var TankStateEnum = {
 	TARGET_AQUIRED : 2,
 	TARGET_IN_RANGE : 3,
 	CRASH_AND_BURN : 4,
-	EVADE : 5, // New : Moving units can take evasive actions to retreat and heal
-	STOP_AND_GUARD : 6 // New : Makes the units stop at their position, can start move again if attacked
+	EVADE : 5,
+	STOP_AND_GUARD : 6
 }
-
-// var ShotTypeEnum = {
-// 	NONE   : 0,
-// 	BULLET : 1,
-// 	SHELL  : 2,
-// 	MISSLE : 3,
-// 	BOMB   : 4,
-// 	HEAL   : 5
-// }
 
 // All these have base values that the unit needs to either decrease or increase (likely increase) from.
 var ShotType = {
@@ -604,14 +595,14 @@ TankTypes[7] = {
 	MoveSpeed : 0,
 	TurnSpeed : 0,
 	TurretTurnSpeed : 0.14,
-	TurretAttackAngle : 45,
+	TurretAttackAngle : 65,
 	Radius : 7,
 	HitPoints : 45,
 	CooldownTime : 7,
 	MinRange : 10,
 	AttackDistance : 130,
 	AttackRange : 130,
-	SightDistance : 130,
+	SightDistance : 180,
 	BulletType : [ShotType.BULLET],
 	BulletAdjust : [{damage:-4,speed :5}],
 	TurretSize : 4,
@@ -656,7 +647,7 @@ TankTypes[9] = {
 	MoveSpeed : 2.5,
 	TurnSpeed : .045,
 	TurretTurnSpeed : .5,
-	TurretAttackAngle : 45,
+	TurretAttackAngle : 20,
 	Radius : 12,
 	HitPoints : 80,
 	CooldownTime : 6,
@@ -1989,14 +1980,16 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				useThisAngle = BaseAngle;
 				useAttackAngle = 45;
 			}
+			else if(this.isPlane() && Target == null)
+				useThisAngle = BaseAngle;
 
 			canvasContext.beginPath();
 			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
 			canvasContext.moveTo(X,Y);
 			canvasContext.arc(X,Y,Type.SightDistance,useThisAngle - (Math.PI / 180) * useAttackAngle,useThisAngle + (Math.PI / 180) * useAttackAngle,false);
 			canvasContext.closePath();
-			canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.05);
-			canvasContext.fill();
+			//canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.05);
+			//canvasContext.fill();
 			canvasContext.stroke();
 
 		}
@@ -2360,13 +2353,27 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				// 	continue;
 				// }
 
-				if(!gunAmmo.attackaironly && Target.isPlane() && !Type.AntiAircraft) continue;
-				if(gunAmmo.attackaironly && !Target.isPlane()) continue;
-				if(!gunAmmo.attackaironly && Target.isPlane()) continue;
+				if(Type.Kind == TankKindEnum.TURRET && Type.AntiAircraft)
+				{
+					// console.log("==================================");
+					// console.log("My Turret angle: "+ TurretAngle);
+					// console.log("TargetTurretAngle: "+ TargetTurretAngle);
+					// console.log("On point? " + (TurretAngle == TargetTurretAngle));
+					// console.log("TargetTurretAngle(Calculated)" + (TargetTurretAngle - (Math.PI/180) * Type.TurretAttackAngle));
+					// console.log("TargetTurretAngle(Calculated)" + (TargetTurretAngle + (Math.PI/180) * Type.TurretAttackAngle));
+					// console.log("==================================");
+					console.log(gunAmmo.attackaironly);
+					console.log(Target.isPlane());
+					console.log(Type.AntiAircraft);
+				}
+
+
+				if(!gunAmmo.attackaironly && Target.isPlane() && !Type.AntiAircraft) continue; // If your weapon ground only, and you are targeting a plane and you're not AA, skip
+				if(gunAmmo.attackaironly && !Target.isPlane()) continue; // If your weapon is AA only, and you're targeting a ground unit, skip
 
 				if(TurretAngle == TargetTurretAngle 
-					|| TurretAngle < (TargetTurretAngle - (Math.PI/180) * Type.TurretAttackAngle)
-					&& TurretAngle > (TargetTurretAngle + (Math.PI/180) * Type.TurretAttackAngle))
+					|| TurretAngle > (TargetTurretAngle - (Math.PI/180) * Type.TurretAttackAngle)
+					&& TurretAngle < (TargetTurretAngle + (Math.PI/180) * Type.TurretAttackAngle))
 				{
 					var speed = gunAmmo.speed; // Get the gun speed
 
