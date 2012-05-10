@@ -46,7 +46,8 @@ console.log("MAX Units (of all teams): " + getMAX_UNITS_PER_FACTION_ON_MAP());
 // DEBUG Stuff
 var DRAW_TARGET_LINE = false,
 	DRAW_RANGE_CIRCLE = false,
-	DRAW_DISTANCE_CIRCLE = false;
+	DRAW_DISTANCE_CIRCLE = false,
+	DRAW_FOV = false;
 
 var TankStateEnum = {
 	IDLE : 0,
@@ -222,6 +223,10 @@ window.onkeydown = function(event) {
 	case 71: /*G*/
 		GOD_MODE = !GOD_MODE;
 		break;
+	case 70:
+	case 102: /*F*/
+		DRAW_FOV = !DRAW_FOV;
+		break;
   	default: break;
   }
 };
@@ -348,7 +353,10 @@ canvas.addEventListener('click', function(evt){
 		else if(evt.altKey)
 			ClickExplodeUnit(msX,msY,300);
 		else
-			ClickCreateUnit(msX,msY,false);
+		{
+			ClickCreateUnit(msX+rnd(-i*20,i*20),msY+rnd(-i*20,i*20),false);
+			//ClickCreateUnit(msX+rnd(-i*20,i*20),msY+rnd(-i*20,i*20),false,5);
+		}
 	}
 
 }, false);
@@ -1957,9 +1965,27 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
+
+		// Draw FOV
+		if(DRAW_FOV)
+		{
+			canvasContext.beginPath();
+			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.9);
+			canvasContext.moveTo(X,Y);
+			canvasContext.arc(X,Y,Type.SightDistance,TurretAngle - (Math.PI / 180) * 45,TurretAngle + (Math.PI / 180) * 45,false);
+			canvasContext.closePath();
+			canvasContext.stroke();
+
+		}
+
 	}
 
 	//Private:
+	function getAngle(x, y, angle, h) {
+	    var radians = angle * (Math.PI / 180);
+	    return { x: x + h * Math.cos(radians), y: y + h * Math.sin(radians) };
+	}
+	
 	function heal(radius){ AreaHeal(X,Y, radius * radius, This); };
 
 	function SetupMyGuns()
@@ -2320,7 +2346,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(gunAmmo.attackaironly && !Target.isPlane()) continue;
 				if(!gunAmmo.attackaironly && Target.isPlane()) continue;
 
-				if(TurretAngle === TargetTurretAngle || 
+				// console.log("---------------------------------------------");
+				// console.log("TurretAngle : " + TurretAngle);
+				// console.log("TargetTurretAngle : " + TargetTurretAngle);
+				// console.log("TargetTurretAngle(Calculated) : " + (TargetTurretAngle - (Math.PI / 22.5)));
+				// console.log("Target.getBaseAngle : " + Target.getBaseAngle());
+				// console.log("Target.getBaseAngle(Calculated) : " + (Target.getBaseAngle() + (Math.PI / 22.5)));
+				// console.log("---------------------------------------------");
+
+				if(TurretAngle == TargetTurretAngle || 
 				TurretAngle < (TargetTurretAngle - (Math.PI / 22.5)) && TurretAngle > (Target.getBaseAngle() + (Math.PI / 22.5))) // Makes sure we can hit the target 30* from firing
 				{
 					var speed = gunAmmo.speed; // Get the gun speed
@@ -2830,6 +2864,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		/* Show Debug Toggles */
 
+		ctx.fillStyle = (!DRAW_FOV) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillRect(WIDTH-145,0,20,DRAW_BANNER_HEIGHT);
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillText("F",WIDTH-140,14);
+
 		ctx.fillStyle = (!DRAW_DISTANCE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
 		ctx.fillRect(WIDTH-120,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
@@ -3109,7 +3148,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					Tanks[n].kill();
 	}
 
-	function ClickCreateUnit(X,Y, makeBase)
+	function ClickCreateUnit(X,Y, makeBase, forceTypeInt)
 	{
 		var _randomTeam =  Teams[rndInt(0,NUM_TEAMS-1)];
 		if(_randomTeam == undefined || _randomTeam == null) return; // bad team huh...
@@ -3127,7 +3166,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		var _teamNum = _randomTeam.getName();
 
-		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
+		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : (forceTypeInt != undefined) ? TankTypes[forceTypeInt] : TypeToMake, _teamNum);
 		//console.log("turn speed: " + _NewTank.getTurnSpeed());
 		Tanks.add(_NewTank);
 	}
