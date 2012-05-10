@@ -46,7 +46,8 @@ console.log("MAX Units (of all teams): " + getMAX_UNITS_PER_FACTION_ON_MAP());
 // DEBUG Stuff
 var DRAW_TARGET_LINE = false,
 	DRAW_RANGE_CIRCLE = false,
-	DRAW_DISTANCE_CIRCLE = false;
+	DRAW_DISTANCE_CIRCLE = false,
+	DRAW_FOV = false;
 
 var TankStateEnum = {
 	IDLE : 0,
@@ -222,6 +223,10 @@ window.onkeydown = function(event) {
 	case 71: /*G*/
 		GOD_MODE = !GOD_MODE;
 		break;
+	case 70:
+	case 102: /*F*/
+		DRAW_FOV = !DRAW_FOV;
+		break;
   	default: break;
   }
 };
@@ -338,6 +343,11 @@ canvas.addEventListener('click', function(evt){
 		DRAW_DISTANCE_CIRCLE = ! DRAW_DISTANCE_CIRCLE;
 		return;
 	}
+	if(msX >= (WIDTH-145) && msX <= (WIDTH-125) && msY >= 0 && msY <= DRAW_BANNER_HEIGHT)
+	{
+		DRAW_FOV = ! DRAW_FOV;
+		return;
+	}
 
 	if(GOD_MODE)
 	{
@@ -348,7 +358,7 @@ canvas.addEventListener('click', function(evt){
 		else if(evt.altKey)
 			ClickExplodeUnit(msX,msY,300);
 		else
-			ClickCreateUnit(msX,msY,false);
+			ClickCreateUnit(msX,msY,false); //ClickCreateUnit(msX+rnd(-i*20,i*20),msY+rnd(-i*20,i*20),false,5);
 	}
 
 }, false);
@@ -403,6 +413,7 @@ TankTypes[0] = {
 	MoveSpeed : 1.4,
 	TurnSpeed : .18,
 	TurretTurnSpeed : .19,
+	TurretAttackAngle : 45,
 	Radius : 10,
 	HitPoints : 30,
 	CooldownTime :  25,
@@ -429,6 +440,7 @@ TankTypes[1] = {
 	MoveSpeed : 1.0,
 	TurnSpeed : .13,
 	TurretTurnSpeed : .16,
+	TurretAttackAngle : 45,
 	Radius : 10,
 	HitPoints : 50,
 	CooldownTime : 35,
@@ -455,6 +467,7 @@ TankTypes[2] = {
 	MoveSpeed : 0.8,
 	TurnSpeed : .09,
 	TurretTurnSpeed : .14,
+	TurretAttackAngle : 45,
 	Radius : 10,
 	HitPoints : 75,
 	CooldownTime : 50,
@@ -481,6 +494,7 @@ TankTypes[3] = {
 	MoveSpeed : 0.9,
 	TurnSpeed : .07,
 	TurretTurnSpeed : 0.12,
+	TurretAttackAngle : 45,
 	Radius : 10,
 	HitPoints : 25,
 	CooldownTime : 75,
@@ -507,6 +521,7 @@ TankTypes[4] = {
 	MoveSpeed : 0.7,
 	TurnSpeed : .07,
 	TurretTurnSpeed : 0.12,
+	TurretAttackAngle : 45,
 	Radius : 10,
 	HitPoints : 85,
 	CooldownTime : 70,
@@ -534,6 +549,7 @@ TankTypes[5] = {
 	MoveSpeed : 1.0,
 	TurnSpeed : .07,
 	TurretTurnSpeed : 0.13,
+	TurretAttackAngle : 45,
 	Radius : 10,
 	HitPoints : 35,
 	CooldownTime : 70,
@@ -561,6 +577,7 @@ TankTypes[6] = {
 	MoveSpeed : 0,
 	TurnSpeed : 0,
 	TurretTurnSpeed : 0.16,
+	TurretAttackAngle : 45,
 	Radius : 7,
 	HitPoints : 200,
 	CooldownTime : 25,
@@ -587,6 +604,7 @@ TankTypes[7] = {
 	MoveSpeed : 0,
 	TurnSpeed : 0,
 	TurretTurnSpeed : 0.14,
+	TurretAttackAngle : 45,
 	Radius : 7,
 	HitPoints : 45,
 	CooldownTime : 7,
@@ -638,6 +656,7 @@ TankTypes[9] = {
 	MoveSpeed : 2.5,
 	TurnSpeed : .045,
 	TurretTurnSpeed : .5,
+	TurretAttackAngle : 45,
 	Radius : 12,
 	HitPoints : 80,
 	CooldownTime : 6,
@@ -663,6 +682,7 @@ TankTypes[10] = {
 	MoveSpeed : 3.5,
 	TurnSpeed : .24,
 	TurretTurnSpeed : .15,
+	TurretAttackAngle : 45,
 	Radius : 12,
 	HitPoints : 160,
 	CooldownTime : 100,
@@ -689,6 +709,7 @@ TankTypes[11] = {
 	MoveSpeed : 1.29,
 	TurnSpeed : .09,
 	TurretTurnSpeed : 0.19,
+	TurretAttackAngle : 45,
 	Radius : 10,
 	HitPoints : 350, //500
 	CooldownTime : 80,
@@ -1160,6 +1181,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 						break;
 					case TankStateEnum.STOP_AND_GUARD:
+						/* did we loose our healer/base?  Go back to evade to pick a new evasive target! */
+						if (TargetEvasive != null && !Tanks.contains(TargetEvasive)) State = TankStateEnum.EVADE;
 
 						// Check their HP. If is over 60%, get back out there and fight!
 						if(this.stopEvading())
@@ -1945,7 +1968,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		        {
 		        	canvasContext.lineTo(x2, y2);
 		        	var degrees = getAngleFromPoint(x2,y2,X,Y)/(Math.PI/180) + 180;
-		        	//var xdist = 
+		        	//var xdist =
 		        }
 			}
 			else
@@ -1955,9 +1978,32 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
+
+		// Draw FOV
+		if(DRAW_FOV)
+		{
+			var useThisAngle = TurretAngle;
+			var useAttackAngle = Type.TurretAttackAngle;
+			if(!Type.AttackingUnit)
+			{
+				useThisAngle = BaseAngle;
+				useAttackAngle = 45;
+			}
+
+			canvasContext.beginPath();
+			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
+			canvasContext.moveTo(X,Y);
+			canvasContext.arc(X,Y,Type.SightDistance,useThisAngle - (Math.PI / 180) * useAttackAngle,useThisAngle + (Math.PI / 180) * useAttackAngle,false);
+			canvasContext.closePath();
+			canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.05);
+			canvasContext.fill();
+			canvasContext.stroke();
+
+		}
+
 	}
 
-	//Private:
+	//Private:	
 	function heal(radius){ AreaHeal(X,Y, radius * radius, This); };
 
 	function SetupMyGuns()
@@ -2318,8 +2364,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(gunAmmo.attackaironly && !Target.isPlane()) continue;
 				if(!gunAmmo.attackaironly && Target.isPlane()) continue;
 
-				if(TurretAngle === TargetTurretAngle || 
-				TurretAngle < (TargetTurretAngle - (Math.PI / 22.5)) && TurretAngle > (Target.getBaseAngle() + (Math.PI / 22.5))) // Makes sure we can hit the target 30* from firing
+				if(TurretAngle == TargetTurretAngle 
+					|| TurretAngle < (TargetTurretAngle - (Math.PI/180) * Type.TurretAttackAngle)
+					&& TurretAngle > (TargetTurretAngle + (Math.PI/180) * Type.TurretAttackAngle))
 				{
 					var speed = gunAmmo.speed; // Get the gun speed
 
@@ -2379,7 +2426,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				else if (X < 0) X += WIDTH; // if you reach the left side
 
 				if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
-				else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT) - 20); // If you reach the top (this works)... set you back at the bottom
+				else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT)); // If you reach the top (this works)... set you back at the bottom
 			}
 
 			if(Type === ShotType.MISSLE) {
@@ -2828,6 +2875,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		/* Show Debug Toggles */
 
+		ctx.fillStyle = (!DRAW_FOV) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillRect(WIDTH-145,0,20,DRAW_BANNER_HEIGHT);
+		ctx.fillStyle = "rgb(0,0,0)";
+		ctx.fillText("F",WIDTH-140,14);
+
 		ctx.fillStyle = (!DRAW_DISTANCE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
 		ctx.fillRect(WIDTH-120,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
@@ -3107,7 +3159,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					Tanks[n].kill();
 	}
 
-	function ClickCreateUnit(X,Y, makeBase)
+	function ClickCreateUnit(X,Y, makeBase, forceTypeInt)
 	{
 		var _randomTeam =  Teams[rndInt(0,NUM_TEAMS-1)];
 		if(_randomTeam == undefined || _randomTeam == null) return; // bad team huh...
@@ -3125,7 +3177,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		}
 		var _teamNum = _randomTeam.getName();
 
-		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : TypeToMake, _teamNum);
+		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : (forceTypeInt != undefined) ? TankTypes[forceTypeInt] : TypeToMake, _teamNum);
 		//console.log("turn speed: " + _NewTank.getTurnSpeed());
 		Tanks.add(_NewTank);
 	}
