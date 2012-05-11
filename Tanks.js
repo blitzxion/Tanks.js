@@ -389,6 +389,8 @@ function getAngleFromPoint(x1, y1, x2, y2) {
     return Math.atan2(y1 - y2, x1 - x2);
 }
 
+var TankLineUp = new Set("tanklineupIndex");
+
 //create teams
 var currcolor = rndInt(0,TeamColors.length-1); /* gotta set here, not after i in for loop... wtf JS ? */
 for(var i=0; i<=NUM_TEAMS-1; i++, currcolor= (currcolor +1) % TeamColors.length)
@@ -404,7 +406,7 @@ TankTypes[0] = {
 	MoveSpeed : 1.4,
 	TurnSpeed : .18,
 	TurretTurnSpeed : .19,
-	TurretAttackAngle : 45,
+	TurretAttackAngle : 5,
 	Radius : 10,
 	HitPoints : 30,
 	CooldownTime :  25,
@@ -431,7 +433,7 @@ TankTypes[1] = {
 	MoveSpeed : 1.0,
 	TurnSpeed : .13,
 	TurretTurnSpeed : .16,
-	TurretAttackAngle : 45,
+	TurretAttackAngle : 5,
 	Radius : 10,
 	HitPoints : 50,
 	CooldownTime : 35,
@@ -458,7 +460,7 @@ TankTypes[2] = {
 	MoveSpeed : 0.8,
 	TurnSpeed : .09,
 	TurretTurnSpeed : .14,
-	TurretAttackAngle : 45,
+	TurretAttackAngle : 5,
 	Radius : 10,
 	HitPoints : 75,
 	CooldownTime : 50,
@@ -485,7 +487,7 @@ TankTypes[3] = {
 	MoveSpeed : 0.9,
 	TurnSpeed : .07,
 	TurretTurnSpeed : 0.12,
-	TurretAttackAngle : 45,
+	TurretAttackAngle : 5,
 	Radius : 10,
 	HitPoints : 25,
 	CooldownTime : 75,
@@ -512,7 +514,7 @@ TankTypes[4] = {
 	MoveSpeed : 0.7,
 	TurnSpeed : .07,
 	TurretTurnSpeed : 0.12,
-	TurretAttackAngle : 45,
+	TurretAttackAngle : 5,
 	Radius : 10,
 	HitPoints : 85,
 	CooldownTime : 70,
@@ -568,7 +570,7 @@ TankTypes[6] = {
 	MoveSpeed : 0,
 	TurnSpeed : 0,
 	TurretTurnSpeed : 0.16,
-	TurretAttackAngle : 45,
+	TurretAttackAngle : 5,
 	Radius : 7,
 	HitPoints : 200,
 	CooldownTime : 25,
@@ -595,7 +597,7 @@ TankTypes[7] = {
 	MoveSpeed : 0,
 	TurnSpeed : 0,
 	TurretTurnSpeed : 0.14,
-	TurretAttackAngle : 65,
+	TurretAttackAngle : 10,
 	Radius : 7,
 	HitPoints : 45,
 	CooldownTime : 7,
@@ -794,6 +796,8 @@ var Explosions = new Set("explosionIndex");
 var Smokes = new Set("smokeIndex");
 var DebrisSet = new Set("debrisIndex");
 
+//var TankLineUp = new Set("tanklineupIndex"); // Holds cached drawings of all tanks
+
 console.log("Welcome to Tanks!");
 console.log("Number of Teams Playing: " + NUM_TEAMS);
 console.log("Random Map Terrain? " + RANDOM_TERRAIN.toString());
@@ -806,7 +810,6 @@ console.log("Healing Cooldown base value : " + HEALTH_COOLDOWN);
 console.log("Welcoming todays fighters...");
 for(var tn in Teams)
 	console.log(Teams[tn].getName() + "!");
-
 
 /////////////
 // Classes //
@@ -1421,84 +1424,87 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		case TankKindEnum.BUILDER:
 		case TankKindEnum.TURRET:
 			this.draw = function(canvasContext) {
+
 				//Base:
 				if(!(Type.Kind === TankKindEnum.TURRET))
 				{
-					canvasContext.save();
-					canvasContext.translate(X, Y);
-					canvasContext.rotate(BaseAngle);
-					canvasContext.beginPath();
-					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-					canvasContext.strokeStyle = Team.getColor().getColorString();
+					Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
 
-					if(Type.Special) /* MAMMOTH TANK! */
-					{
-						canvasContext.moveTo(10,0);
-						canvasContext.lineTo(10,5);
-						canvasContext.lineTo(15,5);
-						canvasContext.lineTo(15,13);
-						canvasContext.lineTo(0,13);
-						canvasContext.lineTo(0,7);
-						canvasContext.lineTo(-5,7);
-						canvasContext.lineTo(-5,13);
-						canvasContext.lineTo(-30,13);
-						canvasContext.lineTo(-30,5);
-						canvasContext.lineTo(-17,5);
-						canvasContext.lineTo(-17,0);
-						canvasContext.lineTo(-17,-5);
-						canvasContext.lineTo(-30,-5);
-						canvasContext.lineTo(-30,-13);
-						canvasContext.lineTo(-5,-13);
-						canvasContext.lineTo(-5,-7);
-						canvasContext.lineTo(0,-7);
-						canvasContext.lineTo(0,-13);
-						canvasContext.lineTo(15,-13);
-						canvasContext.lineTo(15,-5);
-						canvasContext.lineTo(10,-5);
-					}
-					else if(inArray(Type.BulletType,ShotType.HEAL)) /* The Heal Tank! */
-					{
-						// Healing Tank
-						// Body
-						canvasContext.rect(-14, -8, 18, 16); // back
-						canvasContext.fill();
-						canvasContext.rect(-14, -8, 28, 16); // front/entire body
-						canvasContext.stroke();
-						canvasContext.fill();
+					// canvasContext.save();
+					// canvasContext.translate(X, Y);
+					// canvasContext.rotate(BaseAngle);
+					// canvasContext.beginPath();
+					// canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+					// canvasContext.strokeStyle = Team.getColor().getColorString();
 
-						canvasContext.beginPath();
-						canvasContext.moveTo(4, -3); // Hood!
-						canvasContext.lineTo(14, -4);
-						canvasContext.moveTo(4, 3);
-						canvasContext.lineTo(14, 4);
-						canvasContext.stroke();
+					// if(Type.Special) /* MAMMOTH TANK! */
+					// {
+					// 	canvasContext.moveTo(10,0);
+					// 	canvasContext.lineTo(10,5);
+					// 	canvasContext.lineTo(15,5);
+					// 	canvasContext.lineTo(15,13);
+					// 	canvasContext.lineTo(0,13);
+					// 	canvasContext.lineTo(0,7);
+					// 	canvasContext.lineTo(-5,7);
+					// 	canvasContext.lineTo(-5,13);
+					// 	canvasContext.lineTo(-30,13);
+					// 	canvasContext.lineTo(-30,5);
+					// 	canvasContext.lineTo(-17,5);
+					// 	canvasContext.lineTo(-17,0);
+					// 	canvasContext.lineTo(-17,-5);
+					// 	canvasContext.lineTo(-30,-5);
+					// 	canvasContext.lineTo(-30,-13);
+					// 	canvasContext.lineTo(-5,-13);
+					// 	canvasContext.lineTo(-5,-7);
+					// 	canvasContext.lineTo(0,-7);
+					// 	canvasContext.lineTo(0,-13);
+					// 	canvasContext.lineTo(15,-13);
+					// 	canvasContext.lineTo(15,-5);
+					// 	canvasContext.lineTo(10,-5);
+					// }
+					// else if(inArray(Type.BulletType,ShotType.HEAL)) /* The Heal Tank! */
+					// {
+					// 	// Healing Tank
+					// 	// Body
+					// 	canvasContext.rect(-14, -8, 18, 16); // back
+					// 	canvasContext.fill();
+					// 	canvasContext.rect(-14, -8, 28, 16); // front/entire body
+					// 	canvasContext.stroke();
+					// 	canvasContext.fill();
 
-						// The PLUS!
-						canvasContext.beginPath();
-						canvasContext.strokeStyle = "rgb(255,255,255)";
-						canvasContext.lineWidth = 4;
-						canvasContext.moveTo(-5,7);
-						canvasContext.lineTo(-5,-7);
-						canvasContext.moveTo(-12,0);
-						canvasContext.lineTo(2,0);
-						canvasContext.stroke();
-					}
-					else if(inArray(Type.BulletType,ShotType.SHELL)) /*Artillery*/
-					{
-						canvasContext.beginPath();
-						canvasContext.rect(-9, -8, 28, 16);
-					}
-					else
-					{
-						canvasContext.beginPath();
-						canvasContext.rect (-14, -8, 28, 16);
-						canvasContext.lineWidth = 1;
-					}
+					// 	canvasContext.beginPath();
+					// 	canvasContext.moveTo(4, -3); // Hood!
+					// 	canvasContext.lineTo(14, -4);
+					// 	canvasContext.moveTo(4, 3);
+					// 	canvasContext.lineTo(14, 4);
+					// 	canvasContext.stroke();
 
-					canvasContext.closePath();
-					canvasContext.fill();
-					canvasContext.stroke();
-					canvasContext.restore();
+					// 	// The PLUS!
+					// 	canvasContext.beginPath();
+					// 	canvasContext.strokeStyle = "rgb(255,255,255)";
+					// 	canvasContext.lineWidth = 4;
+					// 	canvasContext.moveTo(-5,7);
+					// 	canvasContext.lineTo(-5,-7);
+					// 	canvasContext.moveTo(-12,0);
+					// 	canvasContext.lineTo(2,0);
+					// 	canvasContext.stroke();
+					// }
+					// else if(inArray(Type.BulletType,ShotType.SHELL)) /*Artillery*/
+					// {
+					// 	canvasContext.beginPath();
+					// 	canvasContext.rect(-9, -8, 28, 16);
+					// }
+					// else
+					// {
+					// 	canvasContext.beginPath();
+					// 	canvasContext.rect (-14, -8, 28, 16);
+					// 	canvasContext.lineWidth = 1;
+					// }
+
+					// canvasContext.closePath();
+					// canvasContext.fill();
+					// canvasContext.stroke();
+					// canvasContext.restore();
 				}
 
 				//Turret:
@@ -2353,23 +2359,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				// 	continue;
 				// }
 
-				if(Type.Kind == TankKindEnum.TURRET && Type.AntiAircraft)
-				{
-					// console.log("==================================");
-					// console.log("My Turret angle: "+ TurretAngle);
-					// console.log("TargetTurretAngle: "+ TargetTurretAngle);
-					// console.log("On point? " + (TurretAngle == TargetTurretAngle));
-					// console.log("TargetTurretAngle(Calculated)" + (TargetTurretAngle - (Math.PI/180) * Type.TurretAttackAngle));
-					// console.log("TargetTurretAngle(Calculated)" + (TargetTurretAngle + (Math.PI/180) * Type.TurretAttackAngle));
-					// console.log("==================================");
-					console.log(gunAmmo.attackaironly);
-					console.log(Target.isPlane());
-					console.log(Type.AntiAircraft);
-				}
-
-
 				if(!gunAmmo.attackaironly && Target.isPlane() && !Type.AntiAircraft) continue; // If your weapon ground only, and you are targeting a plane and you're not AA, skip
 				if(gunAmmo.attackaironly && !Target.isPlane()) continue; // If your weapon is AA only, and you're targeting a ground unit, skip
+				if(This.isPlane() && !gunAmmo.attackaironly && Target.isPlane()) continue;
 
 				if(TurretAngle == TargetTurretAngle 
 					|| TurretAngle > (TargetTurretAngle - (Math.PI/180) * Type.TurretAttackAngle)
@@ -2639,7 +2631,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Taken = 0,
 			Given = 0,
 			UsedTickets = 0, // Used in Hard Mode
-			LastTargetFound = new Date();
+			LastTargetFound = new Date(),
+			TeamTankGarage = null;
 
 		this.getColor = function() {return Color;}
 		this.setColor = function(c) { Color = c; }
@@ -2652,6 +2645,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		this.getUsedTickets = function(){return UsedTickets;}
 		this.getLastTargetFoundDate = function(){return LastTargetFound;}
 		this.resetLastTargetFoundDate = function(){LastTargetFound = new Date(); return LastTargetFound;}
+
+		this.SetUpGarage = function(){ if(TeamTankGarage == null) TeamTankGarage = new TankGarage(Color); };
+
+		this.OpenGarage = function(){return TeamTankGarage;};
 
 		this.addTaken = function(d)
 		{
@@ -2682,6 +2679,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			UsedTickets = 0;
 			this.resetLastTargetFoundDate();
 		}
+
 	}
 
 //----- Color class -----
@@ -2700,6 +2698,45 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		this.getColorStringWithAlpha = function(alpha)
 		{
 			return "rgba(" + This.R + "," + This.G + "," + This.B + ", " + alpha + ")";
+		}
+
+	}
+
+//----- Tank Garage Class -----
+	function TankGarage (color)
+	{
+
+		var standardTankBase = renderToCanvas(50,50,function(ctx){
+			    ctx.translate(25,25); // Centers this tank in the buffer/canvas
+			    ctx.beginPath();
+			    ctx.strokeStyle = color.getColorString();
+			    ctx.fillStyle = color.getColorStringWithAlpha(.1);
+			    ctx.rect (-14,-8, 28, 16);
+			    ctx.lineWidth = 1;
+			    ctx.fill();
+			    ctx.stroke();
+		});
+
+
+		this.BuildStandardTank = function(ctx,x,y,a){drawTank(ctx,standardTankBase,x,y,a);};
+
+		// Private
+		function renderToCanvas(width,height,renderFunction)
+		{
+			var buffer = document.createElement('canvas');
+			buffer.width = width;
+			buffer.height = height;
+			renderFunction(buffer.getContext('2d'));
+			return buffer;
+		}
+
+		function drawTank(ctx,tank,x,y,a)
+		{
+			ctx.save();
+            ctx.translate(x,y);
+            ctx.rotate(a);
+            ctx.drawImage(tank,-25,-25,50,50);
+            ctx.restore();
 		}
 
 	}
@@ -2748,11 +2785,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
 
 		for(var n in Teams)
+		{
+			Teams[n].SetUpGarage();
 			if(Teams[n].getGiven() >= SCORE_TO_WIN)
 			{
 				TeamWonByScore = true;
 				break;
 			}
+		}
 
 		for (var n in Tanks) {
 			if (Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
