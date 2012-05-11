@@ -2710,16 +2710,46 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var standardTankBase = renderToCanvas(50,50,function(ctx){
 			    ctx.translate(25,25); // Centers this tank in the buffer/canvas
 			    ctx.beginPath();
-			    ctx.strokeStyle = color.getColorString();
-			    ctx.fillStyle = color.getColorStringWithAlpha(.1);
+			    setTeamColors(ctx);
 			    ctx.rect (-14,-8, 28, 16);
 			    ctx.lineWidth = 1;
 			    ctx.fill();
 			    ctx.stroke();
 		});
 
+		var mammothTankBase = renderToCanvas(75,75,function(ctx){
+				ctx.translate(37.5,37.5);
+				ctx.beginPath();
+				setTeamColors(ctx);
+				ctx.moveTo(10,0);
+				ctx.lineTo(10,5);
+				ctx.lineTo(15,5);
+				ctx.lineTo(15,13);
+				ctx.lineTo(0,13);
+				ctx.lineTo(0,7);
+				ctx.lineTo(-5,7);
+				ctx.lineTo(-5,13);
+				ctx.lineTo(-30,13);
+				ctx.lineTo(-30,5);
+				ctx.lineTo(-17,5);
+				ctx.lineTo(-17,0);
+				ctx.lineTo(-17,-5);
+				ctx.lineTo(-30,-5);
+				ctx.lineTo(-30,-13);
+				ctx.lineTo(-5,-13);
+				ctx.lineTo(-5,-7);
+				ctx.lineTo(0,-7);
+				ctx.lineTo(0,-13);
+				ctx.lineTo(15,-13);
+				ctx.lineTo(15,-5);
+				ctx.lineTo(10,-5);
+				ctx.fill();
+			    ctx.stroke();
+		});
+
 
 		this.BuildStandardTank = function(ctx,x,y,a){drawTank(ctx,standardTankBase,x,y,a);};
+		this.BuildMammothTank = function(ctx,x,y,a){drawTank(ctx,mammothTankBase,x,y,a);};
 
 		// Private
 		function renderToCanvas(width,height,renderFunction)
@@ -2729,6 +2759,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			buffer.height = height;
 			renderFunction(buffer.getContext('2d'));
 			return buffer;
+		}
+
+		function setTeamColors(ctx)
+		{
+			ctx.strokeStyle = color.getColorString();
+			ctx.fillStyle = color.getColorStringWithAlpha(.1);
 		}
 
 		function drawTank(ctx,tank,x,y,a)
