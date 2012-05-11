@@ -349,7 +349,7 @@ canvas.addEventListener('click', function(evt){
 		else if(evt.altKey)
 			ClickExplodeUnit(msX,msY,300);
 		else
-			ClickCreateUnit(msX,msY,false); //ClickCreateUnit(msX+rnd(-i*20,i*20),msY+rnd(-i*20,i*20),false,5);
+			ClickCreateUnit(msX,msY,false,11); //ClickCreateUnit(msX+rnd(-i*20,i*20),msY+rnd(-i*20,i*20),false,5);
 	}
 
 }, false);
@@ -1429,7 +1429,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(!(Type.Kind === TankKindEnum.TURRET))
 				{
 
-					Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
+					
+					if(Type.Special)
+						Team.OpenGarage().BuildMammothTank(canvasContext,X,Y,BaseAngle);
+					else if(inArray(Type.BulletType,ShotType.HEAL))
+						Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
+					else if(inArray(Type.BulletType,ShotType.SHELL))
+						Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
+					else
+						Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
 
 					// canvasContext.save();
 					// canvasContext.translate(X, Y);
@@ -2708,7 +2716,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	{
 
 		var standardTankBase = renderToCanvas(50,50,function(ctx){
-			    ctx.translate(25,25); // Centers this tank in the buffer/canvas
+			    //ctx.translate(25,25); // Centers this tank in the buffer/canvas
 			    ctx.beginPath();
 			    setTeamColors(ctx);
 			    ctx.rect (-14,-8, 28, 16);
@@ -2717,8 +2725,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			    ctx.stroke();
 		});
 
-		var mammothTankBase = renderToCanvas(75,75,function(ctx){
-				ctx.translate(37.5,37.5);
+		var mammothTankBase = renderToCanvas(50,50,function(ctx){
 				ctx.beginPath();
 				setTeamColors(ctx);
 				ctx.moveTo(10,0);
@@ -2729,13 +2736,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				ctx.lineTo(0,7);
 				ctx.lineTo(-5,7);
 				ctx.lineTo(-5,13);
-				ctx.lineTo(-30,13);
-				ctx.lineTo(-30,5);
+				ctx.lineTo(-23,13);
+				ctx.lineTo(-23,5);
 				ctx.lineTo(-17,5);
 				ctx.lineTo(-17,0);
 				ctx.lineTo(-17,-5);
-				ctx.lineTo(-30,-5);
-				ctx.lineTo(-30,-13);
+				ctx.lineTo(-23,-5);
+				ctx.lineTo(-23,-13);
 				ctx.lineTo(-5,-13);
 				ctx.lineTo(-5,-7);
 				ctx.lineTo(0,-7);
@@ -2743,6 +2750,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				ctx.lineTo(15,-13);
 				ctx.lineTo(15,-5);
 				ctx.lineTo(10,-5);
+				ctx.closePath();
 				ctx.fill();
 			    ctx.stroke();
 		});
@@ -2757,7 +2765,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var buffer = document.createElement('canvas');
 			buffer.width = width;
 			buffer.height = height;
-			renderFunction(buffer.getContext('2d'));
+
+			var ctxOut = buffer.getContext('2d');
+			ctxOut.translate(width/2,height/2);
+
+			renderFunction(ctxOut);
 			return buffer;
 		}
 
