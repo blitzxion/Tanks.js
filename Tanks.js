@@ -1428,6 +1428,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				//Base:
 				if(!(Type.Kind === TankKindEnum.TURRET))
 				{
+
 					Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
 
 					// canvasContext.save();
@@ -2647,7 +2648,6 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		this.resetLastTargetFoundDate = function(){LastTargetFound = new Date(); return LastTargetFound;}
 
 		this.SetUpGarage = function(){ if(TeamTankGarage == null) TeamTankGarage = new TankGarage(Color); };
-
 		this.OpenGarage = function(){return TeamTankGarage;};
 
 		this.addTaken = function(d)
@@ -2678,6 +2678,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			Given = 0;
 			UsedTickets = 0;
 			this.resetLastTargetFoundDate();
+			TeamTankGarage = null;
 		}
 
 	}
