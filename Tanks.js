@@ -2594,7 +2594,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			if(red + color > 255)
 				red = 255 - color;
 			canvasContext.beginPath();
-			canvasContext.fillStyle = "rgba(" + (red + color) + "," + color + "," + color + "," + (1 - TimeRatio) + ")";
+			if (IS_MOBILE)
+				canvasContext.fillStyle = "rgb(" + (red + color) + "," + color + "," + color + ")";
+			else
+				canvasContext.fillStyle = "rgba(" + (red + color) + "," + color + "," + color + "," + (1 - TimeRatio) + ")";
 			canvasContext.arc(X, Y, StartSize + (EndSize - StartSize) * Time / TotalTime, 0, 2 * Math.PI, false);
 			canvasContext.fill();
 		}
@@ -2699,6 +2702,9 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		this.getColorStringWithAlpha = function(alpha)
 		{
+			if (IS_MOBILE)
+				return "rgb(" + This.R + "," + This.G + "," + This.B + ")";
+
 			return "rgba(" + This.R + "," + This.G + "," + This.B + ", " + alpha + ")";
 		}
 
@@ -2882,28 +2888,28 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		/* Show Debug Toggles */
 
-		ctx.fillStyle = (!DRAW_FOV) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!DRAW_FOV) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-145,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("F",WIDTH-140,14);
 
-		ctx.fillStyle = (!DRAW_DISTANCE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!DRAW_DISTANCE_CIRCLE) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-120,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("S",WIDTH-115,14);
 
-		ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-95,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("R",WIDTH-90,14);
 
-		ctx.fillStyle = (!DRAW_TARGET_LINE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!DRAW_TARGET_LINE) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-70,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("T",WIDTH-65,14);
 
 		// Draw button for GOD MODE
-		ctx.fillStyle = (!GOD_MODE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!GOD_MODE) ? "rgb(255,255,255,.8)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-45,0,40,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("GOD",WIDTH-40,14);
@@ -2911,7 +2917,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		// Show a little helper for the GOD_MODE button
 		if(DRAW_GOD_MODE_HELP)
 		{
-			ctx.fillStyle = "rgba(0,0,0,.5)";
+			ctx.fillStyle = "rgb(0,0,0)";
 			ctx.fillRect(WIDTH-200,DRAW_BANNER_HEIGHT,200,120);
 			ctx.fillStyle = "rgb(255,0,0)";
 			ctx.fillText("GOD MODE is " + ((GOD_MODE) ? "Enabled!" : "Disabled..."),WIDTH-195,36)
