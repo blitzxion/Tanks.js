@@ -2702,8 +2702,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		this.getColorStringWithAlpha = function(alpha)
 		{
-			if (IS_MOBILE)
-				return "rgb(" + This.R + "," + This.G + "," + This.B + ")";
+			/*if (IS_MOBILE)
+				return "rgb(" + This.R + "," + This.G + "," + This.B + ")";*/
 
 			return "rgba(" + This.R + "," + This.G + "," + This.B + ", " + alpha + ")";
 		}
