@@ -348,8 +348,8 @@ canvas.addEventListener('click', function(evt){
 			ClickCreateUnit(msX,msY,true);
 		else if(evt.altKey)
 			ClickExplodeUnit(msX,msY,300);
-		else
-			ClickCreateUnit(msX,msY,false,11); //ClickCreateUnit(msX+rnd(-i*20,i*20),msY+rnd(-i*20,i*20),false,5);
+		else //for(i=0;i<=25;i++)
+			ClickCreateUnit(msX,msY,false); //ClickCreateUnit(msX+rnd(-i*10,i*10),msY+rnd(-i*10,i*10),false,4);
 	}
 
 }, false);
@@ -388,8 +388,6 @@ function getAngleFromPoint(x1, y1, x2, y2) {
 
     return Math.atan2(y1 - y2, x1 - x2);
 }
-
-var TankLineUp = new Set("tanklineupIndex");
 
 //create teams
 var currcolor = rndInt(0,TeamColors.length-1); /* gotta set here, not after i in for loop... wtf JS ? */
@@ -1433,7 +1431,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					if(Type.Special)
 						Team.OpenGarage().BuildMammothTank(canvasContext,X,Y,BaseAngle);
 					else if(inArray(Type.BulletType,ShotType.HEAL))
-						Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
+						Team.OpenGarage().BuildHealerTank(canvasContext,X,Y,BaseAngle);
 					else if(inArray(Type.BulletType,ShotType.SHELL))
 						Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
 					else
@@ -2500,13 +2498,15 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	        return getAngleFromPoint(x, y, X, Y);
 	    }
 
-		this.draw = function(canvasContext)
+		this.draw = function(ctx)
 		{
-			canvasContext.beginPath();
-			canvasContext.fillStyle = "rgb(255, 255,0)";
-			canvasContext.fillRect (X, Y, 1.5, 1.5);
-			canvasContext.fillStyle = "rgb(10, 10,0)";
-			canvasContext.fillRect (X + 1, Y +1, 1.5, 1.5);
+			drawImg(ctx,bulletImage,X,Y,2,2,0);
+
+			// canvasContext.beginPath();
+			// canvasContext.fillStyle = "rgb(255, 255,0)";
+			// canvasContext.fillRect (X, Y, 1.5, 1.5);
+			// canvasContext.fillStyle = "rgb(10, 10,0)";
+			// canvasContext.fillRect (X + 1, Y +1, 1.5, 1.5);
 		};
 
 		//Private:
@@ -2526,6 +2526,17 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 		};
 	}
+
+
+
+var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
+	ctx.beginPath();
+	ctx.fillStyle = "rgb(10, 10,0)";
+	ctx.fillRect (1,1,2,2);
+	ctx.fillStyle = "rgb(255, 255,0)";
+	ctx.fillRect (0,0,2,2);
+});
+
 
 //----- Explosion Class -----
 	function Explosion (x, y, preDisplayTime, size)
@@ -2715,12 +2726,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function TankGarage (color)
 	{
 
+
 		var standardTankBase = renderToCanvas(50,50,function(ctx){
-			    //ctx.translate(25,25); // Centers this tank in the buffer/canvas
 			    ctx.beginPath();
 			    setTeamColors(ctx);
-			    ctx.rect (-14,-8, 28, 16);
-			    ctx.lineWidth = 1;
+				ctx.lineWidth = 1.5;
+			    ctx.rect(-14,-8, 28, 16);
 			    ctx.fill();
 			    ctx.stroke();
 		});
@@ -2729,6 +2740,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				ctx.beginPath();
 				setTeamColors(ctx);
 				ctx.moveTo(10,0);
+				ctx.lineWidth = 1.5;
 				ctx.lineTo(10,5);
 				ctx.lineTo(15,5);
 				ctx.lineTo(15,13);
@@ -2755,9 +2767,39 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			    ctx.stroke();
 		});
 
+		var healTank = renderToCanvas(50,50,function(ctx){
+			// Body
+			ctx.beginPath();
+			setTeamColors(ctx);
+			ctx.rect(-14, -8, 18, 16); // back
+			ctx.fill();
+			ctx.rect(-14, -8, 28, 16); // front/entire body
+			ctx.stroke();
+			ctx.fill();
+
+			ctx.beginPath();
+			ctx.moveTo(4, -3); // Hood!
+			ctx.lineTo(14, -4);
+			ctx.moveTo(4, 3);
+			ctx.lineTo(14, 4);
+			ctx.stroke();
+
+			//The PLUS!
+			ctx.beginPath();
+			ctx.strokeStyle = "rgb(255,255,255)";
+			ctx.lineWidth = 4;
+			ctx.moveTo(-5,7);
+			ctx.lineTo(-5,-7);
+			ctx.moveTo(-12,0);
+			ctx.lineTo(2,0);
+			ctx.stroke();
+			
+		});
+
 
 		this.BuildStandardTank = function(ctx,x,y,a){drawTank(ctx,standardTankBase,x,y,a);};
 		this.BuildMammothTank = function(ctx,x,y,a){drawTank(ctx,mammothTankBase,x,y,a);};
+		this.BuildHealerTank = function(ctx,x,y,a){drawTank(ctx,healTank,x,y,a);};
 
 		// Private
 		function renderToCanvas(width,height,renderFunction)
@@ -2765,10 +2807,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var buffer = document.createElement('canvas');
 			buffer.width = width;
 			buffer.height = height;
-
 			var ctxOut = buffer.getContext('2d');
 			ctxOut.translate(width/2,height/2);
-
 			renderFunction(ctxOut);
 			return buffer;
 		}
@@ -2782,9 +2822,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		function drawTank(ctx,tank,x,y,a)
 		{
 			ctx.save();
-            ctx.translate(x,y);
+			ctx.translate(x,y);
             ctx.rotate(a);
-            ctx.drawImage(tank,-25,-25,50,50);
+            ctx.imageSmoothingEnabled = true;
+            ctx.drawImage(tank,-(tank.width/2),-(tank.height/2)); //50,50);
             ctx.restore();
 		}
 
@@ -2793,6 +2834,34 @@ function Tank(x_init, y_init, team, type, teamnum) {
 ///////////////
 // Functions //
 ///////////////
+
+	function renderToTempCanvas(width,height,center,renderFunction)
+	{
+		var buffer = document.createElement('canvas');
+		buffer.width = width;
+		buffer.height = height;
+		var ctxOut = buffer.getContext('2d');
+		if(center) ctxOut.translate(width/2,height/2); // this will center the incoming image. Remember, snug dimensions will make this work!
+		renderFunction(ctxOut);
+		return buffer;
+	}
+
+	function drawImg(ctx,obj,x,y)
+	{
+		ctx.save();
+		ctx.translate(x,y);
+		ctx.drawImage(obj,0,0);
+		ctx.restore();
+	}
+
+	function drawImgAngled(ctx,obj,x,y,w,h,a)
+	{
+		ctx.save();
+		ctx.translate(x,y);
+		ctx.rotate(a);
+		ctx.drawImage(obj,-(w/2),-(h/2),w,h);
+		ctx.restore();	
+	}
 
 	function AreaDamage(X, Y, Damage, RadiusSquared, Shooter)
 	{
