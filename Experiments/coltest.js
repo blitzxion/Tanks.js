@@ -1,10 +1,12 @@
 var GRAVITY = [0.0, 9.81],
-    TIMESTEP = 33;
+    TIMESTEP = 33,
+    COUNT = 25;
 
 var getNextColor = (function() {
     var hue = Math.random() * 360.0,
         saturation = 1.0,
-        value = 1.0;
+        value = 1.0,
+        delta = 360 / COUNT;
 
     return function() {
         var rgb = hsv2rgb(hue, saturation, value);
@@ -13,7 +15,7 @@ var getNextColor = (function() {
             rgb[i] = Math.floor(255 * rgb[i]);
         }
 
-        hue = (hue + 23.0) % 360.0;
+        hue += delta;
 
         return "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
     }
@@ -43,6 +45,25 @@ Boid.prototype = {
     },
 
     forces: function(state, t) {
+        if (this.state.position[1] > canvas.height - 10) {
+            if (this.state.position[0] > canvas.width / 2 - 50 &&
+                this.state.position[0] < canvas.width / 2 + 50) {
+                var F = [0.0, -1000.0];
+                V2.add(F, GRAVITY, F);
+                return { force: F, torque: [0.0, 0.0] };
+            }
+            if (this.state.position[0] > canvas.width - 100) {
+                var F = [-1000.0, -1000.0];
+                V2.add(F, GRAVITY, F);
+                return { force: F, torque: [0.0, 0.0] };
+            }
+            if (this.state.position[0] < 100) {
+                var F = [1000.0, -1000.0];
+                V2.add(F, GRAVITY, F);
+                return { force: F, torque: [0.0, 0.0] };
+            }
+        }
+
         return { force: GRAVITY, torque: [0.0, 0.0] };
     },
 
@@ -150,7 +171,7 @@ window.onload = function() {
 
     function update() {
         timer += dt;
-        if (0.33 < timer) {
+        if (COUNT > boids.length && 0.1 < timer) {
             boids.push(new Boid(canvas.width * 0.5, canvas.height - 10.0));
             timer = 0.0;
         }

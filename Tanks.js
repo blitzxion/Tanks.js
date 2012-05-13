@@ -372,21 +372,21 @@ var Teams = [],
 	];
 
 function getAngleFromPoint(x1, y1, x2, y2) {
-    var dx = x1 - x2,
-        dy = y1 - y2,
-        w2 = WIDTH * 0.5,
-        h2 = HEIGHT * 0.5;
+	var dx = x1 - x2,
+	dy = y1 - y2,
+	w2 = WIDTH * 0.5,
+	h2 = HEIGHT * 0.5;
 
-    if (dx < -w2)
-        x1 += WIDTH;
-    if (dx > w2)
-        x1 -= WIDTH;
-    if (dy < -h2)
-        y1 += HEIGHT;
-    if (dy > h2)
-        y1 -= HEIGHT;
+	if (dx < -w2)
+		x1 += WIDTH;
+	if (dx > w2)
+		x1 -= WIDTH;
+	if (dy < -h2)
+		y1 += HEIGHT;
+	if (dy > h2)
+		y1 -= HEIGHT;
 
-    return Math.atan2(y1 - y2, x1 - x2);
+	return Math.atan2(y1 - y2, x1 - x2);
 }
 
 //create teams
@@ -853,7 +853,7 @@ function Set(indexName)
 		for(var n in this)
 			if(this.contains(this[n]))
 				len++;
-		
+
 		if (typeof fun != "function")
 			throw new TypeError();
 
@@ -980,7 +980,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					if(TypeToMake.Special && GetNumOfSpecials() >= getMAX_SPECIAL_UNITS()) return;
 
 					/* Checking if there are any other units out there before building a healer tank. */
-					if(TypeToMake.Kind == TankKindEnum.TANK && inArray(TypeToMake.BulletType,ShotType.HEAL) 
+					if(TypeToMake.Kind == TankKindEnum.TANK && inArray(TypeToMake.BulletType,ShotType.HEAL)
 						&& Tanks.filter(function(element,index,array){if(element.getTeam()==team&&element.isAttacker())return element;}) <= 0)
 							return;
 
@@ -1158,7 +1158,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								TargetEvasiveLocation.X = TargetEvasive.getX() + TargetEvasiveLocation.XOffset;
 								TargetEvasiveLocation.Y = TargetEvasive.getY() + TargetEvasiveLocation.YOffest;
 							}
-							
+
 						}
 
 						/* keep moving towards base, we havent finished healing */
@@ -1747,7 +1747,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			LastEvadeSwitchDate = new Date();
 
 			if ((HitPoints / Type.HitPoints) > rnd(.37,1)) /* less than start evading for random chance of stop evade */
-			{	
+			{
 				TargetEvasive = null;
 				State = TankStateEnum.IDLE;
 				return true;
@@ -1937,30 +1937,55 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 			canvasContext.moveTo(X, Y);
 
-			if (WORLD_WRAP)
-			{
-				var x = Target.getX(), y = Target.getY();
-				var dx = x - X,
-		            dy = y - Y,
-		            w2 = WIDTH * 0.5,
-		            h2 = HEIGHT * 0.5;
+			if (WORLD_WRAP) {
+				var x = Target.getX(), y = Target.getY(),
+				dx = x - X,
+				dy = y - Y,
+				w2 = WIDTH * 0.5,
+				h2 = HEIGHT * 0.5,
+				x2 = x, y2 = y,
+				wrap = false;
 
-		        var x2 = x, y2 = y;
+				if (dx < -w2) {
+					wrap = true;
+					x2 = x + WIDTH;
+				}
+				if (dx > w2) {
+					wrap = true;
+					x2 = x - WIDTH;
+				}
+				if (dy < -h2) {
+					wrap = true;
+					y2 = y + HEIGHT;
+				}
+				if (dy > h2) {
+					wrap = true;
+					y2 = y - HEIGHT;
+				}
 
-		        if (dx < -w2) x2 = x + WIDTH;
-		        if (dx > w2)  x2 = x - WIDTH;
-		        if (dy < -h2) y2 = y + HEIGHT;
-		        if (dy > h2)  y2 = y - HEIGHT;
+				canvasContext.lineTo(x2, y2);
 
-		        /* if line cuts through edge of world we need to draw two lines on each side of screen to simulate
-		        *  target wrapping.  law of sines to figure out what the lines will be (creating triangles) */
-		        if (x == x2 && y == y2) canvasContext.lineTo(x, y);
-		        else
-		        {
-		        	canvasContext.lineTo(x2, y2);
-		        	var degrees = getAngleFromPoint(x2,y2,X,Y)/(Math.PI/180) + 180;
-		        	//var xdist =
-		        }
+				if (wrap) {
+					var m = (y2 - Y) / (x2 - X),
+					b = Y - m * X;
+
+					if (x2 > WIDTH) {
+						x2 = 0;
+						y2 = m * WIDTH + b;
+					} else if (x2 < 0) {
+						x2 = WIDTH;
+						y2 = b;
+					} else if (y2 > HEIGHT) {
+						y2 = 0;
+						x2 = (HEIGHT - b) / m;
+					} else if (y2 < 0) {
+						y2 = HEIGHT;
+						x2 = -b / m;
+					}
+
+					canvasContext.moveTo(x2, y2);
+					canvasContext.lineTo(x, y);
+				}
 			}
 			else
 				canvasContext.lineTo(Target.getX(), Target.getY());
@@ -1996,7 +2021,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	}
 
-	//Private:	
+	//Private:
 	function heal(radius){ AreaHeal(X,Y, radius * radius, This); };
 
 	function SetupMyGuns()
@@ -2027,13 +2052,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		for(var g in guns)
 		{
 			var ammo = guns[g];
-			
+
 			if(ammo == undefined) ammo = [dGuns]; // Sucks to be you!
 			ammo = array_merge(dGuns,ammo); // Ensures defaults are set AT THE BASE CLASS!
 
 			// Need to get adjustments and apply their settings
 			// Ensures defaults are set AT THE BASE CLASS of Adjustments. Not all units need to have these set, meaning they'll get the defaults.
-			var adjGun = array_merge(ammo,Type.BulletAdjust[i++]); 
+			var adjGun = array_merge(ammo,Type.BulletAdjust[i++]);
 
 			ammo.damage += adjGun.damage;
 			ammo.speed += adjGun.speed;
@@ -2041,10 +2066,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			updatedGuns.push(ammo);
 
 			/* TODO: Update the rest of them, right now, most things use defaults! */
-			
+
 		}
 
-		Type.Gun = updatedGuns; // Commits the updated gun to this tanks new weapon grade	
+		Type.Gun = updatedGuns; // Commits the updated gun to this tanks new weapon grade
 	}
 
 	function die()
@@ -2076,7 +2101,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(Tanks[n].getTeam() == Team) {
 					Tanks[n].callToAttack(target);
 
-					/* We should ask a friendly healer to head our way, but this violates the healer's validation 
+					/* We should ask a friendly healer to head our way, but this violates the healer's validation
 					* in findTargets */
 					/*if (Tanks[n].isHealer() && Tanks[n].Target == null)
 					{
@@ -2371,7 +2396,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(!gunAmmo.attackaironly && Target.isPlane() && !Type.AntiAircraft) continue; // If your weapon ground only, and you are targeting a plane and you're not AA, skip
 				if(gunAmmo.attackaironly && !Target.isPlane()) continue; // If your weapon is AA only, and you're targeting a ground unit, skip
 
-				if(TurretAngle == TargetTurretAngle 
+				if(TurretAngle == TargetTurretAngle
 					|| TurretAngle > (TargetTurretAngle - (Math.PI/180) * Type.TurretAttackAngle)
 					&& TurretAngle < (TargetTurretAngle + (Math.PI/180) * Type.TurretAttackAngle))
 				{
@@ -3137,7 +3162,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				break;
 			}
 		}
-		
+
 	}
 
 	function getFPS(){ return (1000/frameTime).toFixed(1); }
@@ -3209,12 +3234,12 @@ function Tank(x_init, y_init, team, type, teamnum) {
 	function array_merge()
 	{
 		var args = Array.prototype.slice.call(arguments),argl = args.length,arg,retObj = {},k = '', argil = 0,j = 0,i = 0,ct = 0,toStr = Object.prototype.toString,	retArr = true;
-	 
+
 		for (i = 0; i < argl; i++)
 			if (toStr.call(args[i]) !== '[object Array]'){
 				retArr = false;
 				break;}
- 
+
 		if (retArr){
 			retArr = [];
 			for (i = 0; i < argl; i++) retArr = retArr.concat(args[i]);
@@ -3225,13 +3250,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			arg = args[i];
 			if (toStr.call(arg) === '[object Array]')
 				for (j = 0, argil = arg.length; j < argil; j++)	retObj[ct++] = arg[j];
-			else 
+			else
 				for (k in arg)
 					if (arg.hasOwnProperty(k))
 						if (parseInt(k, 10) + '' === k)	retObj[ct++] = arg[k]; else retObj[k] = arg[k];
 		}
 
-		return retObj;	
+		return retObj;
 	}
 
 	// Javascript Extensions
