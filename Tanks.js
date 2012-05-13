@@ -372,21 +372,21 @@ var Teams = [],
 	];
 
 function getAngleFromPoint(x1, y1, x2, y2) {
-    var dx = x1 - x2,
-        dy = y1 - y2,
-        w2 = WIDTH * 0.5,
-        h2 = HEIGHT * 0.5;
+	var dx = x1 - x2,
+	dy = y1 - y2,
+	w2 = WIDTH * 0.5,
+	h2 = HEIGHT * 0.5;
 
-    if (dx < -w2)
-        x1 += WIDTH;
-    if (dx > w2)
-        x1 -= WIDTH;
-    if (dy < -h2)
-        y1 += HEIGHT;
-    if (dy > h2)
-        y1 -= HEIGHT;
+	if (dx < -w2)
+		x1 += WIDTH;
+	if (dx > w2)
+		x1 -= WIDTH;
+	if (dy < -h2)
+		y1 += HEIGHT;
+	if (dy > h2)
+		y1 -= HEIGHT;
 
-    return Math.atan2(y1 - y2, x1 - x2);
+	return Math.atan2(y1 - y2, x1 - x2);
 }
 
 //create teams
@@ -1937,76 +1937,55 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 			canvasContext.moveTo(X, Y);
 
-			if (WORLD_WRAP)
-			{
+			if (WORLD_WRAP) {
 				var x = Target.getX(), y = Target.getY(),
-				    dx = x - X,
-		            dy = y - Y,
-		            w2 = WIDTH * 0.5,
-		            h2 = HEIGHT * 0.5,
-		            x2 = x, y2 = y, m, b, x3 = x, y3 = y,
-                    wrap = false;
+				dx = x - X,
+				dy = y - Y,
+				w2 = WIDTH * 0.5,
+				h2 = HEIGHT * 0.5,
+				x2 = x, y2 = y,
+				wrap = false;
 
-		        if (dx < -w2) {
-                    wrap = true;
-                    x2 = x + WIDTH;
-                }
-		        if (dx > w2) {
-                    wrap = true;
-                    x2 = x - WIDTH;
-                }
-		        if (dy < -h2) {
-                    wrap = true;
-                    y2 = y + HEIGHT;
-                }
-		        if (dy > h2) {
-                    wrap = true;
-                    y2 = y - HEIGHT;
-                }
+				if (dx < -w2) {
+					wrap = true;
+					x2 = x + WIDTH;
+				}
+				if (dx > w2) {
+					wrap = true;
+					x2 = x - WIDTH;
+				}
+				if (dy < -h2) {
+					wrap = true;
+					y2 = y + HEIGHT;
+				}
+				if (dy > h2) {
+					wrap = true;
+					y2 = y - HEIGHT;
+				}
 
-                canvasContext.lineTo(x2, y2);
+				canvasContext.lineTo(x2, y2);
 
-                if (wrap) {
-                    m = (y2 - Y) / (x2 - X);
-                    b = Y - m * X;
+				if (wrap) {
+					var m = (y2 - Y) / (x2 - X),
+					b = Y - m * X;
 
-                    if (x2 > WIDTH) {
-                        x2 = WIDTH;
-                        x3 = 0;
-                        y2 = m * x2 + b;
-                        y3 = y2;
-                    } else if (x2 < 0) {
-                        x2 = 0;
-                        x3 = WIDTH;
-                        y2 = m * x2 + b;
-                        y3 = y2;
-                    }
-                    if (y2 > HEIGHT) {
-                        y2 = HEIGHT;
-                        y3 = 0;
-                        x2 = (y2 - b) / m;
-                        x3 = x2;
-                    } else if (y2 < 0) {
-                        y2 = 0;
-                        y3 = HEIGHT;
-                        x2 = (y2 - b) / m;
-                        x3 = x2;
-                    }
+					if (x2 > WIDTH) {
+						x2 = 0;
+						y2 = m * WIDTH + b;
+					} else if (x2 < 0) {
+						x2 = WIDTH;
+						y2 = b;
+					} else if (y2 > HEIGHT) {
+						y2 = 0;
+						x2 = (HEIGHT - b) / m;
+					} else if (y2 < 0) {
+						y2 = HEIGHT;
+						x2 = b / m;
+					}
 
-                    /*
-                    if (wrap) {
-                        alert(WIDTH + " x " + HEIGHT + "\n" +
-                              "(" + X + "," + Y + ")" + "\n" +
-                              "(" + x + "," + y + ")" + "\n" +
-                              "(" + x2 + "," + y2 + ")" + "\n" +
-                              "(" + x3 + "," + y3 + ")" + "\n" +
-                              m + " x + " + b);
-                    }
-                    */
-
-                    canvasContext.moveTo(x3, y3);
-                    canvasContext.lineTo(x, y);
-                }
+					canvasContext.moveTo(x2, y2);
+					canvasContext.lineTo(x, y);
+				}
 			}
 			else
 				canvasContext.lineTo(Target.getX(), Target.getY());
