@@ -1980,7 +1980,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 						x2 = (HEIGHT - b) / m;
 					} else if (y2 < 0) {
 						y2 = HEIGHT;
-						x2 = b / m;
+						x2 = -b / m;
 					}
 
 					canvasContext.moveTo(x2, y2);
