@@ -1498,7 +1498,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					}
 
 					canvasContext.closePath();
-					canvasContext.fill();
+					if (!IS_MOBILE)
+						canvasContext.fill();
 					canvasContext.stroke();
 					canvasContext.restore();
 				}
@@ -1645,7 +1646,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 				canvasContext.closePath();
 
-				canvasContext.fill();
+				if (!IS_MOBILE)
+					canvasContext.fill();
 				canvasContext.stroke();
 				canvasContext.restore();
 				this.drawDebugExtras(canvasContext);
