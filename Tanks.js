@@ -1564,8 +1564,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.beginPath();
 					canvasContext.arc(0, 0, Type.TurretSize, 0, 2 * Math.PI, false);
 				}
-
-				canvasContext.fill();
+				if (!IS_MOBILE || Type.Kind === TankKindEnum.TURRET)
+					canvasContext.fill();
 				canvasContext.restore();
 				this.drawDebugExtras(canvasContext);
 
@@ -1908,7 +1908,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var pointArray = calcPointsCirc(X, Y, radius,1);
 		canvasContext.beginPath();
 		canvasContext.arc(X, Y, radius, 0, 2 * Math.PI, false)
-		canvasContext.fillStyle = Team.getColor().getStringAlphaPreferred(alpha);
+		canvasContext.fillStyle = Team.getColor().getStringAlpha(alpha);
 		canvasContext.fill();
 		canvasContext.closePath();
 	}
