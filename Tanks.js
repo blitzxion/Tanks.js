@@ -1409,7 +1409,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fillStyle = "rgb(0,0,0)";
 				canvasContext.fillRect (X - 11, Y - 11, 22, 22);
 
-				canvasContext.fillStyle = Team.getColor().getColorString();
+				canvasContext.fillStyle = Team.getColor().getString();
 				canvasContext.fillRect (X - 10, Y - 10, 20, 20);
 
 				// Draw Healing Circle
@@ -1428,8 +1428,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.translate(X, Y);
 					canvasContext.rotate(BaseAngle);
 					canvasContext.beginPath();
-					canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-					canvasContext.strokeStyle = Team.getColor().getColorString();
+
+					if (!IS_MOBILE)
+						canvasContext.fillStyle = Team.getColor().getStringAlpha(.2);
+					canvasContext.strokeStyle = Team.getColor().getString();
 
 					if(Type.Special) /* MAMMOTH TANK! */
 					{
@@ -1505,8 +1507,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.save();
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(TurretAngle);
-				canvasContext.strokeStyle = Team.getColor().getColorString();
-				canvasContext.fillStyle = Team.getColor().getColorString();
+				canvasContext.strokeStyle = Team.getColor().getString();
+				canvasContext.fillStyle = Team.getColor().getString();
 
 				if(Type.Special)
 				{
@@ -1578,12 +1580,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.save();
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(BaseAngle);
-				canvasContext.strokeStyle = Team.getColor().getColorString();
+				canvasContext.strokeStyle = Team.getColor().getString();
 				canvasContext.lineWidth = 1;
 				canvasContext.beginPath();
 
 				//Default Fill Alpha
-				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+				if (!IS_MOBILE)
+					canvasContext.fillStyle = Team.getColor().getStringAlphaPreferred(.2);
 
 				switch(Type.BulletType[0]) // Primary weapon takes precedence
 				{
@@ -1903,7 +1906,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var pointArray = calcPointsCirc(X, Y, radius,1);
 		canvasContext.beginPath();
 		canvasContext.arc(X, Y, radius, 0, 2 * Math.PI, false)
-		canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(alpha);
+		canvasContext.fillStyle = Team.getColor().getStringAlphaPreferred(alpha);
 		canvasContext.fill();
 		canvasContext.closePath();
 	}
@@ -1916,7 +1919,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var pointArray = calcPointsCirc(X, Y, Type.AttackDistance,1);
 			canvasContext.beginPath();
 			canvasContext.arc(X, Y, Type.AttackDistance, 0, 2 * Math.PI, false)
-			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.2);
+			canvasContext.strokeStyle = Team.getColor().getStringAlphaPreferred(.2);
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
@@ -1926,7 +1929,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var pointArray = calcPointsCirc(X, Y, Type.SightDistance,1);
 			canvasContext.beginPath();
 			canvasContext.arc(X, Y, Type.SightDistance, 0, 2 * Math.PI, false)
-			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.2);
+			canvasContext.strokeStyle = Team.getColor().getStringAlphaPreferred(.2);
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
@@ -1990,7 +1993,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			else
 				canvasContext.lineTo(Target.getX(), Target.getY());
 
-			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
+			canvasContext.strokeStyle = Team.getColor().getStringAlphaPreferred(.5);
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
@@ -2009,11 +2012,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				useThisAngle = BaseAngle;
 
 			canvasContext.beginPath();
-			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
+			canvasContext.strokeStyle = Team.getColor().getStringAlphaPreferred(.5);
 			canvasContext.moveTo(X,Y);
 			canvasContext.arc(X,Y,Type.SightDistance,useThisAngle - (Math.PI / 180) * useAttackAngle,useThisAngle + (Math.PI / 180) * useAttackAngle,false);
 			canvasContext.closePath();
-			//canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.05);
+			//canvasContext.fillStyle = Team.getColor().getStringAlpha(.05);
 			//canvasContext.fill();
 			canvasContext.stroke();
 
@@ -2720,17 +2723,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		this.B = b;
 		var This = this;
 
-		this.getColorString = function()
+		this.getString = function()
 		{
 			return "rgb(" + This.R + "," + This.G + "," + This.B + ")";
 		};
 
-		this.getColorStringWithAlpha = function(alpha)
+		this.getStringAlpha = function(alpha)
 		{
 			/*if (IS_MOBILE)
 				return "rgb(" + This.R + "," + This.G + "," + This.B + ")";*/
 
 			return "rgba(" + This.R + "," + This.G + "," + This.B + ", " + alpha + ")";
+		}
+		this.getStringAlphaPreferred = function(alpha)
+		{
+			if (IS_MOBILE) return this.getString();
+			else return this.getStringAlpha(alpha);
 		}
 
 	}
@@ -2848,7 +2856,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		{
 			var t = Teams[teamnum];
 
-			ctx.fillStyle = t.getColor().getColorString();
+			ctx.fillStyle = t.getColor().getString();
 
 			var text = (smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven();
 			ctx.fillText(text, padding, paddingY);
@@ -2860,7 +2868,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				ctx.save();
 				var strokeY = Math.floor(DRAW_BANNER_HEIGHT / 2); /* plus any starting Y for team text*/
 				ctx.beginPath();
-				ctx.strokeStyle = t.getColor().getColorString();
+				ctx.strokeStyle = t.getColor().getString();
 				ctx.lineWidth = 3;
 				ctx.moveTo(padding, strokeY);
 				ctx.lineTo(padding + measured.width, strokeY);
@@ -3123,7 +3131,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	function clearArea(canvasContext, color)
 	{
-		canvasContext.fillStyle = color.getColorString();
+		canvasContext.fillStyle = color.getString();
 		canvasContext.fillRect (0, 0, WIDTH, HEIGHT);
 	}
 
@@ -3140,7 +3148,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				given: _team[i].getGiven(),
 				score: _team[i].getScore(),
 				totalscore: _team[i].getTotalScore(),
-				colorstring: _team[i].getColor().getColorString()
+				colorstring: _team[i].getColor().getString()
 			});
 			TeamScores.push(_team[i].getGiven()); //Push Scores
 			TeamUnits.push(_team[i].getScore()); //Push Units
