@@ -545,7 +545,7 @@ TankTypes[5] = {
 	HitPoints : 35,
 	CooldownTime : 70,
 	MinRange : 25,
-	AttackDistance : 130,
+	AttackDistance : 150,
 	AttackRange : 155,
 	SightDistance : 200,
 	BulletType : [ShotType.MISSLE],
@@ -600,9 +600,9 @@ TankTypes[7] = {
 	HitPoints : 45,
 	CooldownTime : 7,
 	MinRange : 10,
-	AttackDistance : 130,
-	AttackRange : 130,
-	SightDistance : 180,
+	AttackDistance : 150,
+	AttackRange : 150,
+	SightDistance : 150,
 	BulletType : [ShotType.BULLET],
 	BulletAdjust : [{damage:-4,speed :5}],
 	TurretSize : 4,
@@ -2765,20 +2765,20 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 	{
 
 
-		var standardTankBase = renderToCanvas(42,24,function(ctx){ // 50,50
+		var standardTankBase = renderToCanvas(40,40,function(ctx){ // 50,50
 			    ctx.beginPath();
 			    setTeamColors(ctx);
-				//ctx.lineWidth = 1.5;
+				ctx.lineWidth = 2;
 			    ctx.rect(-14,-8, 28, 16);
-			    ctx.fill();
 			    ctx.stroke();
+				ctx.fill();
 		});
 
 		var mammothTankBase = renderToCanvas(50,50,function(ctx){
 				ctx.beginPath();
 				setTeamColors(ctx);
 				ctx.moveTo(10,0);
-				//ctx.lineWidth = 1.5;
+				ctx.lineWidth = 2;
 				ctx.lineTo(10,5);
 				ctx.lineTo(15,5);
 				ctx.lineTo(15,13);
@@ -2805,10 +2805,11 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 			    ctx.stroke();
 		});
 
-		var healTank = renderToCanvas(50,50,function(ctx){
+		var healTank = renderToCanvas(40,40,function(ctx){
 			// Body
 			ctx.beginPath();
 			setTeamColors(ctx);
+			ctx.lineWidth = 2;
 			ctx.rect(-14, -8, 18, 16); // back
 			ctx.fill();
 			ctx.rect(-14, -8, 28, 16); // front/entire body
