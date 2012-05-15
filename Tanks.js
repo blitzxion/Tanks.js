@@ -2765,10 +2765,10 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 	{
 
 
-		var standardTankBase = renderToCanvas(50,50,function(ctx){
+		var standardTankBase = renderToCanvas(42,24,function(ctx){ // 50,50
 			    ctx.beginPath();
 			    setTeamColors(ctx);
-				ctx.lineWidth = 1.5;
+				//ctx.lineWidth = 1.5;
 			    ctx.rect(-14,-8, 28, 16);
 			    ctx.fill();
 			    ctx.stroke();
@@ -2778,7 +2778,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 				ctx.beginPath();
 				setTeamColors(ctx);
 				ctx.moveTo(10,0);
-				ctx.lineWidth = 1.5;
+				//ctx.lineWidth = 1.5;
 				ctx.lineTo(10,5);
 				ctx.lineTo(15,5);
 				ctx.lineTo(15,13);
@@ -2846,24 +2846,23 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 			buffer.width = width;
 			buffer.height = height;
 			var ctxOut = buffer.getContext('2d');
-			ctxOut.translate(width/2,height/2);
+			ctxOut.translate(width/2,height/2); // Sets the point to the center of the new canvas
 			renderFunction(ctxOut);
 			return buffer;
 		}
 
 		function setTeamColors(ctx)
 		{
-			ctx.strokeStyle = color.getColorString();
-			ctx.fillStyle = color.getColorStringWithAlpha(.1);
+			ctx.fillStyle = color.getStringAlphaPreferred(.1);
+			ctx.strokeStyle = color.getString();
 		}
 
 		function drawTank(ctx,tank,x,y,a)
 		{
 			ctx.save();
-			ctx.translate(x,y);
-            ctx.rotate(a);
-            ctx.imageSmoothingEnabled = true;
-            ctx.drawImage(tank,-(tank.width/2),-(tank.height/2)); //50,50);
+			ctx.translate(x,y); // Sets the point to where we're going to place the image (the game provides this)
+            ctx.rotate(a); // Rotate towards provided heading (the game provides this)
+            ctx.drawImage(tank,-(tank.width/2),-(tank.height/2)); //50,50); // Draws the stored image to the main canvas
             ctx.restore();
 		}
 
@@ -3099,7 +3098,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 		ctx.fillText("T",WIDTH-65,14);
 
 		// Draw button for GOD MODE
-		ctx.fillStyle = (!GOD_MODE) ? "rgb(255,255,255,.8)" : "rgb(42,225,96)";
+		ctx.fillStyle = (!GOD_MODE) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-45,0,40,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("GOD",WIDTH-40,14);
