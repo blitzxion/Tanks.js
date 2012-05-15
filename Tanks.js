@@ -348,8 +348,8 @@ canvas.addEventListener('click', function(evt){
 			ClickCreateUnit(msX,msY,true);
 		else if(evt.altKey)
 			ClickExplodeUnit(msX,msY,300);
-		else //for(i=0;i<=25;i++)
-			ClickCreateUnit(msX,msY,false); //ClickCreateUnit(msX+rnd(-i*10,i*10),msY+rnd(-i*10,i*10),false,4);
+		else
+			ClickCreateUnit(msX,msY,false); //ClickCreateUnit(msX+rnd(-i*20,i*20),msY+rnd(-i*20,i*20),false,5);
 	}
 
 }, false);
@@ -372,21 +372,21 @@ var Teams = [],
 	];
 
 function getAngleFromPoint(x1, y1, x2, y2) {
-    var dx = x1 - x2,
-        dy = y1 - y2,
-        w2 = WIDTH * 0.5,
-        h2 = HEIGHT * 0.5;
+	var dx = x1 - x2,
+	dy = y1 - y2,
+	w2 = WIDTH * 0.5,
+	h2 = HEIGHT * 0.5;
 
-    if (dx < -w2)
-        x1 += WIDTH;
-    if (dx > w2)
-        x1 -= WIDTH;
-    if (dy < -h2)
-        y1 += HEIGHT;
-    if (dy > h2)
-        y1 -= HEIGHT;
+	if (dx < -w2)
+		x1 += WIDTH;
+	if (dx > w2)
+		x1 -= WIDTH;
+	if (dy < -h2)
+		y1 += HEIGHT;
+	if (dy > h2)
+		y1 -= HEIGHT;
 
-    return Math.atan2(y1 - y2, x1 - x2);
+	return Math.atan2(y1 - y2, x1 - x2);
 }
 
 //create teams
@@ -854,7 +854,7 @@ function Set(indexName)
 		for(var n in this)
 			if(this.contains(this[n]))
 				len++;
-		
+
 		if (typeof fun != "function")
 			throw new TypeError();
 
@@ -981,7 +981,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					if(TypeToMake.Special && GetNumOfSpecials() >= getMAX_SPECIAL_UNITS()) return;
 
 					/* Checking if there are any other units out there before building a healer tank. */
-					if(TypeToMake.Kind == TankKindEnum.TANK && inArray(TypeToMake.BulletType,ShotType.HEAL) 
+					if(TypeToMake.Kind == TankKindEnum.TANK && inArray(TypeToMake.BulletType,ShotType.HEAL)
 						&& Tanks.filter(function(element,index,array){if(element.getTeam()==team&&element.isAttacker())return element;}) <= 0)
 							return;
 
@@ -1159,7 +1159,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 								TargetEvasiveLocation.X = TargetEvasive.getX() + TargetEvasiveLocation.XOffset;
 								TargetEvasiveLocation.Y = TargetEvasive.getY() + TargetEvasiveLocation.YOffest;
 							}
-							
+
 						}
 
 						/* keep moving towards base, we havent finished healing */
@@ -1410,7 +1410,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.fillStyle = "rgb(0,0,0)";
 				canvasContext.fillRect (X - 11, Y - 11, 22, 22);
 
-				canvasContext.fillStyle = Team.getColor().getColorString();
+				canvasContext.fillStyle = Team.getColor().getString();
 				canvasContext.fillRect (X - 10, Y - 10, 20, 20);
 
 				// Draw Healing Circle
@@ -1518,8 +1518,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.save();
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(TurretAngle);
-				canvasContext.strokeStyle = Team.getColor().getColorString();
-				canvasContext.fillStyle = Team.getColor().getColorString();
+				canvasContext.strokeStyle = Team.getColor().getString();
+				canvasContext.fillStyle = Team.getColor().getString();
 
 				if(Type.Special)
 				{
@@ -1574,8 +1574,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 					canvasContext.beginPath();
 					canvasContext.arc(0, 0, Type.TurretSize, 0, 2 * Math.PI, false);
 				}
-
-				canvasContext.fill();
+				if (!IS_MOBILE || Type.Kind === TankKindEnum.TURRET)
+					canvasContext.fill();
 				canvasContext.restore();
 				this.drawDebugExtras(canvasContext);
 
@@ -1591,12 +1591,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				canvasContext.save();
 				canvasContext.translate(X, Y);
 				canvasContext.rotate(BaseAngle);
-				canvasContext.strokeStyle = Team.getColor().getColorString();
+				canvasContext.strokeStyle = Team.getColor().getString();
 				canvasContext.lineWidth = 1;
 				canvasContext.beginPath();
 
 				//Default Fill Alpha
-				canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
+				if (!IS_MOBILE)
+					canvasContext.fillStyle = Team.getColor().getStringAlphaPreferred(.2);
 
 				switch(Type.BulletType[0]) // Primary weapon takes precedence
 				{
@@ -1655,7 +1656,8 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 				canvasContext.closePath();
 
-				canvasContext.fill();
+				if (!IS_MOBILE)
+					canvasContext.fill();
 				canvasContext.stroke();
 				canvasContext.restore();
 				this.drawDebugExtras(canvasContext);
@@ -1760,7 +1762,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			LastEvadeSwitchDate = new Date();
 
 			if ((HitPoints / Type.HitPoints) > rnd(.37,1)) /* less than start evading for random chance of stop evade */
-			{	
+			{
 				TargetEvasive = null;
 				State = TankStateEnum.IDLE;
 				return true;
@@ -1916,7 +1918,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		var pointArray = calcPointsCirc(X, Y, radius,1);
 		canvasContext.beginPath();
 		canvasContext.arc(X, Y, radius, 0, 2 * Math.PI, false)
-		canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(alpha);
+		canvasContext.fillStyle = Team.getColor().getStringAlpha(alpha);
 		canvasContext.fill();
 		canvasContext.closePath();
 	}
@@ -1929,7 +1931,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var pointArray = calcPointsCirc(X, Y, Type.AttackDistance,1);
 			canvasContext.beginPath();
 			canvasContext.arc(X, Y, Type.AttackDistance, 0, 2 * Math.PI, false)
-			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.2);
+			canvasContext.strokeStyle = Team.getColor().getStringAlphaPreferred(.2);
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
@@ -1939,7 +1941,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			var pointArray = calcPointsCirc(X, Y, Type.SightDistance,1);
 			canvasContext.beginPath();
 			canvasContext.arc(X, Y, Type.SightDistance, 0, 2 * Math.PI, false)
-			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.2);
+			canvasContext.strokeStyle = Team.getColor().getStringAlphaPreferred(.2);
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
@@ -1950,35 +1952,60 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 			canvasContext.moveTo(X, Y);
 
-			if (WORLD_WRAP)
-			{
-				var x = Target.getX(), y = Target.getY();
-				var dx = x - X,
-		            dy = y - Y,
-		            w2 = WIDTH * 0.5,
-		            h2 = HEIGHT * 0.5;
+			if (WORLD_WRAP) {
+				var x = Target.getX(), y = Target.getY(),
+				dx = x - X,
+				dy = y - Y,
+				w2 = WIDTH * 0.5,
+				h2 = HEIGHT * 0.5,
+				x2 = x, y2 = y,
+				wrap = false;
 
-		        var x2 = x, y2 = y;
+				if (dx < -w2) {
+					wrap = true;
+					x2 = x + WIDTH;
+				}
+				if (dx > w2) {
+					wrap = true;
+					x2 = x - WIDTH;
+				}
+				if (dy < -h2) {
+					wrap = true;
+					y2 = y + HEIGHT;
+				}
+				if (dy > h2) {
+					wrap = true;
+					y2 = y - HEIGHT;
+				}
 
-		        if (dx < -w2) x2 = x + WIDTH;
-		        if (dx > w2)  x2 = x - WIDTH;
-		        if (dy < -h2) y2 = y + HEIGHT;
-		        if (dy > h2)  y2 = y - HEIGHT;
+				canvasContext.lineTo(x2, y2);
 
-		        /* if line cuts through edge of world we need to draw two lines on each side of screen to simulate
-		        *  target wrapping.  law of sines to figure out what the lines will be (creating triangles) */
-		        if (x == x2 && y == y2) canvasContext.lineTo(x, y);
-		        else
-		        {
-		        	canvasContext.lineTo(x2, y2);
-		        	var degrees = getAngleFromPoint(x2,y2,X,Y)/(Math.PI/180) + 180;
-		        	//var xdist =
-		        }
+				if (wrap) {
+					var m = (y2 - Y) / (x2 - X),
+					b = Y - m * X;
+
+					if (x2 > WIDTH) {
+						x2 = 0;
+						y2 = m * WIDTH + b;
+					} else if (x2 < 0) {
+						x2 = WIDTH;
+						y2 = b;
+					} else if (y2 > HEIGHT) {
+						y2 = 0;
+						x2 = (HEIGHT - b) / m;
+					} else if (y2 < 0) {
+						y2 = HEIGHT;
+						x2 = -b / m;
+					}
+
+					canvasContext.moveTo(x2, y2);
+					canvasContext.lineTo(x, y);
+				}
 			}
 			else
 				canvasContext.lineTo(Target.getX(), Target.getY());
 
-			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
+			canvasContext.strokeStyle = Team.getColor().getStringAlphaPreferred(.5);
 			canvasContext.stroke();
 			canvasContext.closePath();
 		}
@@ -1997,11 +2024,11 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				useThisAngle = BaseAngle;
 
 			canvasContext.beginPath();
-			canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
+			canvasContext.strokeStyle = Team.getColor().getStringAlphaPreferred(.5);
 			canvasContext.moveTo(X,Y);
 			canvasContext.arc(X,Y,Type.SightDistance,useThisAngle - (Math.PI / 180) * useAttackAngle,useThisAngle + (Math.PI / 180) * useAttackAngle,false);
 			canvasContext.closePath();
-			//canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.05);
+			//canvasContext.fillStyle = Team.getColor().getStringAlpha(.05);
 			//canvasContext.fill();
 			canvasContext.stroke();
 
@@ -2009,7 +2036,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 
 	}
 
-	//Private:	
+	//Private:
 	function heal(radius){ AreaHeal(X,Y, radius * radius, This); };
 
 	function SetupMyGuns()
@@ -2040,13 +2067,13 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		for(var g in guns)
 		{
 			var ammo = guns[g];
-			
+
 			if(ammo == undefined) ammo = [dGuns]; // Sucks to be you!
 			ammo = array_merge(dGuns,ammo); // Ensures defaults are set AT THE BASE CLASS!
 
 			// Need to get adjustments and apply their settings
 			// Ensures defaults are set AT THE BASE CLASS of Adjustments. Not all units need to have these set, meaning they'll get the defaults.
-			var adjGun = array_merge(ammo,Type.BulletAdjust[i++]); 
+			var adjGun = array_merge(ammo,Type.BulletAdjust[i++]);
 
 			ammo.damage += adjGun.damage;
 			ammo.speed += adjGun.speed;
@@ -2054,10 +2081,10 @@ function Tank(x_init, y_init, team, type, teamnum) {
 			updatedGuns.push(ammo);
 
 			/* TODO: Update the rest of them, right now, most things use defaults! */
-			
+
 		}
 
-		Type.Gun = updatedGuns; // Commits the updated gun to this tanks new weapon grade	
+		Type.Gun = updatedGuns; // Commits the updated gun to this tanks new weapon grade
 	}
 
 	function die()
@@ -2089,7 +2116,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				if(Tanks[n].getTeam() == Team) {
 					Tanks[n].callToAttack(target);
 
-					/* We should ask a friendly healer to head our way, but this violates the healer's validation 
+					/* We should ask a friendly healer to head our way, but this violates the healer's validation
 					* in findTargets */
 					/*if (Tanks[n].isHealer() && Tanks[n].Target == null)
 					{
@@ -2606,7 +2633,10 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 			if(red + color > 255)
 				red = 255 - color;
 			canvasContext.beginPath();
-			canvasContext.fillStyle = "rgba(" + (red + color) + "," + color + "," + color + "," + (1 - TimeRatio) + ")";
+			if (IS_MOBILE)
+				canvasContext.fillStyle = "rgb(" + (red + color) + "," + color + "," + color + ")";
+			else
+				canvasContext.fillStyle = "rgba(" + (red + color) + "," + color + "," + color + "," + (1 - TimeRatio) + ")";
 			canvasContext.arc(X, Y, StartSize + (EndSize - StartSize) * Time / TotalTime, 0, 2 * Math.PI, false);
 			canvasContext.fill();
 		}
@@ -2710,14 +2740,22 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 		this.B = b;
 		var This = this;
 
-		this.getColorString = function()
+		this.getString = function()
 		{
 			return "rgb(" + This.R + "," + This.G + "," + This.B + ")";
 		};
 
-		this.getColorStringWithAlpha = function(alpha)
+		this.getStringAlpha = function(alpha)
 		{
+			/*if (IS_MOBILE)
+				return "rgb(" + This.R + "," + This.G + "," + This.B + ")";*/
+
 			return "rgba(" + This.R + "," + This.G + "," + This.B + ", " + alpha + ")";
+		}
+		this.getStringAlphaPreferred = function(alpha)
+		{
+			if (IS_MOBILE) return this.getString();
+			else return this.getStringAlpha(alpha);
 		}
 
 	}
@@ -2975,7 +3013,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 		{
 			var t = Teams[teamnum];
 
-			ctx.fillStyle = t.getColor().getColorString();
+			ctx.fillStyle = t.getColor().getString();
 
 			var text = (smallscreen ? "" : t.getName() + " - ") + t.getScore() + " units, "+ t.getGiven();
 			ctx.fillText(text, padding, paddingY);
@@ -2987,7 +3025,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 				ctx.save();
 				var strokeY = Math.floor(DRAW_BANNER_HEIGHT / 2); /* plus any starting Y for team text*/
 				ctx.beginPath();
-				ctx.strokeStyle = t.getColor().getColorString();
+				ctx.strokeStyle = t.getColor().getString();
 				ctx.lineWidth = 3;
 				ctx.moveTo(padding, strokeY);
 				ctx.lineTo(padding + measured.width, strokeY);
@@ -3040,28 +3078,28 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 
 		/* Show Debug Toggles */
 
-		ctx.fillStyle = (!DRAW_FOV) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!DRAW_FOV) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-145,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("F",WIDTH-140,14);
 
-		ctx.fillStyle = (!DRAW_DISTANCE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!DRAW_DISTANCE_CIRCLE) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-120,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("S",WIDTH-115,14);
 
-		ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!DRAW_RANGE_CIRCLE) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-95,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("R",WIDTH-90,14);
 
-		ctx.fillStyle = (!DRAW_TARGET_LINE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!DRAW_TARGET_LINE) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-70,0,20,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("T",WIDTH-65,14);
 
 		// Draw button for GOD MODE
-		ctx.fillStyle = (!GOD_MODE) ? "rgba(255,255,255,.8)" : "rgba(42,225,96,.8)";
+		ctx.fillStyle = (!GOD_MODE) ? "rgb(255,255,255,.8)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-45,0,40,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("GOD",WIDTH-40,14);
@@ -3069,7 +3107,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 		// Show a little helper for the GOD_MODE button
 		if(DRAW_GOD_MODE_HELP)
 		{
-			ctx.fillStyle = "rgba(0,0,0,.5)";
+			ctx.fillStyle = "rgb(0,0,0)";
 			ctx.fillRect(WIDTH-200,DRAW_BANNER_HEIGHT,200,120);
 			ctx.fillStyle = "rgb(255,0,0)";
 			ctx.fillText("GOD MODE is " + ((GOD_MODE) ? "Enabled!" : "Disabled..."),WIDTH-195,36)
@@ -3250,7 +3288,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 
 	function clearArea(canvasContext, color)
 	{
-		canvasContext.fillStyle = color.getColorString();
+		canvasContext.fillStyle = color.getString();
 		canvasContext.fillRect (0, 0, WIDTH, HEIGHT);
 	}
 
@@ -3267,7 +3305,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 				given: _team[i].getGiven(),
 				score: _team[i].getScore(),
 				totalscore: _team[i].getTotalScore(),
-				colorstring: _team[i].getColor().getColorString()
+				colorstring: _team[i].getColor().getString()
 			});
 			TeamScores.push(_team[i].getGiven()); //Push Scores
 			TeamUnits.push(_team[i].getScore()); //Push Units
@@ -3289,7 +3327,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 				break;
 			}
 		}
-		
+
 	}
 
 	function getFPS(){ return (1000/frameTime).toFixed(1); }
@@ -3361,12 +3399,12 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 	function array_merge()
 	{
 		var args = Array.prototype.slice.call(arguments),argl = args.length,arg,retObj = {},k = '', argil = 0,j = 0,i = 0,ct = 0,toStr = Object.prototype.toString,	retArr = true;
-	 
+
 		for (i = 0; i < argl; i++)
 			if (toStr.call(args[i]) !== '[object Array]'){
 				retArr = false;
 				break;}
- 
+
 		if (retArr){
 			retArr = [];
 			for (i = 0; i < argl; i++) retArr = retArr.concat(args[i]);
@@ -3377,13 +3415,13 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 			arg = args[i];
 			if (toStr.call(arg) === '[object Array]')
 				for (j = 0, argil = arg.length; j < argil; j++)	retObj[ct++] = arg[j];
-			else 
+			else
 				for (k in arg)
 					if (arg.hasOwnProperty(k))
 						if (parseInt(k, 10) + '' === k)	retObj[ct++] = arg[k]; else retObj[k] = arg[k];
 		}
 
-		return retObj;	
+		return retObj;
 	}
 
 	// Javascript Extensions
