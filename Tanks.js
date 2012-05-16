@@ -600,9 +600,9 @@ TankTypes[7] = {
 	HitPoints : 45,
 	CooldownTime : 7,
 	MinRange : 10,
-	AttackDistance : 130,
-	AttackRange : 130,
-	SightDistance : 180,
+	AttackDistance : 150,
+	AttackRange : 150,
+	SightDistance : 150,
 	BulletType : [ShotType.BULLET],
 	BulletAdjust : [{damage:-4,speed :5}],
 	TurretSize : 4,
@@ -2944,7 +2944,7 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		ctx.fillText("T",WIDTH-65,14);
 
 		// Draw button for GOD MODE
-		ctx.fillStyle = (!GOD_MODE) ? "rgb(255,255,255,.8)" : "rgb(42,225,96)";
+		ctx.fillStyle = (!GOD_MODE) ? "rgb(255,255,255)" : "rgb(42,225,96)";
 		ctx.fillRect(WIDTH-45,0,40,DRAW_BANNER_HEIGHT);
 		ctx.fillStyle = "rgb(0,0,0)";
 		ctx.fillText("GOD",WIDTH-40,14);
