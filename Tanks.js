@@ -531,7 +531,7 @@ TankTypes[4] = {
 	EvaProb : .25
 };
 
-//Missle Launcher
+//Missile Launcher
 TankTypes[5] = {
 	Kind : TankKindEnum.TANK,
 	Special : false,
@@ -793,8 +793,6 @@ var Bullets = new Set("bulletIndex");
 var Explosions = new Set("explosionIndex");
 var Smokes = new Set("smokeIndex");
 var DebrisSet = new Set("debrisIndex");
-
-//var TankLineUp = new Set("tanklineupIndex"); // Holds cached drawings of all tanks
 
 console.log("Welcome to Tanks!");
 console.log("Number of Teams Playing: " + NUM_TEAMS);
@@ -1426,92 +1424,14 @@ function Tank(x_init, y_init, team, type, teamnum) {
 				//Base:
 				if(!(Type.Kind === TankKindEnum.TURRET))
 				{
-
-					
-					if(Type.Special)
+					if(Type.Special) // Mammoth Tank
 						Team.OpenGarage().BuildMammothTank(canvasContext,X,Y,BaseAngle);
-					else if(inArray(Type.BulletType,ShotType.HEAL))
+					else if(inArray(Type.BulletType,ShotType.HEAL)) // Healing Tank
 						Team.OpenGarage().BuildHealerTank(canvasContext,X,Y,BaseAngle);
-					else if(inArray(Type.BulletType,ShotType.SHELL))
-						Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
+					else if(inArray(Type.BulletType,ShotType.SHELL)) // Artillery
+						Team.OpenGarage().BuildArtilleryTank(canvasContext,X,Y,BaseAngle);
 					else
-						Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle);
-
-					// canvasContext.save();
-					// canvasContext.translate(X, Y);
-					// canvasContext.rotate(BaseAngle);
-					// canvasContext.beginPath();
-					// canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.2);
-					// canvasContext.strokeStyle = Team.getColor().getColorString();
-
-					// if(Type.Special) /* MAMMOTH TANK! */
-					// {
-					// 	canvasContext.moveTo(10,0);
-					// 	canvasContext.lineTo(10,5);
-					// 	canvasContext.lineTo(15,5);
-					// 	canvasContext.lineTo(15,13);
-					// 	canvasContext.lineTo(0,13);
-					// 	canvasContext.lineTo(0,7);
-					// 	canvasContext.lineTo(-5,7);
-					// 	canvasContext.lineTo(-5,13);
-					// 	canvasContext.lineTo(-30,13);
-					// 	canvasContext.lineTo(-30,5);
-					// 	canvasContext.lineTo(-17,5);
-					// 	canvasContext.lineTo(-17,0);
-					// 	canvasContext.lineTo(-17,-5);
-					// 	canvasContext.lineTo(-30,-5);
-					// 	canvasContext.lineTo(-30,-13);
-					// 	canvasContext.lineTo(-5,-13);
-					// 	canvasContext.lineTo(-5,-7);
-					// 	canvasContext.lineTo(0,-7);
-					// 	canvasContext.lineTo(0,-13);
-					// 	canvasContext.lineTo(15,-13);
-					// 	canvasContext.lineTo(15,-5);
-					// 	canvasContext.lineTo(10,-5);
-					// }
-					// else if(inArray(Type.BulletType,ShotType.HEAL)) /* The Heal Tank! */
-					// {
-					// 	// Healing Tank
-					// 	// Body
-					// 	canvasContext.rect(-14, -8, 18, 16); // back
-					// 	canvasContext.fill();
-					// 	canvasContext.rect(-14, -8, 28, 16); // front/entire body
-					// 	canvasContext.stroke();
-					// 	canvasContext.fill();
-
-					// 	canvasContext.beginPath();
-					// 	canvasContext.moveTo(4, -3); // Hood!
-					// 	canvasContext.lineTo(14, -4);
-					// 	canvasContext.moveTo(4, 3);
-					// 	canvasContext.lineTo(14, 4);
-					// 	canvasContext.stroke();
-
-					// 	// The PLUS!
-					// 	canvasContext.beginPath();
-					// 	canvasContext.strokeStyle = "rgb(255,255,255)";
-					// 	canvasContext.lineWidth = 4;
-					// 	canvasContext.moveTo(-5,7);
-					// 	canvasContext.lineTo(-5,-7);
-					// 	canvasContext.moveTo(-12,0);
-					// 	canvasContext.lineTo(2,0);
-					// 	canvasContext.stroke();
-					// }
-					// else if(inArray(Type.BulletType,ShotType.SHELL)) /*Artillery*/
-					// {
-					// 	canvasContext.beginPath();
-					// 	canvasContext.rect(-9, -8, 28, 16);
-					// }
-					// else
-					// {
-					// 	canvasContext.beginPath();
-					// 	canvasContext.rect (-14, -8, 28, 16);
-					// 	canvasContext.lineWidth = 1;
-					// }
-
-					// canvasContext.closePath();
-					// canvasContext.fill();
-					// canvasContext.stroke();
-					// canvasContext.restore();
+						Team.OpenGarage().BuildStandardTank(canvasContext,X,Y,BaseAngle); // Everything else!
 				}
 
 				//Turret:
@@ -1588,80 +1508,22 @@ function Tank(x_init, y_init, team, type, teamnum) {
 		case TankKindEnum.PLANE:
 			this.draw = function(canvasContext)
 			{
-				canvasContext.save();
-				canvasContext.translate(X, Y);
-				canvasContext.rotate(BaseAngle);
-				canvasContext.strokeStyle = Team.getColor().getString();
-				canvasContext.lineWidth = 1;
-				canvasContext.beginPath();
-
-				//Default Fill Alpha
-				if (!IS_MOBILE)
-					canvasContext.fillStyle = Team.getColor().getStringAlphaPreferred(.2);
-
 				switch(Type.BulletType[0]) // Primary weapon takes precedence
 				{
 					case ShotType.BOMB:
-						// B-2 Bomber
-						// Inspired by: http://en.wikipedia.org/wiki/File:NORTHROP_B-2.png
-
-						// BODY!
-						canvasContext.moveTo(10, 0);
-						canvasContext.lineTo(-20, 40);
-						canvasContext.lineTo(-27, 30);
-						canvasContext.lineTo(-17, 15);
-						canvasContext.lineTo(-27, 0);
-						canvasContext.lineTo(-17, -15);
-						canvasContext.lineTo(-27, -30);
-						canvasContext.lineTo(-20, -40);
+						Team.OpenGarage().BuildBomberPlane(canvasContext,X,Y,BaseAngle);
 						break;
 					case ShotType.MISSLE:
-						// F-16 Fighter
-						canvasContext.moveTo(10,0);
-						canvasContext.lineTo(-5,2);
-						canvasContext.lineTo(-10,10);
-						canvasContext.lineTo(-12,10);
-						canvasContext.lineTo(-12,2);
-						canvasContext.lineTo(-17,2);
-						canvasContext.lineTo(-20,5);
-						canvasContext.lineTo(-22,5);
-						canvasContext.lineTo(-20,0);
-
-						canvasContext.lineTo(-22,-5);
-						canvasContext.lineTo(-20,-5);
-						canvasContext.lineTo(-17,-2);
-						canvasContext.lineTo(-12,-2);
-						canvasContext.lineTo(-12,-10);
-						canvasContext.lineTo(-10,-10);
-						canvasContext.lineTo(-5,-2);
-						canvasContext.closePath();
-
-						canvasContext.moveTo(-8,-7);
-						canvasContext.lineTo(-3,-7);
-						canvasContext.moveTo(-8,7);
-						canvasContext.lineTo(-3,7);
+						Team.OpenGarage().BuildJetPlane(canvasContext,X,Y,BaseAngle);
 						break;
 
 					case ShotType.NONE:
 					default:
-						canvasContext.moveTo(-12, 0);
-						canvasContext.lineTo(12, 0);
-						canvasContext.moveTo(0, 0);
-						canvasContext.lineTo(-5, -8);
-						canvasContext.moveTo(0, 0);
-						canvasContext.lineTo(-5, 8);
+						Team.OpenGarage().BuildDronePlane(canvasContext,X,Y,BaseAngle);
 						break;
-
 				}
 
-				canvasContext.closePath();
-
-				if (!IS_MOBILE)
-					canvasContext.fill();
-				canvasContext.stroke();
-				canvasContext.restore();
 				this.drawDebugExtras(canvasContext);
-
 				this.drawHPBar(canvasContext,X,Y);
 			}
 			break;
@@ -2763,46 +2625,44 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 //----- Tank Garage Class -----
 	function TankGarage (color)
 	{
-
-
 		var standardTankBase = renderToCanvas(40,40,function(ctx){ // 50,50
-			    ctx.beginPath();
-			    setTeamColors(ctx);
-				ctx.lineWidth = 2;
-			    ctx.rect(-14,-8, 28, 16);
-			    ctx.stroke();
-				ctx.fill();
+			ctx.beginPath();
+			setTeamColors(ctx);
+			ctx.lineWidth = 2;
+			ctx.rect(-14,-8, 28, 16);
+			ctx.stroke();
+			if (!IS_MOBILE) ctx.fill();
 		});
 
 		var mammothTankBase = renderToCanvas(50,50,function(ctx){
-				ctx.beginPath();
-				setTeamColors(ctx);
-				ctx.moveTo(10,0);
-				ctx.lineWidth = 2;
-				ctx.lineTo(10,5);
-				ctx.lineTo(15,5);
-				ctx.lineTo(15,13);
-				ctx.lineTo(0,13);
-				ctx.lineTo(0,7);
-				ctx.lineTo(-5,7);
-				ctx.lineTo(-5,13);
-				ctx.lineTo(-23,13);
-				ctx.lineTo(-23,5);
-				ctx.lineTo(-17,5);
-				ctx.lineTo(-17,0);
-				ctx.lineTo(-17,-5);
-				ctx.lineTo(-23,-5);
-				ctx.lineTo(-23,-13);
-				ctx.lineTo(-5,-13);
-				ctx.lineTo(-5,-7);
-				ctx.lineTo(0,-7);
-				ctx.lineTo(0,-13);
-				ctx.lineTo(15,-13);
-				ctx.lineTo(15,-5);
-				ctx.lineTo(10,-5);
-				ctx.closePath();
-				ctx.fill();
-			    ctx.stroke();
+			ctx.beginPath();
+			setTeamColors(ctx);
+			ctx.moveTo(10,0);
+			ctx.lineWidth = 2;
+			ctx.lineTo(10,5);
+			ctx.lineTo(15,5);
+			ctx.lineTo(15,13);
+			ctx.lineTo(0,13);
+			ctx.lineTo(0,7);
+			ctx.lineTo(-5,7);
+			ctx.lineTo(-5,13);
+			ctx.lineTo(-23,13);
+			ctx.lineTo(-23,5);
+			ctx.lineTo(-17,5);
+			ctx.lineTo(-17,0);
+			ctx.lineTo(-17,-5);
+			ctx.lineTo(-23,-5);
+			ctx.lineTo(-23,-13);
+			ctx.lineTo(-5,-13);
+			ctx.lineTo(-5,-7);
+			ctx.lineTo(0,-7);
+			ctx.lineTo(0,-13);
+			ctx.lineTo(15,-13);
+			ctx.lineTo(15,-5);
+			ctx.lineTo(10,-5);
+			ctx.closePath();
+			if (!IS_MOBILE) ctx.fill();
+			ctx.stroke();
 		});
 
 		var healTank = renderToCanvas(40,40,function(ctx){
@@ -2811,7 +2671,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 			setTeamColors(ctx);
 			ctx.lineWidth = 2;
 			ctx.rect(-14, -8, 18, 16); // back
-			ctx.fill();
+			if (!IS_MOBILE) ctx.fill();
 			ctx.rect(-14, -8, 28, 16); // front/entire body
 			ctx.stroke();
 			ctx.fill();
@@ -2832,13 +2692,88 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 			ctx.moveTo(-12,0);
 			ctx.lineTo(2,0);
 			ctx.stroke();
-			
 		});
 
+		var artilleryTankBase = renderToCanvas(40,40,function(ctx){
+			ctx.beginPath();
+			setTeamColors(ctx);
+			ctx.lineWidth = 2;
+			ctx.rect(-9,-8, 28, 16);
+			ctx.stroke();
+			if (!IS_MOBILE) ctx.fill();		
+		});
+
+		var bomberPlane = renderToCanvas(80,80,function(ctx){
+			// B-2 Bomber
+			// Inspired by: http://en.wikipedia.org/wiki/File:NORTHROP_B-2.png
+
+			// BODY!
+			ctx.beginPath();
+			setTeamColors(ctx);
+			ctx.lineWidth = 2;
+			ctx.moveTo(10, 0);
+			ctx.lineTo(-20, 40);
+			ctx.lineTo(-27, 30);
+			ctx.lineTo(-17, 15);
+			ctx.lineTo(-27, 0);
+			ctx.lineTo(-17, -15);
+			ctx.lineTo(-27, -30);
+			ctx.lineTo(-20, -40);
+			ctx.closePath();
+			ctx.stroke();
+			if (!IS_MOBILE) ctx.fill();
+		});
+
+		var jetPlane = renderToCanvas(50,50,function(ctx){
+			// F-16 Fighter
+			ctx.beginPath();
+			setTeamColors(ctx);
+			ctx.moveTo(10,0);
+			ctx.lineTo(-5,2);
+			ctx.lineTo(-10,10);
+			ctx.lineTo(-12,10);
+			ctx.lineTo(-12,2);
+			ctx.lineTo(-17,2);
+			ctx.lineTo(-20,5);
+			ctx.lineTo(-22,5);
+			ctx.lineTo(-20,0);
+			ctx.lineTo(-22,-5);
+			ctx.lineTo(-20,-5);
+			ctx.lineTo(-17,-2);
+			ctx.lineTo(-12,-2);
+			ctx.lineTo(-12,-10);
+			ctx.lineTo(-10,-10);
+			ctx.lineTo(-5,-2);
+			ctx.closePath();
+			ctx.stroke();
+			if (!IS_MOBILE) ctx.fill();
+
+			ctx.moveTo(-8,-7);
+			ctx.lineTo(-3,-7);
+			ctx.moveTo(-8,7);
+			ctx.lineTo(-3,7);
+			ctx.stroke();
+		});
+
+		var dronePlane = renderToCanvas(40,40,function(ctx){
+			ctx.beginPath();
+			setTeamColors(ctx);
+			ctx.moveTo(-12, 0);
+			ctx.lineTo(12, 0);
+			ctx.moveTo(0, 0);
+			ctx.lineTo(-5, -8);
+			ctx.moveTo(0, 0);
+			ctx.lineTo(-5, 8);
+			ctx.stroke();
+		});
 
 		this.BuildStandardTank = function(ctx,x,y,a){drawTank(ctx,standardTankBase,x,y,a);};
 		this.BuildMammothTank = function(ctx,x,y,a){drawTank(ctx,mammothTankBase,x,y,a);};
 		this.BuildHealerTank = function(ctx,x,y,a){drawTank(ctx,healTank,x,y,a);};
+		this.BuildArtilleryTank = function(ctx,x,y,a){drawTank(ctx,artilleryTankBase,x,y,a);};
+		this.BuildBomberPlane = function(ctx,x,y,a){drawTank(ctx,bomberPlane,x,y,a);};
+		this.BuildJetPlane = function(ctx,x,y,a){drawTank(ctx,jetPlane,x,y,a);};
+		this.BuildDronePlane = function(ctx,x,y,a){drawTank(ctx,dronePlane,x,y,a);};
 
 		// Private
 		function renderToCanvas(width,height,renderFunction)
@@ -2854,7 +2789,7 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 
 		function setTeamColors(ctx)
 		{
-			ctx.fillStyle = color.getStringAlphaPreferred(.1);
+			if (!IS_MOBILE) ctx.fillStyle = color.getStringAlphaPreferred(.2);
 			ctx.strokeStyle = color.getString();
 		}
 
@@ -2866,7 +2801,6 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
             ctx.drawImage(tank,-(tank.width/2),-(tank.height/2)); //50,50); // Draws the stored image to the main canvas
             ctx.restore();
 		}
-
 	}
 
 ///////////////
