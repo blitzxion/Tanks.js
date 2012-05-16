@@ -223,7 +223,9 @@ window.onkeydown = function(event) {
 };
 
 /* IE Hates that this was in onload() and FireFox/Chrome just don't care. */
+//background = document.getElementById("background");
 canvas = document.getElementById("canvas");
+//btx = background.getContext("2d");
 ctx = canvas.getContext("2d");
 
 window.onload = function() {
@@ -243,6 +245,11 @@ window.onload = function() {
 		canvas.width =  WIDTH * window.devicePixelRatio;
 		canvas.height = HEIGHT * window.devicePixelRatio;
 		ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+		// background.style.width = WIDTH +"px";
+		// background.style.height = HEIGHT+"px";
+		// background.width =  WIDTH * window.devicePixelRatio;
+		// background.height = HEIGHT * window.devicePixelRatio;
+		// btx.scale(window.devicePixelRatio, window.devicePixelRatio);
 	}
 	else
 	{
@@ -250,6 +257,10 @@ window.onload = function() {
 		canvas.style.height = HEIGHT+"px";
 		canvas.width = WIDTH;
 		canvas.height = HEIGHT;
+		// background.style.width = WIDTH +"px";
+		// background.style.height = HEIGHT+"px";
+		// background.width = WIDTH;
+		// background.height = HEIGHT;
 	}
 
 	/* scale X Y points of each unit to the new location based on the resize */
@@ -270,6 +281,11 @@ window.onload = function() {
 			canvas.style.width = WIDTH +"px";
 			canvas.style.height = HEIGHT+"px";
 			ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+			// background.width =  WIDTH * window.devicePixelRatio;
+			// background.height = HEIGHT * window.devicePixelRatio;
+			// background.style.width = WIDTH +"px";
+			// background.style.height = HEIGHT+"px";
+			// btx.scale(window.devicePixelRatio, window.devicePixelRatio);
 		}
 		else /* non device, scale normally */
 		{
@@ -277,6 +293,10 @@ window.onload = function() {
 			canvas.style.height = HEIGHT+"px";
 			canvas.width = WIDTH;
 			canvas.height = HEIGHT;
+			// background.style.width = WIDTH +"px";
+			// background.style.height = HEIGHT+"px";
+			// background.width = WIDTH;
+			// background.height = HEIGHT;
 		}
 
 		var xRatio = WIDTH / WIDTHPREV,
@@ -2872,7 +2892,9 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 		var TankTeam = null;
 		var AllOneTeam = true;
 
-		clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
+		//clearArea(ctx, new Color(terrainColors[tcIndex][0],terrainColors[tcIndex][1],terrainColors[tcIndex][2]));
+		//btx.clearRect(0,0,WIDTH,HEIGHT);
+		ctx.clearRect(0,0,WIDTH,HEIGHT);
 
 		for(var n in Teams)
 		{
@@ -3064,7 +3086,9 @@ var bulletImage = renderToTempCanvas(3,3,false,function(ctx){
 		roundStartTime = new Date;
 
 		tcIndex = (!RANDOM_TERRAIN) ? 5 : Math.floor(Math.random()*terrainColors.length); // Change up the next map terrain
-		//console.log("BG Color: " + terrainColors[tcIndex].toString());
+		// Instead of making Canvas do all the heavy work, make the dom change the color once per game, not every ms!
+		document.getElementsByTagName('body')[0].style.backgroundColor = "rgb("+terrainColors[tcIndex].toString()+")";
+
 		IN_SPACE=false;
 
 		//if(terrainColors[tcIndex].toString() == '0,0,0')
