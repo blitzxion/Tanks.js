@@ -233,6 +233,8 @@ window.onload = function() {
 
 	/* handle retina display:
 	* http://stackoverflow.com/questions/4405710/uiwebview-w-html5-canvas-retina-display
+	* http://pastebin.com/cMyFdgEz
+	* http://29a.ch/2011/5/27/fast-html5-canvas-on-iphone-mobile-safari-performance
 	*/
 	if (window.devicePixelRatio && window.devicePixelRatio > 1)
 	{
