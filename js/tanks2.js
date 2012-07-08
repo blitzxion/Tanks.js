@@ -143,6 +143,14 @@
 			}
 		}
 
+		for(var n in Bullets)
+		{
+			if (Bullets.hasOwnProperty(n) && Bullets.contains(Bullets[n])) {
+				Bullets[n].draw();
+				Bullets[n].move();
+
+			}
+		}
 		// Loop thru Bullets : Bullets are constaly moving between source/destination. They have a end State of MetDestination
 		// Loop thru Smokes : From Missles/Explosions/Crashes (its all inbetween)
 		// Loop thru Explosions : When missles/bullets/planes (crash)/tanks dying on their target location

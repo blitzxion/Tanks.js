@@ -506,6 +506,8 @@ var DebrisSet = new Set("debrisIndex");
 			debug = {}
 			;
 
+		SetupMyGuns(); // Setup and adjusts guns for each unit.
+
 		var getColor = function(){return Color;}
 		this.isBase = function(){return Type.Kind == TankKindEnum.BASE;}
 		this.isSpecial = function (){ return Type.Special; }
@@ -518,6 +520,7 @@ var DebrisSet = new Set("debrisIndex");
 		this.getType = function(){return Type;}
 		this.getTeam = function() {return Team;};
 		this.getTeamnum = function(){return Teamnum;}
+		this.attackingTarget = function(target){return Type.AttackingUnit ? target === Target : false;}
 	    this.getDistanceSquaredFromPoint = function(x, y) {
 	        var dx = x - X,
 	            dy = y - Y,
@@ -990,6 +993,54 @@ var DebrisSet = new Set("debrisIndex");
 					State = TankStateEnum.TARGET_AQUIRED;
 			}
 		}
+		this.takeDamage = function(damage, shooter)
+		{
+			HitPoints -= damage;
+
+			Team.addTaken(damage);
+
+			if(HitPoints <= 0)
+			{
+				if(Type.Kind === TankKindEnum.PLANE) State = TankStateEnum.CRASH_AND_BURN;
+				else die();
+			}
+			if(shooter !== null && shooter.getTeam() !== Team)
+			{
+				shooter.getTeam().addGiven(damage);
+
+				if(HitPoints > 0 && Tanks.contains(shooter)) //Make sure the shooter of this bullet isn't already dead!
+				{
+					if (this.isHealer() || Type.Kind == TankKindEnum.BUILDER)
+					{
+						/* not really sure how to handle this; should the healer instantly reverse directions? if so, it shouldn't go here... */
+
+						if(Target == null || (State !== TankStateEnum.TARGET_AQUIRED && State !== TankStateEnum.TARGET_IN_RANGE)) /* currently healing someone */
+							State = TankStateEnum.MOVE; /* RUN! RANDOMLY! */
+					}
+					else if(Type.AntiAircraft || !shooter.isPlane())
+					{
+						if(!this.isEvading())
+						{
+							if(Target != null && State == TankStateEnum.TARGET_AQUIRED || State == TankStateEnum.TARGET_IN_RANGE) {
+								/* Don't change targets if the current target is attacking this tank */
+
+								if(!Target.attackingTarget(This) &&
+									shooter.getDistanceSquaredFromPoint(X, Y) < Target.getDistanceSquaredFromPoint(X, Y)) {
+									Target = shooter;
+									State = TankStateEnum.TARGET_AQUIRED;
+								}
+							} else {
+								Target = shooter;
+								State = TankStateEnum.TARGET_AQUIRED;
+							}
+						}
+					}
+				}
+				callFriendlies(shooter);
+			}
+		};
+
+
 		this.drawDebugExtras = function()
 		{
 			// Draw ATTACK RANGE Circle
@@ -1012,6 +1063,7 @@ var DebrisSet = new Set("debrisIndex");
 			// 	canvasContext.stroke();
 			// 	canvasContext.closePath();
 			// }
+
 			DRAW_TARGET_LINE = false; // True for now...
 			if(DRAW_TARGET_LINE && Target != null && Tanks.contains(Target) && Type.Kind != TankKindEnum.TURRET)
 			{
@@ -1128,7 +1180,7 @@ var DebrisSet = new Set("debrisIndex");
 					else TurretAngle -= Type.TurretTurnSpeed;
 				} 
 				else
-					TurretAngle = TargetTurretAngle;				
+					TurretAngle = TargetTurretAngle;
 			}
 			if(TurretAngle > Math.PI) TurretAngle -=  2 * Math.PI;
 			if(TurretAngle < -Math.PI) TurretAngle += 2 * Math.PI;
@@ -1289,26 +1341,17 @@ var DebrisSet = new Set("debrisIndex");
 
 		function attack()
 		{
-			return; // Stop this from doing anything....
-
 			var gun, gunAmmo;
+			
 			if(Cooldown <= 0) // This unit is ready to fire!
 			{
 				for(b=0;b<=Type.BulletType.length;b++) // Loop thru all weapons
 				{
 					gun = Type.BulletType[b]; // Get this gun type
 
-					if(gun == undefined) continue;
-
-					if(gun == ShotType.HEAL) continue; // Not likely, but if unit can heal and fire, may want to fire other gun
+					if(gun == undefined || gun == ShotType.HEAL) continue;
 
 					gunAmmo = Type.Gun[b]; // This lines up the BulletType wih the updated Gun
-
-					// if(gunAmmo.reloadtime > 0)
-					// {
-					// 	Type.Gun[b].reloadtime--;
-					// 	continue;
-					// }
 
 					if(!gunAmmo.attackaironly && Target.isPlane() && !Type.AntiAircraft) continue; // If your weapon ground only, and you are targeting a plane and you're not AA, skip
 					if(gunAmmo.attackaironly && !Target.isPlane()) continue; // If your weapon is AA only, and you're targeting a ground unit, skip
@@ -1337,6 +1380,8 @@ var DebrisSet = new Set("debrisIndex");
 					}
 				}
 			}
+			else
+				Cooldown--;
 		}
 
 		function callFriendlies(target)
@@ -1350,6 +1395,76 @@ var DebrisSet = new Set("debrisIndex");
 			}
 		}
 
+		function SetupMyGuns()
+		{
+
+			var _ShotType = ShotType;
+
+			// Default Setup for Guns and Adjustments
+			var dGuns = {
+				damage : 0,
+				timetolive : 0,
+				speed : 0,
+				splashDamage : false,
+				attackaironly : false,
+				attackgroundonly: false,
+				instantkill : false,
+				reloadtime : 0
+			};
+
+			// Current Guns
+			var guns = Type.BulletType,
+				updatedGuns = [];
+
+			if(inArray(guns, ShotType.NONE) || inArray(guns, ShotType.HEAL))
+				return;
+
+			var i = 0;
+			for(var g in guns)
+			{
+				var ammo = guns[g];
+				
+				if(ammo == undefined) ammo = [dGuns]; // Sucks to be you!
+				ammo = array_merge(dGuns,ammo); // Ensures defaults are set AT THE BASE CLASS!
+
+				// Need to get adjustments and apply their settings
+				// Ensures defaults are set AT THE BASE CLASS of Adjustments. Not all units need to have these set, meaning they'll get the defaults.
+				var adjGun = array_merge(ammo,Type.BulletAdjust[i++]); 
+
+				ammo.damage += adjGun.damage;
+				ammo.speed += adjGun.speed;
+				ammo.attackaironly = adjGun.attackaironly;
+				updatedGuns.push(ammo);
+
+				/* TODO: Update the rest of them, right now, most things use defaults! */
+				
+			}
+
+			Type.Gun = updatedGuns; // Commits the updated gun to this tanks new weapon grade	
+		}
+
+		function die()
+		{
+			// var exps = Math.floor(Math.random() * 4 + 8);
+			// if (IS_MOBILE || getFPS < FPS_TOO_LOW) expos = 2;
+
+			// for(var i = 0; i < exps; i++) {
+			// 	Explosions.add(new Explosion(X + Math.random() * 14 - 7, Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10));
+			// }
+
+			// var debris = Math.floor(3 + Math.random() * 4);
+			// if (IS_MOBILE || getFPS < FPS_TOO_LOW) debris = 2;
+
+			// for(i = 0; i < debris; i++) {
+			// 	var angle = Math.random() * 2 * Math.PI;
+			// 	var speed = Math.random() * 4 + .2;
+			// 	DebrisSet.add(new Debris(X, Y, Math.cos(angle) * speed + This.getDx(), Math.sin(angle) * speed + This.getDy(), Math.random() * 10 + 20));
+			// }
+			//console.log(Team.getScore());
+			LAYER.remove(SHAPE); // Bye!
+			Team.setScore(Team.getScore() - 1);
+			Tanks.remove(This);
+		}
 		
 
 		Team.setScore(Team.getScore() + 1);
@@ -1364,9 +1479,131 @@ var DebrisSet = new Set("debrisIndex");
 	}
 
 //----- Bullet Class -----
-	function Bullets()
+	function Bullet(x,y,dx,dy,time,team,damage,shooter,type,target,airAttack)
 	{
+		var X = x, Y = y, Dx = dx, Dy = dy, Time = time, Team = team, Damage = damage, Shooter = shooter, Type = type, Target = target;
 
+		var AirAttack = airAttack;
+		var LastX = x, LastY = y;
+		var This = this;
+		var LastAngle;
+
+		var bShape; // This is the shape object for this bullet. We'll update its X/Y coord instead of redrawing the damn thing over and over.
+
+		Damage = Damage * DAMAGE_MULTIPLIER;
+		Damage = Math.floor(Damage); // Ensure we are only using whole numbers
+
+		if(Damage <= 0)
+			Damage = 1; // So the weak peeps can still attack
+
+		if(Target != null && Tanks.contains(Target) && Type === ShotType.MISSLE)
+			LastAngle = getAngleFromPoint(Target.getX(), Target.getY(), X, Y);
+
+		//Privileged:
+		this.move = function() {
+
+			X += Dx;
+			Y += Dy;
+			Time--;
+
+			if (X > WIDTH) X -= WIDTH; // if you reach the right side
+			else if (X < 0) X += WIDTH; // if you reach the left side
+
+			if (Y > HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
+			else if (Y < 0) Y = Math.abs(Y + HEIGHT); // If you reach the top (this works)... set you back at the bottom		
+
+			if(Type === ShotType.MISSLE) {
+				//Smokes.add(new Smoke(X, Y, 2, 3, 20, 150));
+				//Smokes.add(new Smoke((X + LastX) / 2, (Y + LastY) / 2, 1, 3, 20, 150));
+
+				LastX = X;
+				LastY = Y;
+
+				if(Target === null || !Tanks.contains(Target)) {
+					var BestDotProduct = -1;
+					for(var n in Tanks) {
+						if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n]) &&
+							Tanks[n].getTeam() != Team && (AirAttack || !Tanks[n].isPlane())) {
+
+							var DistanceMagSquared = Tanks[n].getDistanceSquaredFromPoint(X, Y);
+
+							if(DistanceMagSquared < 200 * 200) {
+								var SpeedMag = Math.sqrt(Dx * Dx + Dy * Dy);
+								var DistanceMag = Math.sqrt(DistanceMagSquared);
+								var DotProduct = (Dx * (Tanks[n].getX() - X) + Dy * (Tanks[n].getY() - Y)) / (SpeedMag * DistanceMag);
+								if(DotProduct > BestDotProduct) {
+									Target = Tanks[n];
+                                    LastAngle = this.getAngleFromPoint(Target.getX(), Target.getY());
+									BestDotProduct = DotProduct;
+								}
+							}
+						}
+					}
+				}
+
+				if(Target != null && Tanks.contains(Target)) {
+					var speed = MISSLE_ACCELERATION + Math.sqrt(Dx * Dx + Dy * Dy);
+					var angle = Math.atan2(Dy, Dx);
+					var angleToTarget = getAngleFromPoint(Target.getX(), Target.getY(), X, Y);
+					var RotateAngle = MISSLE_ROTATION * (angleToTarget - LastAngle);
+					angle += RotateAngle > 0 ? Math.min(RotateAngle, MAX_MISSLE_ROTATION)
+											 : Math.max(RotateAngle, -MAX_MISSLE_ROTATION);
+					LastAngle = angleToTarget;
+
+					Dx = speed * Math.cos(angle);
+					Dy = speed * Math.sin(angle);
+				}
+			}
+
+			if(Time <= 0) explode();
+
+			if(Type != ShotType.SHELL && Type != ShotType.BOMB)
+			{
+				// FOR LOOP! Need to loop thru units != to my team (instead of EVERYONE)
+				for(var n in Tanks) {
+					if(Tanks.hasOwnProperty(n) && Tanks.contains(Tanks[n])) {
+						if(Tanks[n].getTeam() != Team && (AirAttack || !Tanks[n].isPlane()) &&
+							Tanks[n].getDistanceSquaredFromPoint(X, Y) < Math.max(Dx * Dx + Dy * Dy, Tanks[n].getRadiusSquared())) {
+								Tanks[n].takeDamage(Damage, Shooter);
+								explode();
+						}
+					}
+				}
+			}
+		};
+		this.getAngleFromPoint = function(x, y) { return getAngleFromPoint(x, y, X, Y); }
+
+		this.draw = function()
+		{
+			if(bShape == null || bShape == undefined)
+			{
+				bShape = KBullet();
+				bShape.setPosition(X,Y);
+				LAYER.add(bShape);
+			}
+			else if(bShape != null || bShape != undefined)
+				bShape.setPosition(X,Y);
+		};
+
+		//Private:
+		function explode()
+		{
+			if(Type === ShotType.SHELL) {
+				//AreaDamage(X, Y, Damage, SHELL_DAMAGE_RADIUS * SHELL_DAMAGE_RADIUS, Shooter);
+				//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, SHELL_DAMAGE_RADIUS));
+			} else if(Type === ShotType.BOMB) {
+				//AreaDamage(X, Y, Damage, BOMB_DAMAGE_RADIUS * BOMB_DAMAGE_RADIUS, Shooter);
+				//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, BOMB_DAMAGE_RADIUS));
+			} else {
+				//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, 6 + Math.random() * 3));
+			}
+
+			if(bShape != null || bShape != undefined)
+				LAYER.remove(bShape);
+
+			Bullets.remove(This);
+
+		};
 	}
 
 //----- Smoke Class -----

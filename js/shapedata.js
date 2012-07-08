@@ -179,8 +179,16 @@ var KStandardTurret = function(type, color){
 	});
 
 	group.add(turret);
-	
-
 	return group;
-
 };
+
+var KBullet = function()
+{
+	return new Kinetic.Rect({
+		x: 0,
+		y: 0,
+		width:1.5,
+		height:1.5,
+		fill: "yellow"
+	});
+}
