@@ -347,7 +347,7 @@ TankTypes[10] = {
 	AttackingUnit : true,
 	Prob : IS_MOBILE ? 15 : 30,
 	MoveSpeed : 3.5,
-	TurnSpeed : .24,
+	TurnSpeed : .14,
 	TurretTurnSpeed : .15,
 	TurretAttackAngle : 45,
 	Radius : 12,
@@ -571,34 +571,38 @@ var DebrisSet = new Set("debrisIndex");
 		this.getHPBar = function() { return HPBAR; }
 		this.drawHPBar = function()
 		{
-			if(HPBAR == null)
+			if(this.getShape() != null)
 			{
-				HPBAR = new Kinetic.Rect({
-					x: X - 10, // Offset it to the left a bit
-					y: Y - 10, // Offset it just above the unit
-					width: 40,
-					height: 3,
-					fill: "green",
-					stroke: "black",
-					strokeWidth: 1
-				});
-				LAYER.add(HPBAR);
-				HPBAR.hide(); // We're at full health, no need!
-			}
-			else
-			{
-				if(HitPoints <= 0) 
-					HPBAR.hide(); // Since the health dropped below 0, hide it
+				if(HPBAR == null)
+				{
+					HPBAR = new Kinetic.Rect({
+						x: X - 15, // Offset it to the left a bit
+						y: Y - 10, // Offset it just above the unit
+						width: 25,
+						height: 3,
+						fill: "green",
+						stroke: "black",
+						strokeWidth: 1
+					});
+					LAYER.add(HPBAR);
+					HPBAR.hide(); // We're at full health, no need!
+				}
 				else
-					if(HitPoints < Type.HitPoints && HitPoints != 0)
-					{
-						HPBAR.show(); // We're less than 100%, go!
-						HPBAR.setPosition(X-10,Y-10);
-						HPBAR.setWidth(40*(HitPoints/Type.HitPoints));
+				{
+					 if(HitPoints <= 0) 
+					 	if(HPBAR.isVisible()) HPBAR.hide(); // Since the health dropped below 0, hide it
+					 else
+					 	if(HitPoints < Type.HitPoints && HitPoints != 0)
+						{
+							if(!HPBAR.isVisible()) HPBAR.show(); // We're less than 100%, go!
 
-						if((HitPoints/Type.HitPoints) <= .35) HPBAR.fill("red");
-						else HPBAR.fill("green");
-					}
+							HPBAR.setPosition(X-15,Y-10);
+							HPBAR.setWidth(25*(HitPoints/Type.HitPoints));
+
+							if((HitPoints/Type.HitPoints) <= .35) HPBAR.fill("red");
+							else HPBAR.fill("green");
+						}
+				}
 			}
 		}
 
@@ -607,15 +611,11 @@ var DebrisSet = new Set("debrisIndex");
 		{
 			if(HEALCIRCLE == null) // Always add if null
 			{
-				HEALCIRCLE = new Kinetic.Circle({
-					x: sX,
-					y: sY,
+				HEALCIRCLE = new Kinetic.Ellipse({
+					x: sX, y: sY,
 					radius: radius,
 					fill: Team.getColor().getStringAlpha(alpha)
 				});
-
-				//LAYER.add(HEALCIRCLE);
-				//HEALCIRCLE.moveToBottom();
 			}
 			else if(Type != TankKindEnum.BASE)
 				HEALCIRCLE.setPosition(sX,sY); // This is for the healing tanks.
@@ -644,7 +644,7 @@ var DebrisSet = new Set("debrisIndex");
 						_shape = KBaseShape(); // This unit now has a shape
 						_shape.setFill(Team.getColor().getString()); // Sets the unit to the correct color
 
-						group.add(this.drawCircle(10,10,BASE_HEAL_RADIUS,.2)); // Draw Healing Circle
+						group.add(this.drawCircle(0,0,BASE_HEAL_RADIUS,.2)); // Draw Healing Circle
 						group.add(_shape);
 
 						group.name = "Base_" + teamnum;
@@ -710,7 +710,7 @@ var DebrisSet = new Set("debrisIndex");
 						SHAPE.setPosition(X,Y); // Default starting point
 						SHAPE.rotate(2 * Math.PI * Math.random()); // Random starting angle
 
-						SHAPE.setScale(1); // This is fun! 1 = default, 2 = Large, .5 = Small! (any number will work)
+						//SHAPE.setScale(1); // This is fun! 1 = default, 2 = Large, .5 = Small! (any number will work)
 
 						LAYER.add(SHAPE);
 					}
@@ -721,8 +721,8 @@ var DebrisSet = new Set("debrisIndex");
 
 						if(Type.Kind != TankKindEnum.TURRET)
 						{
-							try { // Try to rotate the turret, if it has one
-								SHAPE.getChildren()[1].setRotation(TurretAngle);
+							try { // Try to rotate the turret, if it has one. The CHILD's angle is relative to the parent, to pos. it right, you need the diff
+								SHAPE.getChildren()[1].setRotation(getAngleDifference(BaseAngle,TurretAngle));
 							} catch(err) { /* Just leave, no turret on this sucker */ }
 						}
 						
@@ -743,9 +743,16 @@ var DebrisSet = new Set("debrisIndex");
 						SHAPE.setPosition(X,Y);
 						SHAPE.rotate(2 * Math.PI * Math.random());
 						
-						//SHAPE.on("mousedown",function(){ writeMessage(SHAPE.name); });
-						//SHAPE.on("mouseup",function(){ writeMessage(""); });
+						SHAPE.on("mouseover",function(){ writeMessage(
+							SHAPE.name + 
+							((Type.Kind == TankKindEnum.TURRET) ? " TurretA=" + TurretAngle : " BaseA=" + BaseAngle) +
+							" State#=" + State +
+							" TurretBaseA=" + TargetBaseAngle + 
+							((Target != null) ? " Trgt=" + Target.getShape().name : "")
+						)});
+						SHAPE.on("mouseout",function(){ writeMessage(""); });
 						SHAPE.name = Type.Name + "_" + teamnum + "_" + rndInt(10,100000);
+
 						LAYER.add(SHAPE);
 						SHAPE.moveToTop();
 					}
@@ -897,9 +904,35 @@ var DebrisSet = new Set("debrisIndex");
 
 					break;
 				case TankKindEnum.PLANE:
-					
-					break;
+					switch (State)
+					{
+						case TankStateEnum.IDLE:
+						case TankStateEnum.MOVE:
+						case TankStateEnum.EVADE:
+							moveForward();
+							if(Math.random() < MOVE_PROB) TargetBaseAngle = 2 * Math.PI * Math.random();
+							turnTurret();
 
+							// if(inArray(Type.BulletType,ShotType.NONE))
+							// 	This.takeDamage(1,null);
+
+							
+							//findTargets();
+							break;
+						case TankStateEnum.TARGET_AQUIRED:
+							moveForward();
+							if(Math.random() < MOVE_PROB) TargetBaseAngle = 2 * Math.PI * Math.random();
+							turnTurret();
+							break;
+						case TankStateEnum.CRASH_AND_BURN:
+							moveForward();
+							if(Math.random() < MOVE_PROB) TargetBaseAngle = 2 * Math.PI * Math.random();
+							turnTurret();
+							break;
+					}
+					if(Cooldown > 0) Cooldown--;
+
+					break;
 				case TankKindEnum.TURRET:
 					switch (State)
 					{
@@ -979,7 +1012,7 @@ var DebrisSet = new Set("debrisIndex");
 			// 	canvasContext.stroke();
 			// 	canvasContext.closePath();
 			// }
-			DRAW_TARGET_LINE = true; // True for now...
+			DRAW_TARGET_LINE = false; // True for now...
 			if(DRAW_TARGET_LINE && Target != null && Tanks.contains(Target) && Type.Kind != TankKindEnum.TURRET)
 			{
 				var mX = this.getX(), mY = this.getY(),
@@ -1028,28 +1061,43 @@ var DebrisSet = new Set("debrisIndex");
 
 
 			// Draw FOV
-			// if(DRAW_FOV)
-			// {
-			// 	var useThisAngle = TurretAngle;
-			// 	var useAttackAngle = Type.TurretAttackAngle;
-			// 	if(!Type.AttackingUnit)
-			// 	{
-			// 		useThisAngle = BaseAngle;
-			// 		useAttackAngle = 45;
-			// 	}
-			// 	else if(this.isPlane() && Target == null)
-			// 		useThisAngle = BaseAngle;
+			DRAW_FOV = false;
+			if(DRAW_FOV)
+			{
+				if(this.isBase() || this.isPlane()) return;
 
-			// 	canvasContext.beginPath();
-			// 	canvasContext.strokeStyle = Team.getColor().getColorStringWithAlpha(.5);
-			// 	canvasContext.moveTo(X,Y);
-			// 	canvasContext.arc(X,Y,Type.SightDistance,useThisAngle - (Math.PI / 180) * useAttackAngle,useThisAngle + (Math.PI / 180) * useAttackAngle,false);
-			// 	canvasContext.closePath();
-			// 	//canvasContext.fillStyle = Team.getColor().getColorStringWithAlpha(.05);
-			// 	//canvasContext.fill();
-			// 	canvasContext.stroke();
+				var useThisAngle = TurretAngle;
+				var useAttackAngle = Type.TurretAttackAngle;
 
-			//}
+				if(!Type.AttackingUnit)
+				{
+					useThisAngle = BaseAngle;
+					useAttackAngle = 45;
+				}
+				else if(this.isPlane() && Target == null)
+					useThisAngle = BaseAngle;
+
+				if(debug.fov != null && debug.fov != undefined)
+					LAYER.remove(debug.fov);
+				
+				debug.fov = new Kinetic.Shape({
+					drawFunc: function(){
+						var canvasContext = this.getContext();
+						canvasContext.beginPath();
+						canvasContext.strokeStyle = Team.getColor().getStringAlpha(.5);
+						canvasContext.moveTo(X,Y);
+						canvasContext.arc(X,Y,Type.SightDistance,useThisAngle - (Math.PI / 180) * useAttackAngle,useThisAngle + (Math.PI / 180) * useAttackAngle,false);
+						canvasContext.closePath();
+						canvasContext.stroke();
+					}
+				});
+
+				LAYER.add(debug.fov);
+				
+
+
+
+			}
 		}
 
 		// Private Method

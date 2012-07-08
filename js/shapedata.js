@@ -11,7 +11,7 @@ var KBaseShape = function(){
 		width: 20,
 		height: 20,
 		strokeWidth: 1,
-		//centerOffset : [10,10]
+		offset : [10,10]
 	});
 }
 
@@ -48,7 +48,8 @@ var KHealerTank = function(color, colorAlpha){
 	var group = new Kinetic.Group({
 		x: 0,
 		y: 0,
-		offset: [8, 14]
+		offset: [8, 8], // They have front tires that move them, pull back the "Center" of them
+		scale: 1
 	});
 
 	// Body
@@ -107,8 +108,8 @@ var KDronePlane = function(color, colorAlpha){
 		fill: colorAlpha,
 		stroke: color,
 		strokeWidth: 1,
-		scale: .75, // I'm lazy, this helps reduce the size of the plane so it makes sense!
-		offset: [14,16]
+		scale: .5, // I'm lazy, this helps reduce the size of the plane so it makes sense!
+		offset: [13,16]
 	});
 }
 
@@ -118,8 +119,8 @@ var KFighterPlane = function(color, colorAlpha){
 		fill: colorAlpha,
 		stroke: color,
 		strokeWidth: 1,
-		scale: .75 // I'm lazy, this helps reduce the size of the plane so it makes sense!
-		//offset: [19,12.5]
+		scale: 1,
+		offset: [13,16]
 	});
 };
 
@@ -129,8 +130,8 @@ var KBomberPlane = function(color, colorAlpha){
 		fill: colorAlpha,
 		stroke: color,
 		strokeWidth: 1,
-		scale: .75 // I'm lazy, this helps reduce the size of the plane so it makes sense!
-		//offset: [19,12.5]
+		scale: 1.25,
+		offset: [13,16]
 	});
 };
 

@@ -208,6 +208,16 @@ var DRAW_TARGET_LINE = false,
 		return Math.atan2(y1 - y2, x1 - x2);
 	}
 
+	// This is new. Since groups will persiste the parent (the group) angle, the children's angels are RELATIVE to that, so you might need to do this...
+	// http://www.codeproject.com/Articles/59789/Calculate-the-real-difference-between-two-angles-k
+	function getAngleDifference(a1,a2)
+	{
+		var diff = a2 - a1;
+		while(diff < -180) diff += 360;
+		while(diff > 180) diff -= 360;
+		return diff;
+	}
+
 //----- JS Utils -----
 
 	function rnd(min, max) { return Math.random() * (max - min) + min; } /* Returns a random number between min and max */
@@ -304,8 +314,7 @@ var DRAW_TARGET_LINE = false,
 				text : message,
 				fontSize: 18, fontStyle: "italic", textFill: "#555",
 				width: 400, padding: 20,
-				shadow: { color: 'black', blur: 1, offset: [10, 10], alpha: 0.2 },
-				wrap: true
+				shadow: { color: 'black', blur: 1, offset: [10, 10], alpha: 0.2 }
 			});
 			MSGLAYER.add(text);
 		}
