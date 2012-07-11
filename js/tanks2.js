@@ -18,8 +18,10 @@
 		document.getElementById("container").style.height = HEIGHT + "px"; // So the bottom banner can freaking appear
 
 		LAYER = new Kinetic.Layer();
+		BULLETLAYER = new Kinetic.Layer();
 		MSGLAYER = new Kinetic.Layer();
 		STAGE.add(LAYER);
+		STAGE.add(BULLETLAYER);
 		STAGE.add(MSGLAYER);
 
 		Setup();
@@ -157,12 +159,12 @@
 		// Loop thru Debris : This is the from Explosion for planes crashing... 
 
 		LAYER.draw();
+		BULLETLAYER.draw();
 
 		// Setup for the FPS counter
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
 		frameTime+= (thisFrameTime - frameTime) / filterStrength;
 		lastLoop = thisLoop;
 	}
-
 
 })();

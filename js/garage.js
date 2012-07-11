@@ -747,11 +747,11 @@ var DebrisSet = new Set("debrisIndex");
 						SHAPE.rotate(2 * Math.PI * Math.random());
 						
 						SHAPE.on("mouseover",function(){ writeMessage(
-							SHAPE.name + 
-							((Type.Kind == TankKindEnum.TURRET) ? " TurretA=" + TurretAngle : " BaseA=" + BaseAngle) +
-							" State#=" + State +
-							" TurretBaseA=" + TargetBaseAngle + 
-							((Target != null) ? " Trgt=" + Target.getShape().name : "")
+							SHAPE.name +
+							((Type.Kind == TankKindEnum.TURRET) ? "\nTurretA=" + TurretAngle : "\nBaseA=" + BaseAngle) +
+							"\nState#=" + State +
+							"\nTurretBaseA=" + TargetBaseAngle + 
+							((Target != null) ? "\nTrgt=" + Target.getShape().name : "")
 						)});
 						SHAPE.on("mouseout",function(){ writeMessage(""); });
 						SHAPE.name = Type.Name + "_" + teamnum + "_" + rndInt(10,100000);
@@ -931,6 +931,8 @@ var DebrisSet = new Set("debrisIndex");
 							moveForward();
 							if(Math.random() < MOVE_PROB) TargetBaseAngle = 2 * Math.PI * Math.random();
 							turnTurret();
+
+							die();
 							break;
 					}
 					if(Cooldown > 0) Cooldown--;
@@ -1373,7 +1375,19 @@ var DebrisSet = new Set("debrisIndex");
 							Bullets.add(new Bullet(X + Math.cos(TurretAngle) * Type.BarrelLength + Math.cos(TurretAngle - Math.PI / 4) * Type.TurretSeparation, Y + Math.sin(TurretAngle) * Type.BarrelLength + Math.sin(TurretAngle - Math.PI / 4) * Type.TurretSeparation, speed * Math.cos(TurretAngle), speed * Math.sin(TurretAngle), gunAmmo.timetolive, Team, gunAmmo.damage, This, gun, Target, Type.AntiAircraft));
 
 						} else {
-							Bullets.add(new Bullet(X + Math.cos(TurretAngle) * Type.BarrelLength, Y + Math.sin(TurretAngle) * Type.BarrelLength, speed * Math.cos(TurretAngle), speed * Math.sin(TurretAngle), gunAmmo.timetolive, Team, gunAmmo.damage, This, gun, Target, Type.AntiAircraft));
+							Bullets.add(new Bullet(
+								X + Math.cos(TurretAngle) * Type.BarrelLength, //x
+								Y + Math.sin(TurretAngle) * Type.BarrelLength, //y
+								speed * Math.cos(TurretAngle), //dx
+								speed * Math.sin(TurretAngle), //dy
+								gunAmmo.timetolive, 
+								Team, 
+								gunAmmo.damage, 
+								This, 
+								gun, 
+								Target, 
+								Type.AntiAircraft
+							));
 						}
 						Cooldown = Type.CooldownTime;
 						//Type.Gun[b].reloadtime = 100;
@@ -1461,6 +1475,7 @@ var DebrisSet = new Set("debrisIndex");
 			// 	DebrisSet.add(new Debris(X, Y, Math.cos(angle) * speed + This.getDx(), Math.sin(angle) * speed + This.getDy(), Math.random() * 10 + 20));
 			// }
 			//console.log(Team.getScore());
+			console.log("Removing: " + SHAPE.name);
 			LAYER.remove(SHAPE); // Bye!
 			Team.setScore(Team.getScore() - 1);
 			Tanks.remove(This);
@@ -1487,6 +1502,7 @@ var DebrisSet = new Set("debrisIndex");
 		var LastX = x, LastY = y;
 		var This = this;
 		var LastAngle;
+		var exploding = false;
 
 		var bShape; // This is the shape object for this bullet. We'll update its X/Y coord instead of redrawing the damn thing over and over.
 
@@ -1501,6 +1517,8 @@ var DebrisSet = new Set("debrisIndex");
 
 		//Privileged:
 		this.move = function() {
+			
+			if(exploding) return;
 
 			X += Dx;
 			Y += Dy;
@@ -1510,7 +1528,7 @@ var DebrisSet = new Set("debrisIndex");
 			else if (X < 0) X += WIDTH; // if you reach the left side
 
 			if (Y > HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
-			else if (Y < 0) Y = Math.abs(Y + HEIGHT); // If you reach the top (this works)... set you back at the bottom		
+			else if (Y < 0) Y = Math.abs(Y + HEIGHT); // If you reach the top (this works)... set you back at the bottom
 
 			if(Type === ShotType.MISSLE) {
 				//Smokes.add(new Smoke(X, Y, 2, 3, 20, 150));
@@ -1575,11 +1593,16 @@ var DebrisSet = new Set("debrisIndex");
 
 		this.draw = function()
 		{
+			if(exploding) return;
+
+			var _bName = "Bullet_" + shooter.getShape().name + "_" + rndInt(1,90000);
+
 			if(bShape == null || bShape == undefined)
 			{
 				bShape = KBullet();
+				bShape.id = _bName;
 				bShape.setPosition(X,Y);
-				LAYER.add(bShape);
+				BULLETLAYER.add(bShape);
 			}
 			else if(bShape != null || bShape != undefined)
 				bShape.setPosition(X,Y);
@@ -1588,20 +1611,25 @@ var DebrisSet = new Set("debrisIndex");
 		//Private:
 		function explode()
 		{
-			if(Type === ShotType.SHELL) {
-				//AreaDamage(X, Y, Damage, SHELL_DAMAGE_RADIUS * SHELL_DAMAGE_RADIUS, Shooter);
-				//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, SHELL_DAMAGE_RADIUS));
-			} else if(Type === ShotType.BOMB) {
-				//AreaDamage(X, Y, Damage, BOMB_DAMAGE_RADIUS * BOMB_DAMAGE_RADIUS, Shooter);
-				//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, BOMB_DAMAGE_RADIUS));
-			} else {
-				//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, 6 + Math.random() * 3));
+			if(!exploding) // Only explode if we're haven't already...
+			{
+				exploding = true; // Prevents draw() or move() from doing anything to this bullet...
+
+				if(Type === ShotType.SHELL) {
+					//AreaDamage(X, Y, Damage, SHELL_DAMAGE_RADIUS * SHELL_DAMAGE_RADIUS, Shooter);
+					//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, SHELL_DAMAGE_RADIUS));
+				} else if(Type === ShotType.BOMB) {
+					//AreaDamage(X, Y, Damage, BOMB_DAMAGE_RADIUS * BOMB_DAMAGE_RADIUS, Shooter);
+					//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, BOMB_DAMAGE_RADIUS));
+				} else {
+					//Explosions.add(new Explosion(X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, 6 + Math.random() * 3));
+				}
+
+				if(bShape != null && bShape != undefined)
+					BULLETLAYER.remove(bShape);
+
+				Bullets.remove(This);
 			}
-
-			if(bShape != null || bShape != undefined)
-				LAYER.remove(bShape);
-
-			Bullets.remove(This);
 
 		};
 	}
