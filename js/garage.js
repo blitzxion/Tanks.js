@@ -70,401 +70,400 @@ var ShotType = {
 // Unit Types
 var TankTypes = [];
 
-//Small Tank:
-TankTypes[0] = {
-	Name : "SmallTank",
-	Kind : TankKindEnum.TANK,
-	AttackingUnit :  true,
-	Prob : 120,
-	MoveSpeed : 1.4,
-	TurnSpeed : .18,
-	TurretTurnSpeed : .19,
-	TurretAttackAngle : 45,
-	Radius : 10,
-	HitPoints : 30,
-	CooldownTime :  25,
-	MinRange : 10,
-	AttackDistance : 100,
-	AttackRange : 125,
-	SightDistance : 200,
-	BulletType : [ShotType.BULLET],
-	BulletAdjust : [{damage:-2,speed :1}],
-	TurretSize : 5,
-	BarrelLength : 10,
-	DoubleTurret : false,
-	AntiAircraft : false,
-	CanGoEvasive : true,
-	EvaProb : .25,
-	Shape : null
-};
+// ---- UNITS ----
+	//Small Tank:
+	TankTypes[0] = {
+		Name : "SmallTank",
+		Kind : TankKindEnum.TANK,
+		AttackingUnit :  true,
+		Prob : 120,
+		MoveSpeed : 1.4,
+		TurnSpeed : .18,
+		TurretTurnSpeed : .19,
+		TurretAttackAngle : 45,
+		Radius : 10,
+		HitPoints : 30,
+		CooldownTime :  25,
+		MinRange : 10,
+		AttackDistance : 100,
+		AttackRange : 125,
+		SightDistance : 200,
+		BulletType : [ShotType.BULLET],
+		BulletAdjust : [{damage:-2,speed :1}],
+		TurretSize : 5,
+		BarrelLength : 10,
+		DoubleTurret : false,
+		AntiAircraft : false,
+		CanGoEvasive : true,
+		EvaProb : .25,
+		Shape : null
+	};
 
-//Medium Tank
-TankTypes[1] = {
-	Name : "MediumTank",
-	Kind : TankKindEnum.TANK,
-	AttackingUnit :  true,
-	Prob : 120,
-	MoveSpeed : 1.0,
-	TurnSpeed : .13,
-	TurretTurnSpeed : .16,
-	TurretAttackAngle : 5,
-	Radius : 10,
-	HitPoints : 50,
-	CooldownTime : 35,
-	MinRange : 25,
-	AttackDistance : 115,
-	AttackRange : 140,
-	SightDistance : 200,
-	BulletType : [ShotType.BULLET],
-	BulletAdjust : [{damage:-1,speed :1}],
-	TurretSize : 6,
-	BarrelLength : 12,
-	DoubleTurret : false,
-	AntiAircraft : false,
-	CanGoEvasive : true,
-	EvaProb : .25
-};
+	//Medium Tank
+	TankTypes[1] = {
+		Name : "MediumTank",
+		Kind : TankKindEnum.TANK,
+		AttackingUnit :  true,
+		Prob : 120,
+		MoveSpeed : 1.0,
+		TurnSpeed : .13,
+		TurretTurnSpeed : .16,
+		TurretAttackAngle : 5,
+		Radius : 10,
+		HitPoints : 50,
+		CooldownTime : 35,
+		MinRange : 25,
+		AttackDistance : 115,
+		AttackRange : 140,
+		SightDistance : 200,
+		BulletType : [ShotType.BULLET],
+		BulletAdjust : [{damage:-1,speed :1}],
+		TurretSize : 6,
+		BarrelLength : 12,
+		DoubleTurret : false,
+		AntiAircraft : false,
+		CanGoEvasive : true,
+		EvaProb : .25
+	};
 
-//Large Tank
-TankTypes[2] = {
-	Name : "LargeTank",
-	Kind : TankKindEnum.TANK,
-	AttackingUnit : true,
-	Prob : 120,
-	MoveSpeed : 0.8,
-	TurnSpeed : .09,
-	TurretTurnSpeed : .14,
-	TurretAttackAngle : 5,
-	Radius : 10,
-	HitPoints : 75,
-	CooldownTime : 50,
-	MinRange : 25,
-	AttackDistance : 130,
-	AttackRange : 155,
-	SightDistance : 200,
-	BulletType : [ShotType.BULLET],
-	BulletAdjust : [{damage:1,speed :1}],
-	TurretSize : 7,
-	BarrelLength : 14,
-	DoubleTurret : false,
-	AntiAircraft : false,
-	CanGoEvasive : true,
-	EvaProb : .25
-};
+	//Large Tank
+	TankTypes[2] = {
+		Name : "LargeTank",
+		Kind : TankKindEnum.TANK,
+		AttackingUnit : true,
+		Prob : 120,
+		MoveSpeed : 0.8,
+		TurnSpeed : .09,
+		TurretTurnSpeed : .14,
+		TurretAttackAngle : 5,
+		Radius : 10,
+		HitPoints : 75,
+		CooldownTime : 50,
+		MinRange : 25,
+		AttackDistance : 130,
+		AttackRange : 155,
+		SightDistance : 200,
+		BulletType : [ShotType.BULLET],
+		BulletAdjust : [{damage:1,speed :1}],
+		TurretSize : 7,
+		BarrelLength : 14,
+		DoubleTurret : false,
+		AntiAircraft : false,
+		CanGoEvasive : true,
+		EvaProb : .25
+	};
 
-//Artillery
-TankTypes[3] = {
-	Name : "ArtilleryTank",
-	Kind : TankKindEnum.TANK,
-	AttackingUnit : true,
-	Prob : 60,
-	MoveSpeed : 0.9,
-	TurnSpeed : .07,
-	TurretTurnSpeed : 0.12,
-	TurretAttackAngle : 5,
-	Radius : 10,
-	HitPoints : 25,
-	CooldownTime : 75,
-	MinRange : 50,
-	AttackDistance : 175,
-	AttackRange : 180,
-	SightDistance : 180,
-	BulletType : [ShotType.SHELL],
-	BulletAdjust : [{damage:5,speed :-1}],
-	TurretSize : 0,
-	BarrelLength :  16,
-	DoubleTurret : false,
-	AntiAircraft : false,
-	CanGoEvasive : true,
-	EvaProb : .25
-};
+	//Artillery
+	TankTypes[3] = {
+		Name : "ArtilleryTank",
+		Kind : TankKindEnum.TANK,
+		AttackingUnit : true,
+		Prob : 60,
+		MoveSpeed : 0.9,
+		TurnSpeed : .07,
+		TurretTurnSpeed : 0.12,
+		TurretAttackAngle : 5,
+		Radius : 10,
+		HitPoints : 25,
+		CooldownTime : 75,
+		MinRange : 50,
+		AttackDistance : 175,
+		AttackRange : 180,
+		SightDistance : 180,
+		BulletType : [ShotType.SHELL],
+		BulletAdjust : [{damage:5,speed :-1}],
+		TurretSize : 0,
+		BarrelLength :  16,
+		DoubleTurret : false,
+		AntiAircraft : false,
+		CanGoEvasive : true,
+		EvaProb : .25
+	};
 
-//Double Tank
-TankTypes[4] = {
-	Name : "DoubleTank",
-	Kind : TankKindEnum.TANK,
-	AttackingUnit : true,
-	Prob : 80,
-	MoveSpeed : 0.7,
-	TurnSpeed : .07,
-	TurretTurnSpeed : 0.12,
-	TurretAttackAngle : 5,
-	Radius : 10,
-	HitPoints : 85,
-	CooldownTime : 70,
-	MinRange : 25,
-	AttackDistance : 130,
-	AttackRange : 155,
-	SightDistance : 200,
-	BulletType : [ShotType.BULLET],
-	BulletAdjust : [{damage:0,speed :1}],
-	TurretSize : 7,
-	BarrelLength : 14,
-	DoubleTurret : true,
-	TurretSeparation : 1.25,
-	AntiAircraft : false,
-	CanGoEvasive : true,
-	EvaProb : .25
-};
+	//Double Tank
+	TankTypes[4] = {
+		Name : "DoubleTank",
+		Kind : TankKindEnum.TANK,
+		AttackingUnit : true,
+		Prob : 80,
+		MoveSpeed : 0.7,
+		TurnSpeed : .07,
+		TurretTurnSpeed : 0.12,
+		TurretAttackAngle : 5,
+		Radius : 10,
+		HitPoints : 85,
+		CooldownTime : 70,
+		MinRange : 25,
+		AttackDistance : 130,
+		AttackRange : 155,
+		SightDistance : 200,
+		BulletType : [ShotType.BULLET],
+		BulletAdjust : [{damage:0,speed :1}],
+		TurretSize : 7,
+		BarrelLength : 14,
+		DoubleTurret : true,
+		TurretSeparation : 1.25,
+		AntiAircraft : false,
+		CanGoEvasive : true,
+		EvaProb : .25
+	};
 
-//Missle Launcher
-TankTypes[5] = {
-	Name : "MissileTank",
-	Kind : TankKindEnum.TANK,
-	AttackingUnit : true,
-	Prob : 90,
-	MoveSpeed : 1.0,
-	TurnSpeed : .07,
-	TurretTurnSpeed : 0.13,
-	TurretAttackAngle : 45,
-	Radius : 10,
-	HitPoints : 35,
-	CooldownTime : 70,
-	MinRange : 25,
-	AttackDistance : 130,
-	AttackRange : 155,
-	SightDistance : 200,
-	BulletType : [ShotType.MISSLE],
-	BulletAdjust : [{damage:-7,speed :0}],
-	TurretSize : 0,
-	BarrelLength : 5,
-	DoubleTurret : true,
-	TurretSeparation : 2.5,
-	AntiAircraft : true,
-	CanGoEvasive : true,
-	EvaProb : .7
-};
+	//Missle Launcher
+	TankTypes[5] = {
+		Name : "MissileTank",
+		Kind : TankKindEnum.TANK,
+		AttackingUnit : true,
+		Prob : 90,
+		MoveSpeed : 1.0,
+		TurnSpeed : .07,
+		TurretTurnSpeed : 0.13,
+		TurretAttackAngle : 45,
+		Radius : 10,
+		HitPoints : 35,
+		CooldownTime : 70,
+		MinRange : 25,
+		AttackDistance : 130,
+		AttackRange : 155,
+		SightDistance : 200,
+		BulletType : [ShotType.MISSLE],
+		BulletAdjust : [{damage:-7,speed :0}],
+		TurretSize : 0,
+		BarrelLength : 5,
+		DoubleTurret : true,
+		TurretSeparation : 2.5,
+		AntiAircraft : true,
+		CanGoEvasive : true,
+		EvaProb : .7
+	};
 
-//Turret
-TankTypes[6] = {
-	Name : "DefenseTurret",
-	Kind : TankKindEnum.TURRET,
-	AttackingUnit : true,
-	Prob : 40,
-	MoveSpeed : 0,
-	TurnSpeed : 0,
-	TurretTurnSpeed : 0.16,
-	TurretAttackAngle : 5,
-	Radius : 7,
-	HitPoints : 200,
-	CooldownTime : 25,
-	MinRange : 10,
-	AttackDistance : 150,
-	AttackRange : 150,
-	SightDistance : 150,
-	BulletType : [ShotType.BULLET],
-	BulletAdjust : [{damage:-1,speed :1}],
-	TurretSize : 6,
-	BarrelLength : 12,
-	DoubleTurret : false,
-	AntiAircraft : false,
-	CanGoEvasive : false,
-	EvaProb : 0
-};
+	//Turret
+	TankTypes[6] = {
+		Name : "DefenseTurret",
+		Kind : TankKindEnum.TURRET,
+		AttackingUnit : true,
+		Prob : 40,
+		MoveSpeed : 0,
+		TurnSpeed : 0,
+		TurretTurnSpeed : 0.16,
+		TurretAttackAngle : 5,
+		Radius : 7,
+		HitPoints : 200,
+		CooldownTime : 25,
+		MinRange : 10,
+		AttackDistance : 150,
+		AttackRange : 150,
+		SightDistance : 150,
+		BulletType : [ShotType.BULLET],
+		BulletAdjust : [{damage:-1,speed :1}],
+		TurretSize : 6,
+		BarrelLength : 12,
+		DoubleTurret : false,
+		AntiAircraft : false,
+		CanGoEvasive : false,
+		EvaProb : 0
+	};
 
-//AA Turret
-TankTypes[7] = {
-	Name : "AATurret",
-	Kind : TankKindEnum.TURRET,
-	AttackingUnit : true,
-	Prob : 70,
-	MoveSpeed : 0,
-	TurnSpeed : 0,
-	TurretTurnSpeed : 0.14,
-	TurretAttackAngle : 10,
-	Radius : 7,
-	HitPoints : 45,
-	CooldownTime : 7,
-	MinRange : 10,
-	AttackDistance : 130,
-	AttackRange : 130,
-	SightDistance : 180,
-	BulletType : [ShotType.BULLET],
-	BulletAdjust : [{damage:-4,speed :5}],
-	TurretSize : 4,
-	BarrelLength : 6,
-	DoubleTurret : true,
-	TurretSeparation : 4,
-	AntiAircraft : true,
-	CanGoEvasive : false,
-	EvaProb : 0
-};
+	//AA Turret
+	TankTypes[7] = {
+		Name : "AATurret",
+		Kind : TankKindEnum.TURRET,
+		AttackingUnit : true,
+		Prob : 70,
+		MoveSpeed : 0,
+		TurnSpeed : 0,
+		TurretTurnSpeed : 0.14,
+		TurretAttackAngle : 10,
+		Radius : 7,
+		HitPoints : 45,
+		CooldownTime : 7,
+		MinRange : 10,
+		AttackDistance : 130,
+		AttackRange : 130,
+		SightDistance : 180,
+		BulletType : [ShotType.BULLET],
+		BulletAdjust : [{damage:-4,speed :5}],
+		TurretSize : 4,
+		BarrelLength : 6,
+		DoubleTurret : true,
+		TurretSeparation : 4,
+		AntiAircraft : true,
+		CanGoEvasive : false,
+		EvaProb : 0
+	};
 
-//Builder
-TankTypes[8] = {
-	Name : "Builder",
-	Kind : TankKindEnum.BUILDER,
-	AttackingUnit : false,
-	Prob : 15,
-	MoveSpeed : 1.05,
-	TurnSpeed : .13,
-	TurretTurnSpeed : 0,
-	Radius : 10,
-	HitPoints : 100,
-	CooldownTime : 250,
-	MinRange : 0,
-	AttackDistance : 0,
-	AttackRange : 0,
-	SightDistance : 200,
-	BulletType : [ShotType.NONE],
-	TurretSize : 0,
-	BarrelLength :  0,
-	DoubleTurret : false,
-	CanGoEvasive : true,
-	EvaProb : .8
-};
+	//Builder
+	TankTypes[8] = {
+		Name : "Builder",
+		Kind : TankKindEnum.BUILDER,
+		AttackingUnit : false,
+		Prob : 15,
+		MoveSpeed : 1.05,
+		TurnSpeed : .13,
+		TurretTurnSpeed : 0,
+		Radius : 10,
+		HitPoints : 100,
+		CooldownTime : 250,
+		MinRange : 0,
+		AttackDistance : 0,
+		AttackRange : 0,
+		SightDistance : 200,
+		BulletType : [ShotType.NONE],
+		TurretSize : 0,
+		BarrelLength :  0,
+		DoubleTurret : false,
+		CanGoEvasive : true,
+		EvaProb : .8
+	};
 
-//Bomber
-TankTypes[9] = {
-	Name : "BomberPlane",
-	Kind : TankKindEnum.PLANE,
-	AttackingUnit : true,
-	Prob : IS_MOBILE ? 15 : 30,
-	MoveSpeed : 2.5,
-	TurnSpeed : .045,
-	TurretTurnSpeed : .5,
-	TurretAttackAngle : 20,
-	Radius : 12,
-	HitPoints : 80,
-	CooldownTime : 6,
-	MinRange : 10,
-	AttackDistance : 60,
-	AttackRange : 60,
-	SightDistance : 250,
-	BulletType : [ShotType.BOMB],
-	BulletAdjust : [{damage:-15,speed :0}],
-	BarrelLength :  0,
-	DoubleTurret : false,
-	AntiAircraft : false,
-	CanGoEvasive : false,
-	EvaProb : 0
-};
+	//Bomber
+	TankTypes[9] = {
+		Name : "BomberPlane",
+		Kind : TankKindEnum.PLANE,
+		AttackingUnit : true,
+		Prob : IS_MOBILE ? 15 : 30,
+		MoveSpeed : 2.5,
+		TurnSpeed : .045,
+		TurretTurnSpeed : .5,
+		TurretAttackAngle : 20,
+		Radius : 12,
+		HitPoints : 80,
+		CooldownTime : 6,
+		MinRange : 10,
+		AttackDistance : 60,
+		AttackRange : 60,
+		SightDistance : 250,
+		BulletType : [ShotType.BOMB],
+		BulletAdjust : [{damage:-15,speed :0}],
+		BarrelLength :  0,
+		DoubleTurret : false,
+		AntiAircraft : false,
+		CanGoEvasive : false,
+		EvaProb : 0
+	};
 
-//Fighter
-TankTypes[10] = {
-	Name : "FighterJet",
-	Kind : TankKindEnum.PLANE,
-	AttackingUnit : true,
-	Prob : IS_MOBILE ? 15 : 30,
-	MoveSpeed : 3.5,
-	TurnSpeed : .14,
-	TurretTurnSpeed : .15,
-	TurretAttackAngle : 45,
-	Radius : 12,
-	HitPoints : 160,
-	CooldownTime : 100,
-	MinRange : 10,
-	AttackDistance : 350,
-	AttackRange : 350,
-	SightDistance : 500,
-	BulletType : [ShotType.MISSLE, ShotType.SHELL],
-	BulletAdjust : [{damage:-5,speed :4,attackaironly:true},{damage:0,speed :0,timetolive:1}],
-	BarrelLength :  0,
-	DoubleTurret : true,
-	TurretSeparation : 4,
-	AntiAircraft : true,
-	CanGoEvasive : false,
-	EvaProb : 0
-};
+	//Fighter
+	TankTypes[10] = {
+		Name : "FighterJet",
+		Kind : TankKindEnum.PLANE,
+		AttackingUnit : true,
+		Prob : IS_MOBILE ? 15 : 30,
+		MoveSpeed : 3.5,
+		TurnSpeed : .14,
+		TurretTurnSpeed : .15,
+		TurretAttackAngle : 45,
+		Radius : 12,
+		HitPoints : 160,
+		CooldownTime : 100,
+		MinRange : 10,
+		AttackDistance : 350,
+		AttackRange : 350,
+		SightDistance : 500,
+		BulletType : [ShotType.MISSLE, ShotType.SHELL],
+		BulletAdjust : [{damage:-5,speed :4,attackaironly:true},{damage:0,speed :0,timetolive:1}],
+		BarrelLength :  0,
+		DoubleTurret : true,
+		TurretSeparation : 4,
+		AntiAircraft : true,
+		CanGoEvasive : false,
+		EvaProb : 0
+	};
 
-// Mammoth Tank
-TankTypes[11] = {
-	Name : "MammothTank",
-	Kind : TankKindEnum.TANK,
-	AttackingUnit : true,
-	Prob : 20, // 20
-	MoveSpeed : 1.29,
-	TurnSpeed : .09,
-	TurretTurnSpeed : 0.19,
-	TurretAttackAngle : 45,
-	Radius : 10,
-	HitPoints : 350, //500
-	CooldownTime : 80,
-	MinRange : 15,
-	AttackDistance : 130,
-	AttackRange : 135,
-	SightDistance : 300,
-	BulletType : [ShotType.BULLET, ShotType.MISSLE],
-	BulletAdjust : [{damage:3,speed :5},{damage:0,speed :0,attackaironly:true}],
-	TurretSize : 10,
-	BarrelLength : 20,
-	DoubleTurret : true,
-	TurretSeparation : 3.5,
-	AntiAircraft : true,
-	CanGoEvasive : true,
-	EvaProb : .3
-};
+	// Mammoth Tank
+	TankTypes[11] = {
+		Name : "MammothTank",
+		Kind : TankKindEnum.TANK,
+		AttackingUnit : true,
+		Prob : 20, // 20
+		MoveSpeed : 1.29,
+		TurnSpeed : .09,
+		TurretTurnSpeed : 0.19,
+		TurretAttackAngle : 45,
+		Radius : 10,
+		HitPoints : 350, //500
+		CooldownTime : 80,
+		MinRange : 15,
+		AttackDistance : 130,
+		AttackRange : 135,
+		SightDistance : 300,
+		BulletType : [ShotType.BULLET, ShotType.MISSLE],
+		BulletAdjust : [{damage:3,speed :5},{damage:0,speed :0,attackaironly:true}],
+		TurretSize : 10,
+		BarrelLength : 20,
+		DoubleTurret : true,
+		TurretSeparation : 3.5,
+		AntiAircraft : true,
+		CanGoEvasive : true,
+		EvaProb : .3
+	};
 
-// UAV (Scout)
-TankTypes[12] = {
-	Name : "UAVScout",
-	Kind : TankKindEnum.PLANE,
-	AttackingUnit : false,
-	Prob : 5,
-	MoveSpeed : 4.5,
-	TurnSpeed : .12,
-	TurretTurnSpeed : .15,
-	Radius : 12,
-	HitPoints : 400, // This will automatically drain
-	CooldownTime : 100,
-	MinRange : 10,
-	SightDistance : 600,
-	BulletType : [ShotType.NONE],
-};
+	// UAV (Scout)
+	TankTypes[12] = {
+		Name : "UAVScout",
+		Kind : TankKindEnum.PLANE,
+		AttackingUnit : false,
+		Prob : 5,
+		MoveSpeed : 4.5,
+		TurnSpeed : .12,
+		TurretTurnSpeed : .15,
+		Radius : 12,
+		HitPoints : 400, // This will automatically drain
+		CooldownTime : 100,
+		MinRange : 10,
+		SightDistance : 600,
+		BulletType : [ShotType.NONE],
+	};
 
-// Heal Tank
-TankTypes[13] = {
-	Name : "HealerTank",
-	Kind : TankKindEnum.TANK,
-	AttackingUnit : false,
-	Prob : 30,
-	MoveSpeed : 1.05,
-	TurnSpeed : .13,
-	TurretTurnSpeed : 0,
-	Radius : 10,
-	HitPoints : 100,
-	CooldownTime : 250,
-	MinRange : 40, /* make it same as attack distance so he gets just close enough for a heal */
-	AttackDistance : 50, /* the attack distance needs to be less than attack range as this will get the healer tank closer to the target */
-	AttackRange : 50,
-	SightDistance : 200,
-	BulletType : [ShotType.HEAL],
-	TurretSize : 0,
-	BarrelLength :  0,
-	DoubleTurret : false,
-	CanGoEvasive : false,
-	EvaProb : 0
-};
+	// Heal Tank
+	TankTypes[13] = {
+		Name : "HealerTank",
+		Kind : TankKindEnum.TANK,
+		AttackingUnit : false,
+		Prob : 30,
+		MoveSpeed : 1.05,
+		TurnSpeed : .13,
+		TurretTurnSpeed : 0,
+		Radius : 10,
+		HitPoints : 100,
+		CooldownTime : 250,
+		MinRange : 40, /* make it same as attack distance so he gets just close enough for a heal */
+		AttackDistance : 50, /* the attack distance needs to be less than attack range as this will get the healer tank closer to the target */
+		AttackRange : 50,
+		SightDistance : 200,
+		BulletType : [ShotType.HEAL],
+		TurretSize : 0,
+		BarrelLength :  0,
+		DoubleTurret : false,
+		CanGoEvasive : false,
+		EvaProb : 0
+	};
 
-//Base
-var BaseType = {
-	Name : "Base",
-	Kind : TankKindEnum.BASE,
-	AttackingUnit : false,
-	Prob : 0,
-	MoveSpeed : 0,
-	TurnSpeed : 0,
-	TurretTurnSpeed : 0,
-	Radius : 10,
-	HitPoints : 1000,
-	CooldownTime : IS_MOBILE ? 100 : 500,
-	MinRange : 0,
-	AttackDistance : 0,
-	AttackRange : 0,
-	SightDistance : 200,
-	BulletType : [ShotType.NONE],
-	TurretSize : 0,
-	BarrelLength :  0,
-	DoubleTurret : false,
-	CanGoEvasive : false,
-	EvaProb : 0,
-	Shape : null
-};
+	//Base
+	var BaseType = {
+		Name : "Base",
+		Kind : TankKindEnum.BASE,
+		AttackingUnit : false,
+		Prob : 0,
+		MoveSpeed : 0,
+		TurnSpeed : 0,
+		TurretTurnSpeed : 0,
+		Radius : 10,
+		HitPoints : 1000,
+		CooldownTime : IS_MOBILE ? 100 : 500,
+		MinRange : 0,
+		AttackDistance : 0,
+		AttackRange : 0,
+		SightDistance : 200,
+		BulletType : [ShotType.NONE],
+		TurretSize : 0,
+		BarrelLength :  0,
+		DoubleTurret : false,
+		CanGoEvasive : false,
+		EvaProb : 0,
+		Shape : null
+	};
 
 // OLD SHIT
 var Tanks = new Set("tankIndex");
-//var Explosions = new Set("explosionIndex");
-//var DebrisSet = new Set("debrisIndex");
 
 // NEW SHIT
 var Bullets = new BulletPool(50);
@@ -577,41 +576,58 @@ var FlyingDebris = new DebrisPool(50);
 		this.getHPBar = function() { return HPBAR; }
 		this.drawHPBar = function()
 		{
-			return;
+			
 
-			if(SHAPE != null || SHAPE != undefined)
+			if(SHAPE != null)
 			{
-				if(HPBAR == null || HPBAR == undefined)
+				if(HPBAR == null)
 				{
-					HPBAR = new Kinetic.Rect({
-						x: X - 15, // Offset it to the left a bit
-						y: Y - 10, // Offset it just above the unit
-						width: 25,
-						height: 3,
-						fill: "green",
-						stroke: "black",
-						strokeWidth: 1
+					console.log("Creating new HPBAR");
+
+					HPBAR = new Kinetic.Group({x:X-22, y:Y-22 });
+
+					var Shell = new Kinetic.Rect({
+						width:42,
+						height:4,
+						fill:"rgba(0,0,0,.5)",
+						stroke:"black",
+						strokeWidth:1,
 					});
-					LAYER.add(HPBAR);
-					//HPBAR.hide(); // We're at full health, no need!
+
+					var Bar = new Kinetic.Rect({
+						x:.5, y:.5,
+						width:41,
+						height:3,
+						fill:"green"
+					});
+
+					HPBAR.add(Shell);
+					HPBAR.add(Bar);
+
+					HPLAYER.add(HPBAR);
+					HPBAR.hide(); // We're at full health, no need!
 				}
 				else
 				{
-				 	if(HitPoints < Type.HitPoints && HitPoints != 0)
+					HPBAR.setPosition(X-22,Y-22);
+
+				  	if(HitPoints < Type.HitPoints && HitPoints != 0)
 					{
-						//if(!HPBAR.isVisible()) HPBAR.show(); // We're less than 100%, go!
+					 	if(!HPBAR.isVisible()) HPBAR.show(); // We're less than 100%, go!
+					 	HPBAR.getChildren()[1].setWidth(41*(HitPoints/Type.HitPoints));
 
-						HPBAR.setPosition(X-15,Y-10);
-						HPBAR.setWidth(25*(HitPoints/Type.HitPoints));
-
-						if((HitPoints/Type.HitPoints) <= .35) 
-							HPBAR.fill("red");
-						else
-							HPBAR.fill("green");
+					 	if((HitPoints/Type.HitPoints) <= .50 && (HitPoints/Type.HitPoints) >= .26)
+					 		HPBAR.getChildren()[1].setFill("yellow");
+					 	else if((HitPoints/Type.HitPoints) <= .25)
+					 		HPBAR.getChildren()[1].setFill("red");
+					 	else
+					 		HPBAR.getChildren()[1].setFill("green");
 					}
+					else
+						HPBAR.hide();
 				}
 			}
-			else if(SHAPE == null || SHAPE == undefined && HPBAR != null)
+			else if(SHAPE == null && HPBAR != null)
 				LAYER.remove(HPBAR);
 		}
 
@@ -778,7 +794,7 @@ var FlyingDebris = new DebrisPool(50);
 					break;
 			}
 
-			//this.drawHPBar(); // Everyone gets an HP bar!
+			this.drawHPBar(); // Everyone gets an HP bar!
 			this.drawDebugExtras(); // Debug stuffs
 		}
 
@@ -1460,6 +1476,7 @@ var FlyingDebris = new DebrisPool(50);
 			}
 			
 			LAYER.remove(SHAPE); // Bye!
+			HPLAYER.remove(HPBAR);
 			Team.setScore(Team.getScore() - 1);
 			Team.removeUnit(Type.Kind);
 			Tanks.remove(This);

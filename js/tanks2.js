@@ -30,6 +30,7 @@
 		MSGLAYER = new Kinetic.Layer();
 		BOOMLAYER = new Kinetic.Layer();
 		DEBRISLAYER = new Kinetic.Layer();
+		HPLAYER = new Kinetic.Layer();
 
 		// Order of these matter, think z-index starting from 0
 		STAGE.add(LAYER); // z-index of 0 (most tanks, etc are here)
@@ -37,6 +38,7 @@
 		STAGE.add(DEBRISLAYER);
 		STAGE.add(BULLETLAYER);
 		STAGE.add(BOOMLAYER);
+		STAGE.add(HPLAYER);
 		STAGE.add(MSGLAYER);
 
 		Setup();
@@ -184,6 +186,7 @@
 		BOOMLAYER.draw();
 		DEBRISLAYER.draw();
 		BOOMLAYER.draw();
+		HPLAYER.draw();
 
 		// Setup for the FPS counter
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
