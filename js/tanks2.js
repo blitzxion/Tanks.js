@@ -5,6 +5,13 @@
 // Lets begin...
 (function(){
 
+	var stats = new Stats();
+	stats.setMode(0);
+	stats.domElement.style.position = "absolute";
+	stats.domElement.style.left = "0px";
+	stats.domElement.style.bottom = "20px";
+	document.body.appendChild(stats.domElement);
+
 	WIDTH = window.innerWidth,
 	HEIGHT = window.innerHeight - 40; // Bottom banner height
 
@@ -19,9 +26,17 @@
 
 		LAYER = new Kinetic.Layer();
 		BULLETLAYER = new Kinetic.Layer();
+		SMOKELAYER = new Kinetic.Layer();
 		MSGLAYER = new Kinetic.Layer();
-		STAGE.add(LAYER);
+		BOOMLAYER = new Kinetic.Layer();
+		DEBRISLAYER = new Kinetic.Layer();
+
+		// Order of these matter, think z-index starting from 0
+		STAGE.add(LAYER); // z-index of 0 (most tanks, etc are here)
+		STAGE.add(SMOKELAYER);
+		STAGE.add(DEBRISLAYER);
 		STAGE.add(BULLETLAYER);
+		STAGE.add(BOOMLAYER);
 		STAGE.add(MSGLAYER);
 
 		Setup();
@@ -62,6 +77,11 @@
 		var currcolor = rndInt(0,TeamColors.length-1);
 		for(var i=0; i<=NUM_TEAMS-1; i++, currcolor= (currcolor +1) % TeamColors.length)
 			Teams[i] = new Team(TeamColors[currcolor],getName(4,7,null,null));
+
+		// Init Pools
+		Bullets.init();
+		Smokes.init();
+		Explosions.init();
 	}
 
 	function restart()
@@ -70,10 +90,11 @@
 		// Need to create the starting team bases.
 
 		countTotalProbability();
+		// Need a method that resets the pool
 		Tanks.clear();
-		Bullets.clear();
-		Explosions.clear();
-		Smokes.clear();
+		//Bullets.clear();
+		//Explosions.clear();
+		//Smokes.clear();
 
 		/* put opposite corners in this list so bases start opposite each other */
 		var quadrants =
@@ -128,12 +149,14 @@
 			}
 
 			Tanks.add(new Tank(x, y, Teams[i], BaseType, Teams[i].getName()));
+			Teams[i].addUnit(BaseType.Kind);
 		}
 
 	}
 
 	function draw()
 	{
+		stats.begin();
 		document.getElementById("bottomBanner").getElementsByTagName("div")[0].innerHTML = getFPS() + " FPS";
 		
 		// Draw/Activate items
@@ -145,26 +168,26 @@
 			}
 		}
 
-		for(var n in Bullets)
-		{
-			if (Bullets.hasOwnProperty(n) && Bullets.contains(Bullets[n])) {
-				Bullets[n].draw();
-				Bullets[n].move();
+		Bullets.use(); // Move/Draw bullets
+		Smokes.use();
+		Explosions.use();
 
-			}
-		}
-		// Loop thru Bullets : Bullets are constaly moving between source/destination. They have a end State of MetDestination
 		// Loop thru Smokes : From Missles/Explosions/Crashes (its all inbetween)
 		// Loop thru Explosions : When missles/bullets/planes (crash)/tanks dying on their target location
 		// Loop thru Debris : This is the from Explosion for planes crashing... 
 
 		LAYER.draw();
 		BULLETLAYER.draw();
+		SMOKELAYER.draw();
+		BOOMLAYER.draw();
+		DEBRISLAYER.draw();
+		BOOMLAYER.draw();
 
 		// Setup for the FPS counter
 		var thisFrameTime = (thisLoop=new Date) - lastLoop;
 		frameTime+= (thisFrameTime - frameTime) / filterStrength;
 		lastLoop = thisLoop;
+		stats.end();
 	}
 
 })();

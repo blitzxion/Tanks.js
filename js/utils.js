@@ -31,7 +31,7 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Variable properties for some of the tanks, or all of them, i don't care
-var MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 80,
+var MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 30,
 	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE); },
 	getMAX_BASE_UNITS		        = function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1)) }, 		/* 10% can be bases */
 	getMAX_BASE_DEFENSES			= function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .3)) }, 		/* 30% can be defenses */
@@ -96,11 +96,15 @@ var DRAW_TARGET_LINE = false,
 
 }());
 
+//----- Pool Class -----
+
+
 //----- Set class  -----
 	function Set(indexName)
 	{
 		var IndexName = indexName;
 		var Index = 0;
+		this.length = 0;
 
 		this.add = function(item) {
 			if(this.contains(item))
@@ -108,6 +112,7 @@ var DRAW_TARGET_LINE = false,
 			item[IndexName] = Index;
 			this[Index] = item;
 			Index++;
+			this.length++;
 		};
 
 		this.clear = function() {
@@ -115,6 +120,7 @@ var DRAW_TARGET_LINE = false,
 			if(this.contains(this[n]))
 				this.remove(this[n]);
 			Index = 0;
+			this.length = 0;
 		};
 
 		this.contains = function(item) {
@@ -128,6 +134,7 @@ var DRAW_TARGET_LINE = false,
 				return;
 			delete this[item[IndexName]];
 			delete item[IndexName];
+			this.length--;
 		};
 
 		// http://www.tutorialspoint.com/javascript/array_filter.htm
@@ -320,6 +327,29 @@ var DRAW_TARGET_LINE = false,
 		}
 		MSGLAYER.draw();
     }
+
+    function ClickCreateUnit(X,Y, makeBase, forceTypeInt)
+	{
+		var _randomTeam =  Teams[rndInt(0,NUM_TEAMS-1)];
+		if(_randomTeam == undefined || _randomTeam == null) return; // bad team huh...
+
+		var angle = Math.random() * 2 * Math.PI;
+		var TypeToMake;
+		var rand = Math.floor(Math.random() * TotalProb);
+		for(var i = 0; i < TankTypes.length; i++){
+			if(rand < TankTypes[i].Prob){
+				TypeToMake = TankTypes[i];
+				break;
+			} else {
+				rand -= TankTypes[i].Prob;
+			}
+		}
+		var _teamNum = _randomTeam.getName();
+
+		var _NewTank = new Tank(X, Y, _randomTeam, (makeBase) ? BaseType : (forceTypeInt != undefined) ? TankTypes[forceTypeInt] : TypeToMake, _teamNum);
+		//console.log("turn speed: " + _NewTank.getTurnSpeed());
+		Tanks.add(_NewTank);
+	}
 
 	function getFPS(){ return (1000/frameTime).toFixed(1); }
 

@@ -39,6 +39,16 @@ var Teams = [],
 		this.getUnits = function(){return Units;}
 		this.addUnit = function(unit){Units.add(unit);};
 		this.removeUnit = function(unit){Units.remove(unit);};
+		this.getNumOfUnits = function() {return Units.length;};
+		this.getNumOfUnit = function(kind)
+		{
+			var i = 0;
+			for(var t in Units) 
+				if(Units[t] == kind)
+					i++;
+
+			return i;
+		}
 
 		this.addTaken = function(d)
 		{
@@ -70,5 +80,4 @@ var Teams = [],
 			this.resetLastTargetFoundDate();
 			Units = new Set("UnitsIndex");
 		}
-
 	}
