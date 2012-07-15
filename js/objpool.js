@@ -153,3 +153,51 @@ function ExplosionPool(numBooms)
         //resized++;
     }
 }
+
+function DebrisPool(numDebris)
+{
+    var size = (numDebris!= undefined) ? numDebris : 50;
+    var pool = [];
+    
+    this.init = function(){
+        for(var i = 0; i < size; i++){
+            var obj = new Debris();
+            obj.init();
+            pool[i] = obj;
+        }
+    };
+            
+    this.get = function(x, y, dx, dy, time, redness)
+    {
+        if(pool[size - 1].inUse)
+            IncreasePoolSize();
+            
+        if(!pool[size - 1].inUse) {
+            pool[size - 1].spawn(x, y, dx, dy, time, redness);
+            pool.unshift(pool.pop());
+        }
+    };
+    
+    this.use = function(){
+        for(var i = 0; i < size; i++)
+            if(pool[i].inUse){
+                if(pool[i].use()){
+                    pool[i].clear();
+                    pool.push((pool.splice(i,1))[0]);
+                }
+            }
+            else
+                break;
+    };
+    
+    // Increases pool size by five
+    function IncreasePoolSize()
+    {
+         for(var i = 0; i < 5; i++){
+            var obj = new Debris();
+            obj.init();
+            pool.push(obj);
+        }
+        size+=5;    
+    }
+}

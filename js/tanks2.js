@@ -82,6 +82,7 @@
 		Bullets.init();
 		Smokes.init();
 		Explosions.init();
+		FlyingDebris.init();
 	}
 
 	function restart()
@@ -171,6 +172,7 @@
 		Bullets.use(); // Move/Draw bullets
 		Smokes.use();
 		Explosions.use();
+		FlyingDebris.use();
 
 		// Loop thru Smokes : From Missles/Explosions/Crashes (its all inbetween)
 		// Loop thru Explosions : When missles/bullets/planes (crash)/tanks dying on their target location

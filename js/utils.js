@@ -31,7 +31,7 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 	IN_SPACE = false; // Looks best if RANDOM_TERRAIN is disabled
 
 // Variable properties for some of the tanks, or all of them, i don't care
-var MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 30,
+var MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 80,
 	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return Math.floor(MAX_UNITS_ON_SCREEN / TEAMS_ALIVE); },
 	getMAX_BASE_UNITS		        = function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1)) }, 		/* 10% can be bases */
 	getMAX_BASE_DEFENSES			= function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .3)) }, 		/* 30% can be defenses */
@@ -95,9 +95,6 @@ var DRAW_TARGET_LINE = false,
         };
 
 }());
-
-//----- Pool Class -----
-
 
 //----- Set class  -----
 	function Set(indexName)

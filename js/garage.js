@@ -463,13 +463,14 @@ var BaseType = {
 
 // OLD SHIT
 var Tanks = new Set("tankIndex");
-var Explosions = new Set("explosionIndex");
-var DebrisSet = new Set("debrisIndex");
+//var Explosions = new Set("explosionIndex");
+//var DebrisSet = new Set("debrisIndex");
 
 // NEW SHIT
 var Bullets = new BulletPool(50);
 var Smokes = new SmokePool(1000);
 var Explosions = new ExplosionPool(100);
+var FlyingDebris = new DebrisPool(50);
 
 //----- Tanks Class -----
 	function Tank(x_init, y_init, team, type, teamnum)
@@ -1052,7 +1053,6 @@ var Explosions = new ExplosionPool(100);
 			}
 		};
 
-
 		this.drawDebugExtras = function()
 		{
 			// Draw ATTACK RANGE Circle
@@ -1243,25 +1243,19 @@ var Explosions = new ExplosionPool(100);
 				{
 					/* if the target is within 30* of our angle, slow down so we can attack... otherwise circle around */
 					if(BaseAngle > Target.getBaseAngle() - (Math.PI / 15) && BaseAngle < Target.getBaseAngle() + (Math.PI / 15))
-					{
-						//console.log("going to slow down: " + BaseAngle + " : " + Target.getBaseAngle());
 						movespeed = Target.getMoveSpeed();
-					}
-					//else
-					//	console.log(BaseAngle + " : " + Target.getBaseAngle() + ", " + (Target.getBaseAngle() - (Math.PI / 15)) + " : " + (Target.getBaseAngle() + (Math.PI / 15)));
 				}
 
 				X += movespeed * Math.cos(BaseAngle);
 				Y += movespeed * Math.sin(BaseAngle);
 
-				if (WORLD_WRAP)
-				{
-					if (X > WIDTH) X -= WIDTH; // if you reach the right side
-					else if (X < 0) X += WIDTH; // if you reach the left side
+				
+				if (X > WIDTH) X -= WIDTH; // if you reach the right side
+				else if (X < 0) X += WIDTH; // if you reach the left side
 
-					if (Y > HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
-					else if (Y < 0) Y = Math.abs(Y + HEIGHT); // If you reach the top (this works)... set you back at the bottom
-				}
+				if (Y > HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
+				else if (Y < 0) Y = Math.abs(Y + HEIGHT); // If you reach the top (this works)... set you back at the bottom
+				
 			}
 		}
 
@@ -1456,14 +1450,14 @@ var Explosions = new ExplosionPool(100);
 				Explosions.get(X + Math.random() * 14 - 7, Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10);
 			}
 
-			// var debris = Math.floor(3 + Math.random() * 4);
-			// if (IS_MOBILE || getFPS < FPS_TOO_LOW) debris = 2;
+			var debris = Math.floor(3 + Math.random() * 4);
+			if (IS_MOBILE || getFPS < FPS_TOO_LOW) debris = 2;
 
-			// for(i = 0; i < debris; i++) {
-			// 	var angle = Math.random() * 2 * Math.PI;
-			// 	var speed = Math.random() * 4 + .2;
-			// 	DebrisSet.add(new Debris(X, Y, Math.cos(angle) * speed + This.getDx(), Math.sin(angle) * speed + This.getDy(), Math.random() * 10 + 20));
-			// }
+			for(i = 0; i < debris; i++) {
+				var angle = Math.random() * 2 * Math.PI;
+				var speed = Math.random() * 4 + .2;
+				FlyingDebris.get(X, Y, Math.cos(angle) * speed + This.getDx(), Math.sin(angle) * speed + This.getDy(), Math.random() * 10 + 20);
+			}
 			
 			LAYER.remove(SHAPE); // Bye!
 			Team.setScore(Team.getScore() - 1);
@@ -1474,12 +1468,6 @@ var Explosions = new ExplosionPool(100);
 		Team.setScore(Team.getScore() + 1);
 		Team.addScore(1);
 		Team.addTicket();
-	}
-
-//----- Motor Class -----
-	function Motor(type)
-	{
-
 	}
 
 //----- Bullet Class -----
@@ -1670,7 +1658,7 @@ var Explosions = new ExplosionPool(100);
 				return false;
 			};    
 
-			this.update = function(){        
+		this.update = function(){        
 			if(sShape == null || smoked) return;
 
 			if(Time < TotalTime) Time++;
@@ -1790,28 +1778,54 @@ var Explosions = new ExplosionPool(100);
 //----- Debris Class -----
 	function Debris()
 	{
-		// var X = x, Y = y, Dx = dx, Dy = dy, Time = time, TotalTime = time;
-		// if (IS_MOBILE || getFPS() < FPS_TOO_LOW) TotalTime = TotalTime / 5;
+		var X,Y,Dx,Dx,Time,TotalTime;
+		var smoked = false;
+		this.inUse = false; // True if the object is currently in use
 
-		var This = this;
-		this.update = function () {
-			// if(Time-- > 0) {
-			// 	X += Dx;
-			// 	Y += Dy;
+		this.init = function(){
+			// Nothing for Debris at the moment
+		};
 
-			// 	if (WORLD_WRAP)
-			// 	{
-			// 		if (X > WIDTH) X -= WIDTH; // if you reach the right side
-			// 		else if (X < 0) X += WIDTH; // if you reach the left side
+		this.clear = function(){
+			this.inUse = false;
+		};
 
-			// 		if (Y > HEIGHT - DRAW_BANNER_HEIGHT) Y = Math.abs(Y - HEIGHT); // If you reach the bottom... set you back at the top
-			// 		else if (Y - DRAW_BANNER_HEIGHT < 0) Y = Math.abs(Y + (HEIGHT - DRAW_BANNER_HEIGHT) - 20); // If you reach the top (this works)... set you back at the bottom
-			// 	}
+		this.spawn = function(x, y, dx, dy, time, redness){
+			X = x, Y = y, Dx = dx, Dy = dy, Time = time, TotalTime = time;
+			smoked = false;
+			this.inUse = true;
+		};
 
-			// 	Smokes.add(new Smoke(X, Y, 1, 7, 15, 150 * (Time / TotalTime)));
-			// } else {
-			// 	DebrisSet.remove(This);
-			// }
+		this.use = function(){
+			if(smoked) return true;
+			this.update();
+			return false;
+		};    
+
+		this.update = function(){        
+			if(smoked) return;
+
+			if(Time-- > 0)
+			{
+				X += Dx;
+				Y += Dy;
+				if(X > WIDTH) X -= WIDTH;
+				else if(X < 0) X += WIDTH;
+
+				if(Y > HEIGHT) Y = Math.abs(Y - HEIGHT);
+				else if(Y < 0) Y = Math.abs(Y + HEIGHT);
+
+				Smokes.get(X,Y,1,7,7,150 * (Time/TotalTime));
+			}
+			else
+				SmokedOut();
+
+		};
+
+		function SmokedOut()
+		{
+			if(!smoked)
+				smoked = true;
 		}
 	}
 
