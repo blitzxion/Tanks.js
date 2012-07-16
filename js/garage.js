@@ -601,8 +601,18 @@ var FlyingDebris = new DebrisPool(50);
 						fill:"green"
 					});
 
+					// var HP = new Kinetic.Text({
+					// 	x:0,
+					// 	y:-10,
+					// 	text : HitPoints + "/" + HitPoints,
+					// 	fontSize: 8,
+					// 	fontFamily: "Calibri",
+					// 	textFill: "red"
+					// });
+
 					HPBAR.add(Shell);
 					HPBAR.add(Bar);
+					//HPBAR.add(HP);
 
 					HPLAYER.add(HPBAR);
 					HPBAR.hide(); // We're at full health, no need!
@@ -610,6 +620,8 @@ var FlyingDebris = new DebrisPool(50);
 				else
 				{
 					HPBAR.setPosition(X-22,Y-22);
+
+					//HPBAR.getChildren()[2].setText(HitPoints + "/" + Type.HitPoints);
 
 				  	if(HitPoints < Type.HitPoints && HitPoints != 0)
 					{
@@ -630,6 +642,28 @@ var FlyingDebris = new DebrisPool(50);
 			else if(SHAPE == null && HPBAR != null)
 				LAYER.remove(HPBAR);
 		}
+
+		var healing = false;
+		this.recoverHitPoints = function(health, healer)
+		{
+			if(health == null)
+				health = Math.floor(Type.HitPoints * .1); // 10% of this unit's HP
+
+			if(healer !== null && healer.getTeam() == Team)
+			{
+				if(HitPoints == Type.HitPoints) return;
+
+				if(!healing)
+				{
+					healing = true;
+					HitPoints += health;
+					healing = false;
+				}
+
+				if(HitPoints > Type.HitPoints)
+					HitPoints = Type.HitPoints; // Can't heal over the max HP of the unit.
+			}
+		};
 
 		this.getHealCircleShape = function() { return HEALCIRCLE;} 
 		this.drawCircle = function(sX, sY, radius, alpha)
@@ -805,6 +839,14 @@ var FlyingDebris = new DebrisPool(50);
 			{
 				case TankKindEnum.BASE:
 					
+					if(HealCooldown > 0)
+						HealCooldown--;
+					else
+					{
+						AreaHeal(X,Y, BASE_HEAL_RADIUS * BASE_HEAL_RADIUS, This);
+						HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+					}
+
 					// If within cooldown, exit out and wait...
 					if(Cooldown > 0) { Cooldown--; return; }
 					
