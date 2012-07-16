@@ -707,7 +707,7 @@ var FlyingDebris = new DebrisPool(50);
 						group.add(_shape);
 
 						group.name = "Base_" + teamnum;
-						group.on("mouseover",function(){ writeMessage(SHAPE.name); });
+						group.on("mouseover",function(){ writeMessage(SHAPE.name + " ("+ HitPoints + "/" + Type.HitPoints + ")"); });
 						group.on("mouseout",function(){ writeMessage(""); });
 
 						SHAPE = group; // Since this has more than one part
@@ -757,11 +757,9 @@ var FlyingDebris = new DebrisPool(50);
 
 						group.on("click",function(){die();});
 						group.on("mouseover",function(){ writeMessage(
-							SHAPE.name + 
-							((Type.Kind == TankKindEnum.TURRET) ? " TurretA=" + TurretAngle : " BaseA=" + BaseAngle) +
-							" State#=" + State +
-							" TurretBaseA=" + TargetBaseAngle + 
-							((Target != null) ? " Trgt=" + Target.getShape().name : "")
+							SHAPE.name + " ("+ HitPoints + "/" + Type.HitPoints + ")" +  
+							"\nState#=" + State +
+							((Target != null) ? "\nTrgt=" + Target.getShape().name : "")
 						)});
 						group.on("mouseout",function(){ writeMessage(""); });
 						group.name = Type.Name + "_" + teamnum + "_" + rndInt(10,100000);
@@ -901,6 +899,19 @@ var FlyingDebris = new DebrisPool(50);
 
 					break;
 				case TankKindEnum.TANK:
+
+					// If the unit is a healer, throttle the healing attempts
+					if(This.isHealer())
+					{
+						if(HealCooldown > 0) 
+							HealCooldown--;
+						else
+						{
+							AreaHeal(X,Y, Type.AttackRange * Type.AttackRange, This);
+							HealCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+						}
+					}
+
 					switch(State)
 					{
 						case TankStateEnum.IDLE: // 0

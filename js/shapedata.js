@@ -52,6 +52,16 @@ var KHealerTank = function(color, colorAlpha){
 		scale: 1
 	});
 
+
+	var healCircShape = new Kinetic.Ellipse({
+		x:0,
+		y:0,
+		radius : 50,
+		fill: colorAlpha,
+		offset: [-8,-8] // This will center up the healing circle
+	});
+	healCircShape.setAlpha(.3);
+
 	// Body
 	var bodyShape = new Kinetic.Rect({
 		x: 0,
@@ -90,8 +100,9 @@ var KHealerTank = function(color, colorAlpha){
 		fill:"white",
 		stroke : "white",
 		strokeWidth : "4"
-	});	
+	});
 
+	group.add(healCircShape);
 	group.add(bodyShape);
 	group.add(roofShape);
 	group.add(hoodShape);

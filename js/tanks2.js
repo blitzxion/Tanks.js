@@ -95,9 +95,6 @@
 		countTotalProbability();
 		// Need a method that resets the pool
 		Tanks.clear();
-		//Bullets.clear();
-		//Explosions.clear();
-		//Smokes.clear();
 
 		/* put opposite corners in this list so bases start opposite each other */
 		var quadrants =
@@ -130,9 +127,6 @@
 					x = rnd(quad[0], quad[1]);
 					y = rnd(quad[2], quad[3]);
 				}
-
-				//console.log(x +", " + y);
-
 
 				if (x < BASE_HEAL_RADIUS) x += BASE_HEAL_RADIUS;
 				else if (x > WIDTH - BASE_HEAL_RADIUS) x -= BASE_HEAL_RADIUS;
