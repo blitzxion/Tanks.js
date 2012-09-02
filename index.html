@@ -7,6 +7,8 @@
 		#topBanner{position: absolute; top:0; left:0; background-color:#000; width:100%;}
 		#bottomBanner{position: absolute; bottom:0; left:0; background-color:#000; width:100%;}
 		.bannerContent{padding:2px; height: 20px; color: white}
+		.buttonArea button{font-size:10px; float: right;}
+		.teamDiv{font-weight:bold; float:left; padding-right:10px;font-family:Tahoma,"Helvetica Neue", Arial, Helvetica, sans-serif;}
 	</style>
 	<link rel="apple-touch-icon-precomposed" href="https://github.com/blitzxion/Tanks.js/raw/master/tankicon.png" />
 	<meta name="apple-mobile-web-app-capable"  content="yes" />
@@ -18,7 +20,16 @@
 	<script>function BlockMove(event) { event.preventDefault() ; /* Tell Safari not to move the window. */ } </script>
 </head>
 <body ontouchmove="BlockMove(event);">
-	<div id="topBanner"><div class="bannerContent"></div></div>
+	<div id="topBanner">
+		<div class="bannerContent">
+			<div class="buttonArea">
+				<button id="togglePlay" title="Toggle Gameplay">P</button>
+				<button id="toggleTargetLine" title="Toggle Debug Target Line">T</button>
+				<button id="toggleFOV" title="Toggle Debug FOV">F</button>
+				<button id="toggleGODModel" title="Toggle GOD Mode">G</button>
+			</div>
+		</div>
+	</div>
 	<div id="container"></div>
 	<div id="bottomBanner"><div class="bannerContent"></div></div>
 </body>

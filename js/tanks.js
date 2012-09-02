@@ -11,9 +11,11 @@ var WIDTH = window.innerWidth,
 var STAGE = null,
 	LAYER = null,
 	ANIM = null,
+	IsAnimating = false,
 	EXPLOSIONLAYER = null,
 	SMOKELAYER = null,
-	BULLETLAYER = null;
+	BULLETLAYER = null,
+	MSGLAYER = null;
 
 var IS_IPAD = navigator.platform === 'iPad',
 	IS_IPHONE = navigator.platform === 'iPhone',
@@ -23,7 +25,7 @@ var IS_IPAD = navigator.platform === 'iPad',
 
 // Sigh, vars... vars everywhere
 var ROUND = 0, // func RESET() increases this on new rounds.
-	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 7, // This is the max amount on the playing field.
+	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 4, // This is the max amount on the playing field.
 	MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 50, // down from 80... that was killing the browser
 	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return Math.floor(MAX_UNITS_ON_SCREEN / NUM_TEAMS); },
 	getMAX_BASE_UNITS		        = function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1)) }, 		/* 10% can be bases */
@@ -56,7 +58,8 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 
 // Debug
 var DRAW_FOV = false,
-	DRAW_TARGET_LINE = false;
+	DRAW_TARGET_LINE = false,
+	DRAW_HPBAR = true;
 
 // Pools and Lists (mainly lists)
 var TeamPool = new gamecore.LinkedList(); // List of Teams
@@ -82,6 +85,7 @@ window.onload = function() {
 		listening: false
 	});
 
+	MSGLAYER = new Kinetic.Layer();
 	BULLETLAYER = new Kinetic.Layer();
 	EXPLOSIONLAYER = new Kinetic.Layer();
 	SMOKELAYER = new Kinetic.Layer();
@@ -90,6 +94,7 @@ window.onload = function() {
 	STAGE.add(BULLETLAYER);
 	STAGE.add(SMOKELAYER);
 	STAGE.add(EXPLOSIONLAYER);
+	STAGE.add(MSGLAYER);
 
 	ANIM = new Kinetic.Animation({
 		func: function(){ draw(); },
@@ -99,10 +104,12 @@ window.onload = function() {
 	SetupGame();
 	RestartGame();
 	ANIM.start();
+	IsAnimating = true;
 };
 
 window.onresize = function(event) {
 	ANIM.stop();
+	IsAnimating = false;
 
 	WIDTHPREV = WIDTH;
 	HEIGHTPREV = HEIGHT;
@@ -132,6 +139,7 @@ window.onresize = function(event) {
 	}
 
 	ANIM.start();
+	IsAnimating = true;
 };
 
 
@@ -274,44 +282,29 @@ var tcIndex,
 			this.unitCooldown = Math.random()*180|80;
 			if(this.units != null) {
 				var n = this.units.first;
-				while(n){ this.units.remove(n); n = n.nextLinked; }
+				while(n){ n.obj.die(); this.units.remove(n); n = n.nextLinked; }
 			}
 		},
 
 		// Globl Unit related methods
-		callFriendlies: function(target) {
-
-			return;
-
+		callFriendlies: function(caller, target) {
 			var n = this.units.first;
 			while(n){
 
-				if(n.obj.target != null 
-					&& n.obj.target.getDistanceSquaredFromPoint(n.obj.X,n.obj.Y) < target.getDistanceSquaredFromPoint(n.obj.X,n.obj.Y) 
-					&& !n.obj.target.isDead){
+				if( n.obj == caller
+					|| !n.obj.attackingUnit
+					|| (n.obj.target != null && n.obj.target.getDistanceSquaredFromPoint(n.obj.X,n.obj.Y) > target.getDistanceSquaredFromPoint(n.obj.X,n.obj.Y)) ){
 					n = n.nextLinked;
 					continue;
 				}
-
-				if(!n.obj.attackingUnit){
-					n = n.nextLinked;
-					continue;
-				}
-
 				//if(!n.obj.antiAircraft && target.obj.Class.isA("PlaneUnit")) return; // For Planes
 				//if(n.obj.Class.isA("DefenseUnit")) return; // For Defeneses
-				if(n.obj.state !== TankStateEnum.TARGET_AQUIRED && n.obj.state !== TankStateEnum.TARGET_IN_RANGE)
+				if(n.obj.state == TankStateEnum.IDLE || n.obj.state == TankStateEnum.MOVE)
 				{
-					if(n.obj.isDead) {
-						n = n.nextLinked;
-						continue;
-					}
-
+					if(n.obj.isDead) { n = n.nextLinked; continue; }
 					n.obj.target = target;
-					// if not evading...
 					n.obj.state = TankStateEnum.TARGET_AQUIRED;
 				}
-
 				n = n.nextLinked;
 			}
 		}
@@ -320,65 +313,66 @@ var tcIndex,
 // Tanks (the base one, create extended copies for newer ones)
 	var Tank = gamecore.Base.extend('Tank',{ /* Static (this is inherited as well) */ probability: 120 },
 	{
-		// Basics
-		myTeam: null,
-		hp: 0,
-		maxHp : 100,
-		moveSpeed: 1.5,
-		turnSpeed: 0.18,
-		attackingUnit: true,
-		isDead: false, // if(isDead) shape.visible = false
-		isHealing: false,
-		cooldown: 0,
-		maxCooldown:25, // TODO: each unit has something different....
-		special:false,		
+		// Vars
+			// Basics
+			myTeam: null,
+			hp: 0,
+			maxHp : 100,
+			moveSpeed: 1.5,
+			turnSpeed: 0.18,
+			attackingUnit: true,
+			isDead: false, // if(isDead) shape.visible = false
+			isHealing: false,
+			cooldown: 0,
+			maxCooldown:25, // TODO: each unit has something different....
+			special:false,		
 
-		// Turret\Barrel Basics
-		hasTurret: true,
-		turretSize: 5,
-		turretTurnSpeed: .19,
-		barrelLength: 10,
-		doubleBarrel : false,
-		barrelSeparation: 0,
+			// Turret\Barrel Basics
+			hasTurret: true,
+			turretSize: 5,
+			turretTurnSpeed: .19,
+			barrelLength: 10,
+			doubleBarrel : false,
+			barrelSeparation: 0,
 
-		// State
-		state: TankStateEnum.IDLE,
+			// State
+			state: TankStateEnum.IDLE,
 
-		// Attack Related
-		attackDistance: 100,
-		turretAttackAngle: 45,
-		antiAircraft: false,
-		target: null,
+			// Attack Related
+			attackDistance: 100,
+			turretAttackAngle: 45,
+			antiAircraft: false,
+			target: null,
 
-		// Angles
-		targetBaseAngle: 0,
-		targetTurretAngle: 0,
-		turretAngle: 0,
-		prevTurretAngle: 0,
-		prevBaseAngle: 0,
-		baseAngle: 0,
-		radius: 10,
-		minRange: 10,
-		sightDistance: 200,
+			// Angles
+			targetBaseAngle: 0,
+			targetTurretAngle: 0,
+			turretAngle: 0,
+			prevTurretAngle: 0,
+			prevBaseAngle: 0,
+			baseAngle: 0,
+			radius: 10,
+			minRange: 10,
+			sightDistance: 200,
 
-		// inherited color class // to be done by Team...
-		color: null,
+			// inherited color class // to be done by Team...
+			color: null,
 
-		// Weapon (single for now)
-		bulletType: ShotTypeEnum.BULLET,
-		bulletTime: 30,
-		bulletSpeed: 6,
-		bulletDamage: 3, 
+			// Weapon (single for now)
+			bulletType: ShotTypeEnum.BULLET,
+			bulletTime: 30,
+			bulletSpeed: 6,
+			bulletDamage: 3, 
 
-		// Positioning and Shapes
-		X: 0,
-		Y: 0,
-		prevX: 0,
-		prevY: 0,
-		Shape: null,
-		TankTurretShape: null, // Helps with the bazillion .GetChildren() calls...
-		debug: null,
-		This: null,
+			// Positioning and Shapes
+			X: 0,
+			Y: 0,
+			prevX: 0,
+			prevY: 0,
+			Shape: null,
+			TankTurretShape: null, // Helps with the bazillion .GetChildren() calls...
+			debug: null,
+			This: null,
 
 		// Instance    
 		init: function (x,y,color,team) {  // This creates the unit upon call
@@ -484,11 +478,9 @@ var tcIndex,
 			tGroup.add(new Kinetic.Circle({ radius: this.turretSize, fill: this.color.getString(), strokeWidth: 0 }));
 			group.add(tGroup);
 
-			var bObj = this;
-			group.on("click",function(){
-				console.log(bObj.target);
-				console.log(bObj.state);
-			});
+			//var bObj = this;
+			//group.on("mouseover",function(){ writeMessage("{0} ({1}/{2})".format("Unit",bObj.hp,bObj.maxHp)); });
+			//group.on("mouseout",function(){ writeMessage(""); });
 
 			this.Shape = group;
 			this.Shape.setPosition(this.X, this.Y);
@@ -498,10 +490,11 @@ var tcIndex,
 		},
 		drawHPBar: function(){
 
-			if(this.hpbar != null && this.isDead)
+			if(this.hpbar != null && this.isDead
+				|| this.hpbar == null && !DRAW_HPBAR) // If the bar is null and we're not wanting them...
 				return;
 
-			if(this.hpbar == null)
+			if(this.hpbar == null && DRAW_HPBAR) // Only create new ones if DRAW_HPBAR is enabled
 			{
 				this.hpbar = new Kinetic.Group({x:this.X-22, y:this.Y-22});
 				var Shell = new Kinetic.Rect({width:42,height:4,fill:"rgb(0,0,0)",stroke:"black",strokeWidth:1});
@@ -514,6 +507,13 @@ var tcIndex,
 			}
 			else
 			{
+				if(!DRAW_HPBAR)
+				{
+					this.hpbar.hide();
+					this.hpbarVis = false;
+					return;
+				}
+
 				this.hpbar.setPosition(this.X-22,this.Y-22);
 
 				if(this.hp < this.maxHp && this.hp != 0)
@@ -623,7 +623,7 @@ var tcIndex,
 				}
 				n = n.nextLinked;
 			}
-			if(this.target != null) this.myTeam.callFriendlies(this.target);
+			if(this.target != null) this.myTeam.callFriendlies(this.This, this.target);
 		},
 		attack: function () { 
 			if(this.cooldown <= 0) {
@@ -699,7 +699,6 @@ var tcIndex,
 			var exps = (IS_MOBILE) ? 2 : Math.floor(Math.random() * 4 + 4);
 			for(var i = 0; i <= exps; i++)
 				Explosion.create(this.X + Math.random() * 14 - 7, this.Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10);
-
 		},
 		takeDamage: function(damage,shooter)
 		{
@@ -712,7 +711,7 @@ var tcIndex,
 				if(shooter !== null && shooter.myTeam != this.myTeam)
 					shooter.myTeam.given += damage; // Increase their points
 
-				this.myTeam.callFriendlies(shooter);
+				this.myTeam.callFriendlies(this.This,shooter);
 			}
 		},
 		recoverHitPoints: function(health){
@@ -875,7 +874,6 @@ var tcIndex,
 				LAYER.remove(this.debug.fov);
 				this.debug.fov = null;
 			}
-
 		}
 	});
 
@@ -1063,25 +1061,22 @@ var tcIndex,
 			if(this.Time <= 0) 
 				this.explode();
 			
-			var b = TeamPool.first;
-			while(b){
-				if(b.obj != this.Team){
-					var u = b.obj.units.first;
-					while(u){
-						if(this.ShotType == ShotTypeEnum.SHELL && u.obj.getDistanceSquaredFromPoint(this.X,this.Y) < SHELL_DAMAGE_RADIUS * SHELL_DAMAGE_RADIUS) {
-							u.obj.takeDamage(this.Damage, this.Shooter);
-							this.explode(SHELL_DAMAGE_RADIUS);
-						} else if(this.ShotType == ShotTypeEnum.BOMB && u.obj.getDistanceSquaredFromPoint(this.X,this.Y) < BOMB_DAMAGE_RADIUS * BOMB_DAMAGE_RADIUS) {
-							u.obj.takeDamage(this.Damage, this.Shooter);
-							this.explode(BOMB_DAMAGE_RADIUS);
-						} else if(u.obj.getDistanceSquaredFromPoint(this.X,this.Y) < Math.max(this.Dx * this.Dx + this.Dy * this.Dy, (u.obj.radius * u.obj.radius))){
-							u.obj.takeDamage(this.Damage, this.Shooter);
-							this.explode();
+			if(this.ShotType != ShotTypeEnum.SHELL || this.ShotType != ShotTypeEnum.BOMB)
+			{
+				var b = TeamPool.first;
+				while(b){
+					if(b.obj != this.Team){
+						var u = b.obj.units.first;
+						while(u){
+							if(u.obj.getDistanceSquaredFromPoint(this.X,this.Y) < Math.max(this.Dx * this.Dx + this.Dy * this.Dy, (u.obj.radius * u.obj.radius))){
+								u.obj.takeDamage(this.Damage, this.Shooter);
+								this.explode();
+							}
+							u = u.nextLinked;
 						}
-						u = u.nextLinked;
 					}
+					b = b.nextLinked;
 				}
-				b = b.nextLinked;
 			}
 		},
 		draw : function(){
@@ -1093,10 +1088,17 @@ var tcIndex,
 			if(!this.Exploded){
 				this.Exploded = true; 
 				this.Shape.hide();
+				explosionRadius = (!explosionRadius) ? 6 + Math.random() * 3 : explosionRadius;
 
-				 explosionRadius = (explosionRadius == undefined) ? 6 + Math.random() * 3 : explosionRadius;
+				if(this.ShotType == ShotTypeEnum.SHELL){
+					AreaDamage(this.X, this.Y, this.Damage, SHELL_DAMAGE_RADIUS * SHELL_DAMAGE_RADIUS, this.Shooter);
+					explosionRadius = SHELL_DAMAGE_RADIUS;
+				} else if(this.ShotType == ShotTypeEnum.BOMB) {
+					AreaDamage(this.X, this.Y, this.Damage, BOMB_DAMAGE_RADIUS * BOMB_DAMAGE_RADIUS, this.Shooter);
+					explosionRadius = BOMB_DAMAGE_RADIUS;
+				}
+				
 				Explosion.create(this.X + Math.random() * 2 - 1,this.Y + Math.random() * 2 - 1, 0, explosionRadius);
-				// Create explosion class here
 			}
 		},
 		getAngleFromPoint: function(x1,y1) {
@@ -1249,9 +1251,18 @@ var tcIndex,
 	function draw() {
 		stats.begin();
 
+		var TeamsAlive = NUM_TEAMS;
 		if(TeamPool != null){
 			var n = TeamPool.first;
-			while (n) { n.obj.work(); n = n.nextLinked; }
+			while (n) { 
+				if(n.obj.units.length() > 0)
+					n.obj.work(); 
+				else
+					TeamsAlive--;
+				n = n.nextLinked; 
+			}
+
+			if(TeamsAlive <= 1) RestartGame(); // This makes it instant, should have a nice little timer here
 		}
 
 		// Draw bullets
@@ -1272,6 +1283,7 @@ var tcIndex,
 			while(e) { if(e.obj.finished){ e.obj.release(); } e = e.nextLinked; }
 		}
 
+		// Smoke (this seems to be a FPS killer...)
 		var sp = Smoke.getPool(), s;
 		if(sp != null) {
 			s = sp.getUsedList().first;
@@ -1291,7 +1303,13 @@ var tcIndex,
 	{
 		var colorIndex = Math.random()*TeamColors.length|0; // Colors + 1 (picks 0 to length)
 		for(var i=0;i<=NUM_TEAMS-1;i++, colorIndex = (colorIndex + 1) % TeamColors.length )
-			TeamPool.add(new Team(TeamColors[colorIndex],getName(4,7,null,null)));
+		{
+			var teamName = getName(4,7,null,null);
+			var teamColor = TeamColors[colorIndex];
+			var teamDiv = $('<div/>').text('{0} : 0'.format(teamName)).css({color:teamColor.getString()}).addClass('teamDiv');
+			TeamPool.add(new Team(TeamColors[colorIndex],teamName));
+			$(".bannerContent").first().append(teamDiv);
+		}
 	}
 
 	function RestartGame()
@@ -1355,6 +1373,23 @@ var tcIndex,
 		}
 	}
 
+	function AreaDamage(X, Y, Damage, RadiusSquared, Shooter)
+	{
+		var t = TeamPool.first;
+		while(t)
+		{
+			if(t != Shooter.myTeam) { // Don't damage my team!
+				var n = t.obj.units.first;
+				while(n) {
+					if(n.obj.getDistanceSquaredFromPoint(X, Y) < RadiusSquared && !n.obj.Class.isA("PlaneUnit"))
+						n.obj.takeDamage(Damage,Shooter);
+					n = n.nextLinked;
+				}
+			}
+			t = t.nextLinked;
+		}
+	}
+
 	function ChangeTerrain()
 	{
 		tcIndex = Math.floor(Math.random()*TerrainColors.length); // Change up the next map terrain
@@ -1408,10 +1443,14 @@ var tcIndex,
 			TOTAL_PROB += UnitObjectReference[n].probability;
 	}
 
+	function log(str) { console.log(str); }
+
 	String.prototype.format = function() {
 		var args = arguments;
 		return this.replace(/{(\d+)}/g, function(match, number) { return typeof args[number] != 'undefined' ? args[number] : match; });
 	};
+
+	// DOM related
 
 	$('body').keypress(function(e){
 		switch(e.which)
@@ -1422,5 +1461,35 @@ var tcIndex,
 			case 102: case 70: // F
 				DRAW_FOV = !DRAW_FOV;
 				break;
+			case 112: case 80: case 32: // P / Space : Pause
+				$('#togglePlay').trigger('click');
+				break;
+			case 104: case 72: // H :
+				DRAW_HPBAR = !DRAW_HPBAR;
+				break;
+			case 120: case 88: // X : Reset the entire game (kills all units, etc)
+				RestartGame();
+				break;
+			// case 76: case 108: // L : Toggles event listening (FPS killer)
+			// 	LAYER.setListening(!LAYER.getListening());
+			// 	break;
 		}
 	});
+
+
+	// Pause feature! Helpful for unit-for-unit debugging.
+	$('#togglePlay').click(function(e){
+		if(ANIM != null) {
+			var pausedDiv = $('<div/>').text('Paused').css({'font-size':20,'color':'red','height':100,'width':100,'margin':'0 auto'}).addClass('pausedDiv');
+			if(IsAnimating) { 
+				ANIM.stop(); 
+				$('.bannerContent').append(pausedDiv);
+			} else { 
+				ANIM.start(); $('.pausedDiv').remove(); 
+			}
+			IsAnimating = !IsAnimating;
+		}
+	});
+
+	$('#toggleTargetLine').click(function(e){DRAW_TARGET_LINE = !DRAW_TARGET_LINE});
+	$('#toggleFOV').click(function(e){DRAW_FOV = !DRAW_FOV});
