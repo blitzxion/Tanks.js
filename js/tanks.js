@@ -15,7 +15,7 @@ var STAGE = null,
 	EXPLOSIONLAYER = null,
 	SMOKELAYER = null,
 	BULLETLAYER = null,
-	MSGLAYER = null;
+	MISCLAYER = null;
 
 var IS_IPAD = navigator.platform === 'iPad',
 	IS_IPHONE = navigator.platform === 'iPhone',
@@ -27,10 +27,10 @@ var IS_IPAD = navigator.platform === 'iPad',
 var ROUND = 0, // func RESET() increases this on new rounds.
 	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 4, // This is the max amount on the playing field.
 	MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 50, // down from 80... that was killing the browser
-	getMAX_UNITS_PER_FACTION_ON_MAP = function() { return Math.floor(MAX_UNITS_ON_SCREEN / NUM_TEAMS); },
-	getMAX_BASE_UNITS		        = function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1)) }, 		/* 10% can be bases */
-	getMAX_BASE_DEFENSES			= function() { return Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .3)) }, 		/* 30% can be defenses */
-	getMAX_SPECIAL_UNITS			= function() { var max = Math.floor((getMAX_UNITS_PER_FACTION_ON_MAP() * .1) / 2); if (max <1) return 1; return max; },
+	MAX_UNITS_PER_FACTION_ON_MAP = 0,
+	MAX_BASE_UNITS = 0,
+	MAX_BASE_DEFENSES = 0,
+	MAX_SPECIAL_UNITS = 0,
 	RANDOM_COLORS = true,
 	RANDOM_TERRAIN = true,
 	GOD_MODE = false, // While enabled, click methods will fire
@@ -85,7 +85,7 @@ window.onload = function() {
 		listening: false
 	});
 
-	MSGLAYER = new Kinetic.Layer();
+	MISCLAYER = new Kinetic.Layer();
 	BULLETLAYER = new Kinetic.Layer();
 	EXPLOSIONLAYER = new Kinetic.Layer();
 	SMOKELAYER = new Kinetic.Layer();
@@ -94,7 +94,7 @@ window.onload = function() {
 	STAGE.add(BULLETLAYER);
 	STAGE.add(SMOKELAYER);
 	STAGE.add(EXPLOSIONLAYER);
-	STAGE.add(MSGLAYER);
+	STAGE.add(MISCLAYER);
 
 	ANIM = new Kinetic.Animation({
 		func: function(){ draw(); },
@@ -190,7 +190,7 @@ var tcIndex,
 		//[216, 213, 201], // Desert
 		//[177,173,165], // Snow
 		//[175, 128, 74], //mars
-		[112, 128, 144],  // Moon
+		//[112, 128, 144],  // Moon
 		[0,0,0], // space!
 		//[98,146,134], //rain
 		//[198, 191, 165], //slate
@@ -215,6 +215,7 @@ var tcIndex,
 		lastTargetFound: null, hasLost: false, thisTeam: null,
 		unitCooldown: Math.random()*180|80,
 		units: null, // Should be a list of units (Doubly Linked List!)
+		numBases: 0, // It less taxing this way
 
 		init: function(color, name){
 			this.color = color;
@@ -227,7 +228,7 @@ var tcIndex,
 			// Logic here to randomly select which until will be added here!
 			// The builder will be calling this to make the team build a unit...
 			// No need to continue if we're maxed out on units
-			if(this.score >= getMAX_UNITS_PER_FACTION_ON_MAP()) return;
+			if(this.score >= MAX_UNITS_PER_FACTION_ON_MAP) return;
 
 			if(this.unitCooldown > 0){ this.unitCooldown--; return; }
 
@@ -239,6 +240,10 @@ var tcIndex,
 			}
 			if(unitToMake == null) return;
 
+			// Too many builders/bases?
+			if(unitToMake.isA("BaseUnit")) this.numBases++;
+			if(this.numBases > MAX_BASE_UNITS) return;
+
 			this.units.add(new unitToMake(x,y,this.color,this.thisTeam));
 			this.score++;
 			this.unitCooldown = Math.random()*300|50;
@@ -246,6 +251,23 @@ var tcIndex,
 		createBase : function(x,y){
 			// Creates a base at the location. This is useful for Builder Tanks wanting to deploy or when the game is starting...
 			this.units.add(new BaseUnit(x,y,this.color,this.thisTeam))
+			this.numBases++;
+			this.score++;
+			//this.placeFlag(x,y);
+		},
+		placeFlag: function(x,y,color)
+		{
+			var avatar = this.name.substring(0,1); // First char (also, the letter "N" in Wingdings is a skull & cross bones)
+			var g = new Kinetic.Group();
+			var t = new Kinetic.Text({x:7,y:3,text:avatar,fontFamily:"Wingdings",fontSize:12,textFill:"black"});
+			var f = new Kinetic.Rect({x:0,y:1,width:25,height:15,fill:this.color.getString(),stroke:"gray",strokeWidth:1});
+			var l = new Kinetic.Line({points:[0,0,0,30],stroke:"silver",lineCap:"round",strokeWidth:2});
+			var c = new Kinetic.Ellipse({x:0,y:30,radius:{x:10,y:5},fill:color.getString()});
+			g.add(c);g.add(f);g.add(l);g.add(t);
+			g.move(x,y);
+			g.rotate(-.2)
+			g.setScale(1.5);
+			MISCLAYER.add(g);
 		},
 		work: function(){
 			// If there are units abound, make them do stuff...
@@ -277,7 +299,7 @@ var tcIndex,
 			u = null; // GC?
 		},
 		reset: function(){
-			this.score = this.totalScore = this.taken = this.given = this.usedTickets = 0;
+			this.score = this.totalScore = this.taken = this.given = this.usedTickets = this.numBases = 0;
 			this.lastTargetFound = new Date();
 			this.unitCooldown = Math.random()*180|80;
 			if(this.units != null) {
@@ -288,11 +310,20 @@ var tcIndex,
 
 		// Globl Unit related methods
 		callFriendlies: function(caller, target) {
+
+			// Special check...
+			if(target.myTeam == caller.myTeam){
+				$('#togglePlay').trigger('click');
+				log('Calling on my own team...');
+				caller.target = null;
+				caller.state = TankStateEnum.IDLE;
+			}
+
 			var n = this.units.first;
 			while(n){
-
 				if( n.obj == caller
 					|| !n.obj.attackingUnit
+					|| n.obj.Class.isA("Turret")
 					|| (n.obj.target != null && n.obj.target.getDistanceSquaredFromPoint(n.obj.X,n.obj.Y) > target.getDistanceSquaredFromPoint(n.obj.X,n.obj.Y)) ){
 					n = n.nextLinked;
 					continue;
@@ -339,10 +370,13 @@ var tcIndex,
 			state: TankStateEnum.IDLE,
 
 			// Attack Related
+			attackRange: 125,
 			attackDistance: 100,
 			turretAttackAngle: 45,
 			antiAircraft: false,
 			target: null,
+			targetEvasive: null,
+			targetEvasiveLocation: {X:0,Y:0,XOffset:0,YOffset:0},
 
 			// Angles
 			targetBaseAngle: 0,
@@ -417,7 +451,7 @@ var tcIndex,
 					
 					if(this.target != null && this.target.isDead) this.target = null;
 
-					//this.findTarget(); // We're always looking for a better target? Costly operation...
+					this.findTarget(); // We're always looking for a better target? Costly operation...
 					
 					if(this.target != null) {
 						var tds = this.target.getDistanceSquaredFromPoint(this.X,this.Y);
@@ -449,8 +483,88 @@ var tcIndex,
 						this.target = null;
 					}
 					break;
-				default:
+				case TankStateEnum.EVADE: // 4
+					var dist = null, prevTargetEvasive = this.targetEvasive;
+					this.targetEvasive = null; // Reset
 
+					// Find closest base/healing unit...
+					var n = this.myTeam.units.first;
+					while(n) {
+						if(n.obj.Class.isA("BaseUnit")) {
+							var currDist = n.obj.getDistanceSquaredFromPoint(this.X,this.Y);
+							if(dist == null || currDist < dist){
+								this.targetEvasive = n.obj;
+								dist = currDist;
+								break;
+							}
+						}
+						n = n.nextLinked;
+					}
+
+					this.findTarget(); // I hate calling this method...
+
+					// If there is an enemy in range of me while i'm retreating, get lazy asses on them!
+					if(this.target != null) {
+						this.myTeam.callFriendlies(this.This,this.target);
+						this.moveTurretAndAttack();
+					}
+
+					// No base or we stopped evading, setup to begin fighting again...
+					if(this.targetEvasive == null || this.stopEvading()) {
+						this.state = TankStateEnum.IDLE;
+						return;
+					}
+
+					if(prevTargetEvasive != this.targetEvasive || this.targetEvasive.Class.isA("HealingUnit"))
+					{
+						if(this.targetEvasive.Class.isA("BaseUnit"))
+						{
+							this.targetEvasiveLocation.XOffset = this.targetEvasiveLocation.YOffset = 0;
+							var xRand = (Math.random() * 2 * BASE_HEAL_RADIUS - BASE_HEAL_RADIUS - 4),
+								ylim = Math.sqrt((BASE_HEAL_RADIUS - 2) * (BASE_HEAL_RADIUS - 2) - xRand * xRand),
+								yRand = (Math.random() * 2 * ylim - ylim);
+							this.targetEvasiveLocation.X = this.targetEvasive.X + xRand;
+							this.targetEvasiveLocation.Y = this.targetEvasive.Y + yRand;
+						}
+						else
+						{
+							if(this.targetEvasiveLocation.XOffset == 0 && this.targetEvasiveLocation.YOffset == 0)
+							{
+								var xRand = (Math.random() * 2 * this.targetEvasive.attackRange - this.targetEvasive.attackRange - 4),
+									ylim = Math.sqrt((this.targetEvasive.attackRange - 2) * (this.targetEvasive.attackRange - 2) - xRand * xRand);
+							}
+							this.targetEvasiveLocation.X = this.targetEvasive.X + this.targetEvasiveLocation.XOffset;
+							this.targetEvasiveLocation.Y = this.targetEvasive.Y + this.targetEvasiveLocation.YOffset; // Not sure why...
+						}
+					}
+
+					if(Math.floor(this.X) != Math.floor(this.targetEvasiveLocation.X) || Math.floor(this.Y) != Math.floor(this.targetEvasiveLocation.Y)) {
+						this.targetBaseAngle = this.getAngleFromPoint(this.targetEvasiveLocation.X, this.targetEvasiveLocation.Y);
+						this.move();
+					}
+					else
+						this.state = TankStateEnum.STOP_AND_GUARD;
+
+					break;
+				case TankStateEnum.CRASH_AND_BURN:
+					break;
+				case TankStateEnum.STOP_AND_GUARD:
+					if(this.targetEvasive != null && this.targetEvasive.isDead) this.state = TankStateEnum.EVADE;
+
+					if(this.stopEvading()) {	
+						this.state = TankStateEnum.IDLE;
+					} else {
+						if(Math.floor(this.X) != Math.floor(this.targetEvasiveLocation.X) || Math.floor(this.Y) != Math.floor(this.targetEvasiveLocation.Y)) {
+							this.targetBaseAngle = this.getAngleFromPoint(this.targetEvasiveLocation.X, this.targetEvasiveLocation.Y);
+							this.move();	
+						}
+
+						this.findTarget();
+						if(this.target != null && !this.target.Class.isA("BaseUnit"))
+							this.moveTurretAndAttack();
+					}
+					break;
+				default:
 					if(this.target != null && this.target.isDead)
 						this.target = null;
 
@@ -538,12 +652,12 @@ var tcIndex,
 			if (this.isDead) return;
 
 			// Prevents the drawing method from constantly needing to be updated (not sure if really needed)
-			if (this.X != this.prevX && this.Y != this.prevY) {
+			//if (this.X != this.prevX && this.Y != this.prevY) {
 				this.Shape.setPosition(this.X, this.Y);
 				this.Shape.setRotation(this.baseAngle);
 			 	this.prevX = this.X;
 			 	this.prevY = this.Y;
-			}
+			//}
 
 			if (this.hasTurret)
 				this.TankTurretShape.setRotation(this.getAngleDiff(this.baseAngle, this.turretAngle));
@@ -592,7 +706,25 @@ var tcIndex,
 			if (this.turretAngle > Math.PI) this.turretAngle -= 2 * Math.PI;
 			if (this.turretAngle < -Math.PI) this.turretAngle += 2 * Math.PI;
 		},
-		evade: function () { /* Nothing Yet */ },
+		startEvading: function(){
+			if(this.state == TankStateEnum.EVADE) return true;
+			var hpPercent = (this.hp / this.maxHp);
+			if(hpPercent > .15 && hpPercent <= Math.random()*.45|.15) {
+				this.state = TankStateEnum.EVADE;
+				return true;
+			}
+			return false;
+		},
+		stopEvading: function () { 
+			if(this.state == TankStateEnum.EVADE) return true;
+			if((this.hp / this.maxHp) > Math.random()*1|.37)
+			{
+				this.targetEvasive = null;
+				this.state = TankStateEnum.IDLE;
+				return true;
+			}
+			return false;
+		},
 		findTarget: function () { 
 			// This is likely one of the most taxing calls... it loops for every unit
 			// It should be a quadrant loop or something...
@@ -689,8 +821,10 @@ var tcIndex,
 				this.setTargetTurretAngle();
 				this.turnTurret();
 				var tds = this.target.getDistanceSquaredFromPoint(this.X,this.Y);
-				if(tds <= this.attackDistance * this.attackDistance)
+				if(tds <= this.attackDistance * this.attackDistance){
+					// this.startEvading(); // This isn't working...
 					this.attack();
+				}
 			}
 		},
 		die: function ()
@@ -707,6 +841,10 @@ var tcIndex,
 			if(this.hp <= 0) {
 				// Planes = CRASH_AND_BURN else...
 				this.die();
+
+				if(this.myTeam.units.length() <= 1) // I'm the last one left
+					shooter.myTeam.placeFlag(this.X,this.Y,this.color);
+
 			} else {
 				if(shooter !== null && shooter.myTeam != this.myTeam)
 					shooter.myTeam.given += damage; // Increase their points
@@ -878,33 +1016,150 @@ var tcIndex,
 	});
 
 	var MediumTank = Tank.extend("MediumTank",{},{ 
-		moveSpeed:1.0, turnSpeed:0.13, turretTurnSpeed:0.16, hp: 50, minRange:25, attackDistance:115, turretSize:6, barrelLength:12,
+		moveSpeed:1.0, turnSpeed:0.13, turretTurnSpeed:0.16, hp: 50, minRange:25, attackRange: 140, attackDistance:115, turretSize:6, barrelLength:12,
 		bulletTime: 34, bulletDamage: 4,maxCooldown:35
 	});
 	var LargeTank = Tank.extend("LargeTank",{},{ 
-		moveSpeed:0.8, turnSpeed:0.09, turretTurnSpeed:0.14, hp: 75, minRange:25, attackDistance:130, turretSize:7, barrelLength:14,
+		moveSpeed:0.8, turnSpeed:0.09, turretTurnSpeed:0.14, hp: 75, minRange:25, attackRange: 155, attackDistance:130, turretSize:7, barrelLength:14,
 		bulletTime: 38, bulletDamage: 6,maxCooldown:50
 	});
 	var ArtilleryTank = Tank.extend("ArtilleryTank",{probability:60},{ 
-		moveSpeed:0.9, turnSpeed:0.07, turretTurnSpeed:0.12, hp: 25, minRange:50, attackDistance:175, turretSize:0, barrelLength:16,
+		moveSpeed:0.9, turnSpeed:0.07, turretTurnSpeed:0.12, hp: 25, minRange:50, attackRange: 180, attackDistance:175, turretSize:0, barrelLength:16,
 		bulletType: ShotTypeEnum.SHELL, bulletTime: 41, bulletSpeed: 4, bulletDamage: 15,maxCooldown:75
 	});
 	var DoubleTank = Tank.extend("DoubleTank",{probability:80},{ 
-		moveSpeed:0.7, turnSpeed:0.07, turretTurnSpeed:0.12, hp: 85, minRange:25, attackDistance:130, turretSize:7, barrelLength:14,
+		moveSpeed:0.7, turnSpeed:0.07, turretTurnSpeed:0.12, hp: 85, minRange:25, attackRange: 155, attackDistance:130, turretSize:7, barrelLength:14,
 		doubleBarrel: true, barrelSeparation:1.5, bulletTime: 43, bulletDamage: 5,maxCooldown:70
 	});
 	var MissileTank = Tank.extend("MissileTank",{probability:90},{ 
-		moveSpeed:1.0, turnSpeed:0.07, turretTurnSpeed:0.13, hp: 35, minRange:25, attackDistance:130, turretSize:0, barrelLength:5,
+		moveSpeed:1.0, turnSpeed:0.07, turretTurnSpeed:0.13, hp: 35, minRange:25, attackRange: 155, attackDistance:130, turretSize:0, barrelLength:5,
 		doubleBarrel: true, barrelSeparation:2.5, bulletType: ShotTypeEnum.MISSLE, bulletTime: 40, bulletDamage: 8, maxCooldown:70
 	});
 
 	// var MammothTank = Tank.extend("MammothTank",{},{ /* Override in here! */ special:true });
 	// var HealerTank = Tank.extend("HealerTank",{},{ /* Override in here! */ special:true });
-	// var Builder = Tank.extend("Builder",{probability:15},{ /* Override in here! */ special:true  });
+	var Builder = Tank.extend("Builder",{probability:15},{ 
+		turretSize:0, barrelLength:0,bulletType: ShotTypeEnum.NONE,special:true, cooldown:250,
+		moveSpeed:1.05, turnSpeed: .13, hp: 100,
+		work: function()
+		{
+			switch(this.state)
+			{
+				case TankStateEnum.IDLE:
+					if(Math.random() < MOVE_PROB) {
+						this.targetBaseAngle = 2 * Math.PI * Math.random();
+						this.state = TankStateEnum.MOVE;
+					}
+					break;
+				case TankStateEnum.MOVE:
+					if(Math.random() < MOVE_PROB && Math.random() < MOVE_PROB) this.state = TankStateEnum.IDLE;
+					if(Math.random() < MOVE_PROB) this.targetBaseAngle = 2 * Math.PI * Math.random();
+					this.move();
+					break;
+				default:
+					this.state = TankStateEnum.IDLE;
+					this.target = null;
+					break;
+			}
+
+			if(this.cooldown > 0)
+				this.cooldown--;
+			else
+			{
+				var dontBuild = false;
+
+				if(this.myTeam.units.length() >= 1) // if i'm all thats left, build anyways...
+				{
+					var t = TeamPool.first;
+					while(t) {
+						//if(t.obj != this.myTeam) {
+						var n = t.obj.units.first;
+						while(n) {
+							if(t.obj != this.myTeam && n.obj.getDistanceSquaredFromPoint(this.X, this.Y) < MIN_BASE_DISTANCE_SQUARE * 60){
+								dontBuild = true;
+								break;
+							}
+
+							if(t.obj == this.myTeam && n.obj.Class.isA("BaseUnit") && n.obj.getDistanceSquaredFromPoint(this.X, this.Y) < MIN_BASE_DISTANCE_SQUARE * 60){
+								dontBuild = true;
+								break;
+							}
+
+							n = n.nextLinked;
+						}
+						//}
+						if(dontBuild) break;
+						t = t.nextLinked;
+					}
+				}
+
+				if(dontBuild)
+					this.cooldown += 5;
+				else
+				{
+					if(this.X > WIDTH - BASE_HEAL_RADIUS  || this.X < BASE_HEAL_RADIUS || this.Y > HEIGHT - BASE_HEAL_RADIUS || this.Y < BASE_HEAL_RADIUS)
+						this.cooldown += 5;
+					else {
+						this.myTeam.createBase(this.X,this.Y);
+						this.die();
+					}
+				}
+			}
+
+			this.draw(); // lol, don't forget!
+		}
+	});
 
 	// Defenses
-	// var DefenseTurret = Tank.extend("DefenseTurret",{},{ /* Override in here! */ probability:40 });
-	// var AATurret = Tank.extend("AATurret",{robability:70},{ /* Override in here! */ p });
+	var BaseTurret = Tank.extend("Turret",{},{
+		work: function(){
+			switch(this.state)
+			{
+				case TankStateEnum.IDLE:
+					if(Math.random() < MOVE_PROB)
+						this.targetTurretAngle = 2 * Math.PI * Math.random() - Math.PI;
+					this.turnTurret();
+					this.findTarget();
+					break;
+				case TankStateEnum.TARGET_AQUIRED:
+					this.findTarget();
+					this.moveTurretAndAttack();
+					if(this.target == null || this.target.isDead || this.target.getDistanceSquaredFromPoint(this.X, this.Y) > this.attackRange * this.attackRange) {
+						this.state = TankStateEnum.IDLE;
+						this.target = null;
+					}
+					break;
+				default:
+					break;
+			}
+			if(this.cooldown > 0)
+				this.cooldown--;
+
+			this.draw();
+		},
+		buildShape: function(){
+			var group = new Kinetic.Group({ x: this.X, y: this.Y }),
+				tGroup = new Kinetic.Group();
+
+			tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+			if(this.doubleBarrel)
+				tGroup.add(new Kinetic.Line({ points: [0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+
+			tGroup.add(new Kinetic.Circle({ radius: this.turretSize, fill: this.color.getString(), strokeWidth: 0 }));
+			group.add(tGroup);
+
+			this.Shape = group;
+			this.Shape.setPosition(this.X, this.Y);
+			this.Shape.rotate(2 * Math.PI * Math.random());
+			this.TankTurretShape = this.Shape.getChildren()[0]; // Will always be this...
+			LAYER.add(this.Shape); // Important!
+		},
+	});
+	var DefenseTurret = BaseTurret.extend("DefenseTurret",{probability:40},{ hp:200, cooldown:25, minRange:10, attackDistance:150, attackRange:150, sightDistance:150,
+		turretTurnSpeed: 0.16, turretAttackAngle:45, doubleBarrel:false, turretSize:6, barrelLength:12
+	});
+	var AATurret = BaseTurret.extend("AATurret",{probability:70},{ hp:45, cooldown:7, minRange:10, attackDistance:150, attackRange:150, sightDistance:150,
+		turretTurnSpeed: 0.14, turretAttackAngle:65, doubleBarrel:true, turretSize:4, barrelLength:6, barrelSeparation:4, antiAircraft:true });
 
 	// Planes
 	//var BomberPlane = Tank.extend("BomberPlane",{probability:15},{ /* Override in here! */  });
@@ -957,8 +1212,8 @@ var tcIndex,
 	});
 
 	// This is to help determine probability ratings... does not create new instances, etc
-	var UnitObjectReference = [Tank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank];
-	//UnitObjectReference = [ArtilleryTank];
+	var UnitObjectReference = [Tank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
+	//UnitObjectReference = [AATurret]; // Use this to build just one kind of tank... for debugging really...
 
 // Bullets
 	var Bullet = gamecore.DualPooled.extend('Bullet',
@@ -1262,7 +1517,10 @@ var tcIndex,
 				n = n.nextLinked; 
 			}
 
-			if(TeamsAlive <= 1) RestartGame(); // This makes it instant, should have a nice little timer here
+			if(TeamsAlive <= 1 && !RESTARTING) {
+				RESTARTING = true;
+				var r = setTimeout(function(){RestartGame();},10000);
+			}
 		}
 
 		// Draw bullets
@@ -1292,21 +1550,42 @@ var tcIndex,
 			while(s) { if(s.obj.finished){ s.obj.release(); } s = s.nextLinked; }
 		}
 
+		UpdateScores();
+
 		LAYER.draw();
 		BULLETLAYER.draw();
 		EXPLOSIONLAYER.draw();
 		SMOKELAYER.draw();
+		MISCLAYER.draw();
 		stats.end();
+	}
+
+	function UpdateScores()
+	{
+		var t = TeamPool.first;
+		while(t)
+		{
+			var teamName = t.obj.name;
+			$('#' + teamName).text("{0} : {1}".format(teamName,t.obj.taken));
+			t = t.nextLinked;
+		}
 	}
 
 	function SetupGame()
 	{
+		// It a lot easier this way...
+		MAX_UNITS_PER_FACTION_ON_MAP = Math.floor(MAX_UNITS_ON_SCREEN / NUM_TEAMS);
+		MAX_BASE_UNITS = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1)), 		/* 10% can be bases */
+		MAX_BASE_DEFENSES = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .3)); 		/* 30% can be defenses */
+		var max = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2);
+		MAX_SPECIAL_UNITS = (max < 1) ? 1 : max;
+
 		var colorIndex = Math.random()*TeamColors.length|0; // Colors + 1 (picks 0 to length)
 		for(var i=0;i<=NUM_TEAMS-1;i++, colorIndex = (colorIndex + 1) % TeamColors.length )
 		{
 			var teamName = getName(4,7,null,null);
 			var teamColor = TeamColors[colorIndex];
-			var teamDiv = $('<div/>').text('{0} : 0'.format(teamName)).css({color:teamColor.getString()}).addClass('teamDiv');
+			var teamDiv = $('<div/>').text('{0} : 0'.format(teamName)).css({color:teamColor.getString()}).addClass('teamDiv').attr("id",teamName);
 			TeamPool.add(new Team(TeamColors[colorIndex],teamName));
 			$(".bannerContent").first().append(teamDiv);
 		}
@@ -1314,6 +1593,8 @@ var tcIndex,
 
 	function RestartGame()
 	{
+		RESTARTING = false;
+		MISCLAYER.removeChildren(); // Clears anything not tracked...
 		ChangeTerrain();
 		GetTotalProbability();
 
@@ -1328,7 +1609,7 @@ var tcIndex,
 
 		var t = TeamPool.first, i = 0;
 		while(t){ 
-
+ 
 			t.obj.reset(); // This completely blows away the team... (and units)
 
 			var tooClose = true;
