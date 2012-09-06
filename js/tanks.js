@@ -243,7 +243,7 @@ var tcIndex,
 			if(unitToMake == null) return;
 
 			// Too many builders/bases?
-			if(unitToMake.isA("BaseUnit")) {
+			if(unitToMake.isA("Builder")) {
 				this.numBases++;
 				if(this.numBases > MAX_BASE_UNITS) return;
 			}
@@ -315,7 +315,7 @@ var tcIndex,
 			u = null; // GC?
 		},
 		reset: function(){
-			this.score = this.totalScore = this.taken = this.given = this.usedTickets = this.numBases = 0;
+			this.score = this.totalScore = this.taken = this.given = this.usedTickets = this.numBases = this.numTurrets = 0;
 			this.lastTargetFound = new Date();
 			this.unitCooldown = Math.random()*180|80;
 
@@ -1081,10 +1081,10 @@ var tcIndex,
 			switch(this.state)
 			{
 				case TankStateEnum.IDLE:
-					if(Math.random() < MOVE_PROB) {
+					//if(Math.random() < MOVE_PROB) {
 						this.targetBaseAngle = 2 * Math.PI * Math.random();
 						this.state = TankStateEnum.MOVE;
-					}
+					//}
 					break;
 				case TankStateEnum.MOVE:
 					if(Math.random() < MOVE_PROB && Math.random() < MOVE_PROB) this.state = TankStateEnum.IDLE;
