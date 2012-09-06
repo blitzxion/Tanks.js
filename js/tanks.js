@@ -85,16 +85,16 @@ window.onload = function() {
 		listening: false
 	});
 
-	MISCLAYER = new Kinetic.Layer();
+	MISCLAYER = new Kinetic.Layer({listening:true});
 	BULLETLAYER = new Kinetic.Layer();
 	EXPLOSIONLAYER = new Kinetic.Layer();
 	SMOKELAYER = new Kinetic.Layer();
 	
+	STAGE.add(MISCLAYER);
 	STAGE.add(LAYER);
 	STAGE.add(BULLETLAYER);
 	STAGE.add(SMOKELAYER);
 	STAGE.add(EXPLOSIONLAYER);
-	STAGE.add(MISCLAYER);
 
 	ANIM = new Kinetic.Animation({
 		func: function(){ draw(); },
@@ -188,9 +188,9 @@ var tcIndex,
 		[39,40,34], //darkness
 		//[57,118,40], // Tundra
 		//[216, 213, 201], // Desert
-		//[177,173,165], // Snow
+		[177,173,165], // Snow
 		//[175, 128, 74], //mars
-		//[112, 128, 144],  // Moon
+		[112, 128, 144],  // Moon
 		[0,0,0], // space!
 		//[98,146,134], //rain
 		//[198, 191, 165], //slate
@@ -209,13 +209,14 @@ var tcIndex,
 	var Team = gamecore.Base.extend('Team',{},
 	{
 		// Instance
+		invincible:false,
 		name:null,color:null,
 		score:0,totalScore:0,
 		taken:0,given:0,usedTickets:0,
 		lastTargetFound: null, hasLost: false, thisTeam: null,
 		unitCooldown: Math.random()*180|80,
 		units: null, // Should be a list of units (Doubly Linked List!)
-		numBases: 0, // It less taxing this way
+		numBases: 0, numTurrets:0, // It less taxing this way
 
 		init: function(color, name){
 			this.color = color;
@@ -228,6 +229,7 @@ var tcIndex,
 			// Logic here to randomly select which until will be added here!
 			// The builder will be calling this to make the team build a unit...
 			// No need to continue if we're maxed out on units
+			this.score = this.units.length();
 			if(this.score >= MAX_UNITS_PER_FACTION_ON_MAP) return;
 
 			if(this.unitCooldown > 0){ this.unitCooldown--; return; }
@@ -241,19 +243,25 @@ var tcIndex,
 			if(unitToMake == null) return;
 
 			// Too many builders/bases?
-			if(unitToMake.isA("BaseUnit")) this.numBases++;
-			if(this.numBases > MAX_BASE_UNITS) return;
+			if(unitToMake.isA("BaseUnit")) {
+				this.numBases++;
+				if(this.numBases > MAX_BASE_UNITS) return;
+			}
+
+			// Too many defenses?
+			if(unitToMake.isA("Turret")) {
+				this.numTurrets++;
+				if(this.numTurrets > MAX_BASE_DEFENSES) return;
+			}
 
 			this.units.add(new unitToMake(x,y,this.color,this.thisTeam));
-			this.score++;
 			this.unitCooldown = Math.random()*300|50;
+			this.totalScore++;
 		},
 		createBase : function(x,y){
 			// Creates a base at the location. This is useful for Builder Tanks wanting to deploy or when the game is starting...
 			this.units.add(new BaseUnit(x,y,this.color,this.thisTeam))
 			this.numBases++;
-			this.score++;
-			//this.placeFlag(x,y);
 		},
 		placeFlag: function(x,y,color)
 		{
@@ -279,17 +287,25 @@ var tcIndex,
 
 			u = this.units.first;
 			while(u){
-				if(u.obj.isDead)
-				{
-					// I need to remove any possible shape...
-					if(u.obj.hpbar != null) LAYER.remove(u.obj.hpbar);
-					if(u.obj.debug.targetLine != null) LAYER.remove(u.obj.debug.targetLine);
-					if(u.obj.debug.fov != null) LAYER.remove(u.obj.debug.fov);
-					if(u.obj.Shape != null) LAYER.remove(u.obj.Shape);
+				if(u.obj.isDead) {
+					if(this.invincible) {
+						// hehehehehehehehe
+						u.obj.isDead = false;
+						u.obj.hp = u.obj.maxHp = 10000;
+					} else {
+						// I need to remove any possible shape...
+						if(u.obj.hpbar != null) LAYER.remove(u.obj.hpbar);
+						if(u.obj.debug.targetLine != null) LAYER.remove(u.obj.debug.targetLine);
+						if(u.obj.debug.fov != null) LAYER.remove(u.obj.debug.fov);
+						if(u.obj.Shape != null) LAYER.remove(u.obj.Shape);
 
-					// Finally...
-					this.units.remove(u.obj);
-					this.score--;
+						// Need to decrease some counters
+						if(u.obj.Class.isA("BaseUnit")) this.numBases--;
+						if(u.obj.Class.isA("Turret")) this.numTurrets--;
+
+						// Finally...
+						this.units.remove(u.obj);
+					}
 				}
 					
 
@@ -302,10 +318,16 @@ var tcIndex,
 			this.score = this.totalScore = this.taken = this.given = this.usedTickets = this.numBases = 0;
 			this.lastTargetFound = new Date();
 			this.unitCooldown = Math.random()*180|80;
+
+			var wasIInvincible = this.invincible;
+			if(this.invincible) this.invincible = false; // Need to really clear the old units
+			
 			if(this.units != null) {
 				var n = this.units.first;
 				while(n){ n.obj.die(); this.units.remove(n); n = n.nextLinked; }
 			}
+
+			this.invincible = wasIInvincible; // They are still awesome
 		},
 
 		// Globl Unit related methods
@@ -313,7 +335,7 @@ var tcIndex,
 
 			// Special check...
 			if(target.myTeam == caller.myTeam){
-				$('#togglePlay').trigger('click');
+				//$('#togglePlay').trigger('click');
 				log('Calling on my own team...');
 				caller.target = null;
 				caller.state = TankStateEnum.IDLE;
@@ -928,6 +950,19 @@ var tcIndex,
 		},
 		drawDebug: function(){
 			//var DRAW_TARGET_LINE = false; // for now...
+
+			// if(!this.debug.centerLine)
+			// {
+			// 	var l = new Kinetic.Star({x:this.X,y:this.Y,numPoints:4,innerRadius:1,outerRadius:70,fill:"black",stroke:"black",strokeWidth:1});
+			// 	LAYER.add(l);
+			// 	this.debug.centerLine = l;
+			// }
+			// else
+			// {
+			// 	this.debug.centerLine.setPosition(this.X,this.Y);
+			// 	//this.debug.centerLine.setRotation(this.turretAngle);
+			// }
+
 			if(DRAW_TARGET_LINE)
 			{
 				if(this.debug.targetLine != null && this.target == null){
@@ -1112,6 +1147,9 @@ var tcIndex,
 
 	// Defenses
 	var BaseTurret = Tank.extend("Turret",{},{
+		hp:100, cooldown:25, turretTurnSpeed: 0.16, turretAttackAngle:45, antiAircraft:false,
+		attackDistance:150,attackRange:150, minRange:10, sightDistance:150, doubleBarrel:false, turretSize:6, barrelLength:12,
+		moveSpeed:0,turnSpeed:0,radius:7,
 		work: function(){
 			switch(this.state)
 			{
@@ -1141,7 +1179,7 @@ var tcIndex,
 			var group = new Kinetic.Group({ x: this.X, y: this.Y }),
 				tGroup = new Kinetic.Group();
 
-			tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+			tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1,offset:[0,0]}));
 			if(this.doubleBarrel)
 				tGroup.add(new Kinetic.Line({ points: [0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
 
@@ -1155,11 +1193,10 @@ var tcIndex,
 			LAYER.add(this.Shape); // Important!
 		},
 	});
-	var DefenseTurret = BaseTurret.extend("DefenseTurret",{probability:40},{ hp:200, cooldown:25, minRange:10, attackDistance:150, attackRange:150, sightDistance:150,
-		turretTurnSpeed: 0.16, turretAttackAngle:45, doubleBarrel:false, turretSize:6, barrelLength:12
+	var DefenseTurret = BaseTurret.extend("DefenseTurret",{probability:40},{ hp:200 });
+	var AATurret = BaseTurret.extend("AATurret",{probability:70},{ hp:45, cooldown:7, turretTurnSpeed: 0.14, turretAttackAngle:65, 
+		doubleBarrel:true, turretSize:4, barrelLength:6, barrelSeparation:4, antiAircraft:true
 	});
-	var AATurret = BaseTurret.extend("AATurret",{probability:70},{ hp:45, cooldown:7, minRange:10, attackDistance:150, attackRange:150, sightDistance:150,
-		turretTurnSpeed: 0.14, turretAttackAngle:65, doubleBarrel:true, turretSize:4, barrelLength:6, barrelSeparation:4, antiAircraft:true });
 
 	// Planes
 	//var BomberPlane = Tank.extend("BomberPlane",{probability:15},{ /* Override in here! */  });
@@ -1194,6 +1231,13 @@ var tcIndex,
 			base.setFill(this.color.getString());
 			group.add(base);
 			group.add(new Kinetic.Circle({x:0,y:0,radius:BASE_HEAL_RADIUS,fill:this.color.getStringAlpha(.2)}));
+
+			if(this.myTeam.invincible){
+				var l = new Kinetic.Star({x:0,y:0,numPoints:5,innerRadius:5,outerRadius:15,fill:"black"});
+				l.setScale(.6);
+				group.add(l);
+			}
+
 			this.Shape = group;
 			LAYER.add(group);
 			group.moveToBottom();
@@ -1580,13 +1624,23 @@ var tcIndex,
 		var max = Math.floor((MAX_UNITS_PER_FACTION_ON_MAP * .1) / 2);
 		MAX_SPECIAL_UNITS = (max < 1) ? 1 : max;
 
+		log("Max on screen: "+MAX_UNITS_ON_SCREEN);
+		log("Max on per faction: "+MAX_UNITS_PER_FACTION_ON_MAP);
+		log("Max bases per faction: "+MAX_BASE_UNITS);
+		log("Max base defenses per faction: "+MAX_BASE_DEFENSES);
+		log("Max special units per faction: "+MAX_SPECIAL_UNITS);
+
 		var colorIndex = Math.random()*TeamColors.length|0; // Colors + 1 (picks 0 to length)
+		var teamMadeInvincible = false;
 		for(var i=0;i<=NUM_TEAMS-1;i++, colorIndex = (colorIndex + 1) % TeamColors.length )
 		{
 			var teamName = getName(4,7,null,null);
 			var teamColor = TeamColors[colorIndex];
 			var teamDiv = $('<div/>').text('{0} : 0'.format(teamName)).css({color:teamColor.getString()}).addClass('teamDiv').attr("id",teamName);
-			TeamPool.add(new Team(TeamColors[colorIndex],teamName));
+
+			var theTeam = new Team(TeamColors[colorIndex],teamName);
+			//if(Math.random() < .2 && !teamMadeInvincible) theTeam.invincible = teamMadeInvincible = true;
+			TeamPool.add(theTeam);
 			$(".bannerContent").first().append(teamDiv);
 		}
 	}
@@ -1757,6 +1811,30 @@ var tcIndex,
 		}
 	});
 
+	// An outside click event to add random units to the playing field. This uses a different array of allowable units.
+	// $('#container').click(function(){
+	// 	var mousePos = STAGE.getMousePosition();
+	// 	var tempObjectReference = [Tank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
+	// 		//tempObjectReference = [AATurret]; // Use this to build just one kind of tank... for debugging really...
+	// 	var t = TeamPool.first;
+	// 	while(t) {
+
+	// 		var rand = Math.floor(Math.random() * TOTAL_PROB);
+	// 		var unitToMake = null;
+	// 		for(var i=0;i<tempObjectReference.length;i++) {
+	// 			if(rand < tempObjectReference[i].probability){ unitToMake = tempObjectReference[i]; break; }
+	// 			else rand -= tempObjectReference[i].probability;
+	// 		}
+	// 		if(unitToMake == null) return;
+
+	// 		t.obj.units.add(new unitToMake(mousePos.x,mousePos.y,t.obj.color,t.obj.thisTeam));
+
+	// 		if(Math.random() < .5)
+	// 			break;
+
+	// 	 	t = t.nextLinked;
+	// 	}
+	// });
 
 	// Pause feature! Helpful for unit-for-unit debugging.
 	$('#togglePlay').click(function(e){
