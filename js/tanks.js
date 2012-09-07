@@ -59,7 +59,8 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 // Debug
 var DRAW_FOV = false,
 	DRAW_TARGET_LINE = false,
-	DRAW_HPBAR = true;
+	DRAW_HPBAR = true,
+	DRAW_EXPLOSIONS = true;
 
 // Pools and Lists (mainly lists)
 var TeamPool = new gamecore.LinkedList(); // List of Teams
@@ -1420,6 +1421,13 @@ var tcIndex,
 	{
 		INITIAL_POOL_SIZE : 50,
 		create: function(x,y,preDisplayTime,size){
+			
+			if(!DRAW_EXPLOSIONS)
+			{
+				this.finished = true;
+				return null;
+			}
+
 			var ne = this._super();
 			ne.X = x;
 			ne.Y = y;
@@ -1806,6 +1814,9 @@ var tcIndex,
 				RestartGame();
 				break;
 			// case 76: case 108: // L : Toggles event listening (FPS killer)
+			case 69: case 101:
+				DRAW_EXPLOSIONS = !DRAW_EXPLOSIONS;
+				break;
 			// 	LAYER.setListening(!LAYER.getListening());
 			// 	break;
 		}
