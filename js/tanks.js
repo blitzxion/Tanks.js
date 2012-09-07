@@ -872,7 +872,7 @@ var tcIndex,
 				if(shooter !== null && shooter.myTeam != this.myTeam)
 					shooter.myTeam.given += damage; // Increase their points
 
-				this.myTeam.callFriendlies(this.This,shooter);
+				this.myTeam.callFriendlies(this.This.shooter);
 			}
 		},
 		recoverHitPoints: function(health){
