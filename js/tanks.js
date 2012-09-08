@@ -333,18 +333,6 @@ var tcIndex,
 
 		// Globl Unit related methods
 		callFriendlies: function(caller, target) {
-
-			// Special check...
-			if(target.myTeam == caller.myTeam){
-				log(arguments.callee.caller.toString())
-				log(target);
-				log(caller);
-				pause();
-				caller.target = null;
-				caller.state = TankStateEnum.IDLE;
-			}
-			
-
 			var n = this.units.first;
 			while(n){
 				if( n.obj == caller
@@ -1724,7 +1712,7 @@ var tcIndex,
 		var t = TeamPool.first;
 		while(t)
 		{
-			if(t != Shooter.myTeam) { // Don't damage my team!
+			if(t.obj != Shooter.myTeam) { // Don't damage my team!
 				var n = t.obj.units.first;
 				while(n) {
 					if(n.obj.getDistanceSquaredFromPoint(X, Y) < RadiusSquared && !n.obj.Class.isA("PlaneUnit"))
@@ -1832,30 +1820,19 @@ var tcIndex,
 		}
 	});
 
-	// An outside click event to add random units to the playing field. This uses a different array of allowable units.
-	// $('#container').click(function(){
-	// 	var mousePos = STAGE.getMousePosition();
-	// 	var tempObjectReference = [Tank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
-	// 		//tempObjectReference = [AATurret]; // Use this to build just one kind of tank... for debugging really...
-	// 	var t = TeamPool.first;
-	// 	while(t) {
+	//An outside click event to add random units to the playing field. This uses a different array of allowable units.
+	$('#container').click(function(){
+		var mousePos = STAGE.getMousePosition();
+		var tempObjectReference = [Tank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
+			//tempObjectReference = [ArtilleryTank]; // Use this to build just one kind of tank... for debugging really...
 
-	// 		var rand = Math.floor(Math.random() * TOTAL_PROB);
-	// 		var unitToMake = null;
-	// 		for(var i=0;i<tempObjectReference.length;i++) {
-	// 			if(rand < tempObjectReference[i].probability){ unitToMake = tempObjectReference[i]; break; }
-	// 			else rand -= tempObjectReference[i].probability;
-	// 		}
-	// 		if(unitToMake == null) return;
+		// Random Team
+		var t = TeamPool.objToNodeMap.entries()[Math.random()*TeamPool.objToNodeMap.size()|0][1]; // Get their class only (not their name)
+		var u = tempObjectReference[Math.random()*tempObjectReference.length|0];
+		if(u == null) return;
 
-	// 		t.obj.units.add(new unitToMake(mousePos.x,mousePos.y,t.obj.color,t.obj.thisTeam));
-
-	// 		if(Math.random() < .5)
-	// 			break;
-
-	// 	 	t = t.nextLinked;
-	// 	}
-	// });
+		t.obj.units.add(new u(mousePos.x,mousePos.y,t.obj.color,t.obj.thisTeam));
+	});
 
 	// Pause feature! Helpful for unit-for-unit debugging.
 	function pause() {$('#togglePlay').trigger('click');}
