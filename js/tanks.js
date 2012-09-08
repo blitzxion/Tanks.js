@@ -336,11 +336,14 @@ var tcIndex,
 
 			// Special check...
 			if(target.myTeam == caller.myTeam){
-				//$('#togglePlay').trigger('click');
-				log('Calling on my own team...');
+				log(arguments.callee.caller.toString())
+				log(target);
+				log(caller);
+				pause();
 				caller.target = null;
 				caller.state = TankStateEnum.IDLE;
 			}
+			
 
 			var n = this.units.first;
 			while(n){
@@ -872,7 +875,7 @@ var tcIndex,
 				if(shooter !== null && shooter.myTeam != this.myTeam)
 					shooter.myTeam.given += damage; // Increase their points
 
-				this.myTeam.callFriendlies(this.This.shooter);
+				this.myTeam.callFriendlies(this.This, shooter);
 			}
 		},
 		recoverHitPoints: function(health){
@@ -1795,6 +1798,13 @@ var tcIndex,
 
 	// DOM related
 
+	window.onerror = function(errorMsg, url, lineNumber)
+	{
+		log("Unhandled Exception Catched.\nMessage:{0}\nURL:{1}\nLine:{2}".format(errorMsg.toString(), url.toString(), lineNumber.toString()));
+		pause();
+		return false;
+	}
+
 	$('body').keypress(function(e){
 		switch(e.which)
 		{
@@ -1805,7 +1815,7 @@ var tcIndex,
 				DRAW_FOV = !DRAW_FOV;
 				break;
 			case 112: case 80: case 32: // P / Space : Pause
-				$('#togglePlay').trigger('click');
+				pause();
 				break;
 			case 104: case 72: // H :
 				DRAW_HPBAR = !DRAW_HPBAR;
@@ -1848,9 +1858,10 @@ var tcIndex,
 	// });
 
 	// Pause feature! Helpful for unit-for-unit debugging.
+	function pause() {$('#togglePlay').trigger('click');}
 	$('#togglePlay').click(function(e){
 		if(ANIM != null) {
-			var pausedDiv = $('<div/>').text('Paused').css({'font-size':20,'color':'red','height':100,'width':100,'margin':'0 auto'}).addClass('pausedDiv');
+			var pausedDiv = $('<div/>').text('Paused...(P to continue)').css({'font-size':20,'color':'red','height':100,'width':200,'margin':'0 auto'}).addClass('pausedDiv');
 			if(IsAnimating) { 
 				ANIM.stop(); 
 				$('.bannerContent').append(pausedDiv);
