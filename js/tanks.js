@@ -1686,14 +1686,7 @@ var tcIndex,
 			if(this.finished) return;
 			if(!this.vis) {this.Shape.show(); this.vis = true;}
 			if(this.PreDisplayTime <= 0 && this.Size > 0) {
-				// Might just do this with setScale instead...
 				this.Shape.setScale(this.Size/20);
-				// this.Shape.setFill({
-				//	start: {x:0,y:0,radius:0},
-				//	end: {x:0,y:0,radius:(this.Size/2)},
-				//	colorStops: [0,'yellow',1,'red']
-				// });
-				// this.Shape.setRadius(this.Size/2);
 			}
 		},
 		poof: function(){
