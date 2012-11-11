@@ -59,7 +59,7 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 // Debug
 var DRAW_FOV = false,
 	DRAW_TARGET_LINE = false,
-	DRAW_HPBAR = false,
+	DRAW_HPBAR = true,
 	DRAW_EXPLOSIONS = true;
 
 // Pools and Lists (mainly lists)
@@ -295,10 +295,10 @@ var tcIndex,
 						u.obj.hp = u.obj.maxHp = 10000;
 					} else {
 						// I need to remove any possible shape...
-						if(u.obj.hpbar != null) LAYER.remove(u.obj.hpbar);
-						if(u.obj.debug.targetLine != null) LAYER.remove(u.obj.debug.targetLine);
-						if(u.obj.debug.fov != null) LAYER.remove(u.obj.debug.fov);
-						if(u.obj.Shape != null) LAYER.remove(u.obj.Shape);
+						if(u.obj.hpbar != null) u.obj.hpbar.remove(); //LAYER.remove(u.obj.hpbar);
+						if(u.obj.debug.targetLine != null) u.obj.debug.targetLine.remove(); //LAYER.remove(u.obj.debug.targetLine);
+						if(u.obj.debug.fov != null) u.obj.debug.fov.remove(); //LAYER.remove(u.obj.debug.fov);
+						if(u.obj.Shape != null) u.obj.Shape.remove(); //LAYER.remove(u.obj.Shape);
 
 						// Need to decrease some counters
 						if(u.obj.Class.isA("BaseUnit")) this.numBases--;
@@ -620,9 +620,7 @@ var tcIndex,
 		},
 		drawHPBar: function(){
 
-			if(this.hpbar != null && this.isDead
-				|| this.hpbar == null && !DRAW_HPBAR) // If the bar is null and we're not wanting them...
-				return;
+			if(this.isDead || this.hpbar == null && !DRAW_HPBAR) return; // If the bar is null and we're not wanting them...
 
 			if(this.hpbar == null && DRAW_HPBAR) // Only create new ones if DRAW_HPBAR is enabled
 			{
@@ -630,10 +628,13 @@ var tcIndex,
 				var Shell = new Kinetic.Rect({width:42,height:4,fill:"rgb(0,0,0)",stroke:"black",strokeWidth:1});
 				var Bar = new Kinetic.Rect({x:0.5,y:0.5,width:41,height:3,fill:"green"});
 				//var text = new Kinetic.Text({x:0,y:-15,text:"{0}/{1}".format(this.hp,this.maxHp),fontSize:8,fontFamily:"Calibri",textFill:"red"});
+
 				this.hpbar.add(Shell);
 				this.hpbar.add(Bar);
 				//this.hpbar.add(text); // index 2
+
 				LAYER.add(this.hpbar);
+
 				this.hpbar.hide();
 				this.hpbarVis = false;
 			}
@@ -648,10 +649,12 @@ var tcIndex,
 
 				this.hpbar.setPosition(this.X-22,this.Y-22);
 
-				if(this.hp < this.maxHp && this.hp !== 0)
+				if(this.hp < this.maxHp && this.hp != 0)
 				{
 					if(!this.hpbarVis) {this.hpbar.show(); this.hpbarVis = true;}
+
 					var c = this.hpbar.getChildren();
+
 					c[1].setWidth(41*(this.hp/this.maxHp));
 
 					if((this.hp/this.maxHp) <= 0.50 && (this.hp/this.maxHp) >= 0.26) c[1].setFill("yellow");
@@ -1019,7 +1022,7 @@ var tcIndex,
 					this.debug.targetLine.setPoints(iPoints);
 			}
 			else if(!DRAW_TARGET_LINE && this.debug.targetLine != null && !this.isDead){
-				LAYER.remove(this.debug.targetLine);
+				this.debug.targetLine.remove(); //LAYER.remove(this.debug.targetLine);
 				this.debug.targetLine = null;
 			}
 
@@ -1049,7 +1052,7 @@ var tcIndex,
 				}
 			}
 			else if(!DRAW_FOV && this.debug.fov != null && !this.isDead){
-				LAYER.remove(this.debug.fov);
+				this.debug.fov.remove(); //LAYER.remove(this.debug.fov);
 				this.debug.fov = null;
 			}
 		}
@@ -1396,6 +1399,7 @@ var tcIndex,
 			LAYER.add(this.Shape); // Important!
 		}
 	});
+
 	// var BomberPlane = BasePlane.extend("BomberPlane",{probability:15},{
 	//	buildShape : function(){
 	//		var plane = new Kinetic.Polygon({
@@ -2019,10 +2023,13 @@ var tcIndex,
 			case 120: case 88: // X : Reset the entire game (kills all units, etc)
 				RestartGame();
 				break;
-			// case 76: case 108: // L : Toggles event listening (FPS killer)
-			case 69: case 101:
+			case 69: case 101: // E : Toggle Explosions
 				DRAW_EXPLOSIONS = !DRAW_EXPLOSIONS;
 				break;
+			case 71: case 103: // G : God Mode
+				GOD_MODE = !GOD_MODE;
+				break;
+			// case 76: case 108: // L : Toggles event listening (FPS killer)
 			//	LAYER.setListening(!LAYER.getListening());
 			//	break;
 		}
