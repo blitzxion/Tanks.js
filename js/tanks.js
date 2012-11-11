@@ -60,6 +60,7 @@ var ROUND = 0, // func RESET() increases this on new rounds.
 var DRAW_FOV = false,
 	DRAW_TARGET_LINE = false,
 	DRAW_HPBAR = true,
+	DRAW_HPBAR_TEXT = false, // Enable to display the hp values above the hp bars.
 	DRAW_EXPLOSIONS = true;
 
 // Pools and Lists (mainly lists)
@@ -83,7 +84,7 @@ window.onload = function() {
 	 * drawn onto the buffer context
 	 */
 	LAYER = new Kinetic.Layer({
-		listening: false
+		listening: false,
 	});
 
 	MISCLAYER = new Kinetic.Layer({listening:true});
@@ -189,10 +190,10 @@ var tcIndex,
 		[39,40,34], //darkness
 		//[57,118,40], // Tundra
 		//[216, 213, 201], // Desert
-		[177,173,165], // Snow
+		//[177,173,165], // Snow
 		//[175, 128, 74], //mars
 		[112, 128, 144],  // Moon
-		[0,0,0] // space!
+		//[0,0,0] // space!
 		//[98,146,134], //rain
 		//[198, 191, 165], //slate
 		//[117, 113, 75], //field
@@ -257,9 +258,9 @@ var tcIndex,
 				this.numTurrets++;
 			}
 
-			this.units.add(new unitToMake(x,y,this.color,this.thisTeam));
-			this.unitCooldown = Math.random()*300|50;
-			this.totalScore++;
+			this.units.add(new unitToMake(x,y,this.color,this.thisTeam)); // Build the unit!
+			this.unitCooldown = Math.random()*300|50; // Random cooldown before next build
+			this.totalScore++; // Increase our score!
 		},
 		createBase : function(x,y){
 			// Creates a base at the location. This is useful for Builder Tanks wanting to deploy or when the game is starting...
@@ -601,20 +602,28 @@ var tcIndex,
 				strokeWidth: 1, rotation: 0, offset: [14, 8]
 			}));
 
-			tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
-			if(this.doubleBarrel)
-				tGroup.add(new Kinetic.Line({ points: [0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+			if(this.hasTurret)
+			{
+				tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+				if(this.doubleBarrel)
+					tGroup.add(new Kinetic.Line({ points: [0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
 
-			tGroup.add(new Kinetic.Circle({ radius: this.turretSize, fill: this.color.getString(), strokeWidth: 0 }));
-			group.add(tGroup);
+				tGroup.add(new Kinetic.Circle({ radius: this.turretSize, fill: this.color.getString(), strokeWidth: 0 }));
+				group.add(tGroup);
+			}
 
 			this.Shape = group;
 			this.Shape.setPosition(this.X, this.Y);
 			this.Shape.rotate(2 * Math.PI * Math.random());
 			this.TankTurretShape = this.Shape.getChildren()[1]; // Will always be this...
+
+
+
 			LAYER.add(this.Shape); // Important!
 		},
 		drawHPBar: function(){
+
+			var text;
 
 			if(this.isDead || this.hpbar == null && !DRAW_HPBAR) return; // If the bar is null and we're not wanting them...
 
@@ -623,25 +632,25 @@ var tcIndex,
 				this.hpbar = new Kinetic.Group({x:this.X-22, y:this.Y-22});
 				var Shell = new Kinetic.Rect({width:42,height:4,fill:"rgb(0,0,0)",stroke:"black",strokeWidth:1});
 				var Bar = new Kinetic.Rect({x:0.5,y:0.5,width:41,height:3,fill:"green"});
-				var text = new Kinetic.Text({x:0,y:-15,text:"{0}/{1}".format(this.hp,this.maxHp),fontSize:8,fontFamily:"Calibri",textFill:"red"});
+				if(DRAW_HPBAR_TEXT) text = new Kinetic.Text({x:0,y:-15,text:"{0}/{1}".format(this.hp,this.maxHp),fontSize:8,fontFamily:"Calibri",textFill:"red"});
 
 				this.hpbar.add(Shell);
 				this.hpbar.add(Bar);
-				this.hpbar.add(text); // index 2
+				if(DRAW_HPBAR_TEXT) this.hpbar.add(text); // index 2
 
 				LAYER.add(this.hpbar);
 
-				//this.hpbar.hide();
-				//this.hpbarVis = false;
+				this.hpbar.hide();
+				this.hpbarVis = false;
 			}
 			else
 			{
-				// if(!DRAW_HPBAR)
-				// {
-				// 	this.hpbar.hide();
-				// 	this.hpbarVis = false;
-				// 	return;
-				// }
+				if(!DRAW_HPBAR)
+				{
+					this.hpbar.hide();
+					this.hpbarVis = false;
+					return;
+				}
 
 				this.hpbar.setPosition(this.X-22,this.Y-22);
 
@@ -657,11 +666,11 @@ var tcIndex,
 					else if((this.hp/this.maxHp) <= 0.25) c[1].setFill("red");
 					else c[1].setFill("green");
 
-					c[2].setText("{0}/{1}".format(this.hp,this.maxHp));
+					if(DRAW_HPBAR_TEXT) c[2].setText("{0}/{1}".format(this.hp,this.maxHp));
 				}
 				else if(this.hpbarVis) {
-					//this.hpbar.hide();
-					//this.hpbarVis = false;
+					this.hpbar.hide();
+					this.hpbarVis = false;
 				}
 			}
 		},
@@ -991,7 +1000,7 @@ var tcIndex,
 				// Line's basics:
 				if(this.debug.targetLine == null || this.debug.targetLine == undefined){
 					this.debug.targetLine = new Kinetic.Line({
-						stroke : this.color.getStringAlpha(0.5),
+						stroke : this.color.getString(),
 						strokeWidth : 1
 					});
 
@@ -1054,7 +1063,6 @@ var tcIndex,
 		moveSpeed:1.4, turnSpeed:0.18, turretTurnSpeed:0.19, hp: 30, minRange:10, attackRange: 125, attackDistance:100, turretSize:5, barrelLength:10,
 		bulletTime: 32, bulletDamage: 3,maxCooldown:30
 	});
-
 	var MediumTank = Tank.extend("MediumTank",{},{
 		moveSpeed:1.0, turnSpeed:0.13, turretTurnSpeed:0.16, hp: 50, minRange:25, attackRange: 140, attackDistance:115, turretSize:6, barrelLength:12,
 		bulletTime: 34, bulletDamage: 4,maxCooldown:35
@@ -1097,6 +1105,9 @@ var tcIndex,
 			this.Shape.setPosition(this.X, this.Y);
 			this.Shape.rotate(2 * Math.PI * Math.random());
 			this.TankTurretShape = this.Shape.getChildren()[1]; // Will always be this...
+
+
+
 			LAYER.add(this.Shape); // Important!
 		}
 	});
@@ -1136,6 +1147,9 @@ var tcIndex,
 			this.Shape = group;
 			this.Shape.setPosition(this.X, this.Y);
 			this.Shape.rotate(2 * Math.PI * Math.random());
+
+
+
 			LAYER.add(this.Shape); // Important!
 		},
 		findTarget: function(){
@@ -1162,7 +1176,7 @@ var tcIndex,
 	});
 	var Builder = Tank.extend("Builder",{probability:15},{
 		turretSize:0, barrelLength:0,bulletType: ShotTypeEnum.NONE,special:true, cooldown:250,
-		moveSpeed:1.05, turnSpeed: 0.13, hp: 100,
+		moveSpeed:1.05, turnSpeed: 0.13, hp: 100, hasTurret: false,
 		work: function()
 		{
 			switch(this.state)
@@ -1277,6 +1291,9 @@ var tcIndex,
 			this.Shape.setPosition(this.X, this.Y);
 			this.Shape.rotate(2 * Math.PI * Math.random());
 			this.TankTurretShape = this.Shape.getChildren()[0]; // Will always be this...
+
+
+
 			LAYER.add(this.Shape); // Important!
 		}
 	});
@@ -1376,6 +1393,7 @@ var tcIndex,
 			this.Shape = plane;
 			this.Shape.setPosition(this.X, this.Y);
 			this.Shape.rotate(2 * Math.PI * Math.random());
+
 			LAYER.add(this.Shape); // Important!
 		}
 	});
@@ -1393,6 +1411,7 @@ var tcIndex,
 			this.Shape = plane;
 			this.Shape.setPosition(this.X, this.Y);
 			this.Shape.rotate(2 * Math.PI * Math.random());
+
 			LAYER.add(this.Shape); // Important!
 		}
 	});
@@ -1409,6 +1428,7 @@ var tcIndex,
 	//		this.Shape = plane;
 	//		this.Shape.setPosition(this.X, this.Y);
 	//		this.Shape.rotate(2 * Math.PI * Math.random());
+	//
 	//		LAYER.add(this.Shape); // Important!
 	//	}
 	// });
@@ -1450,7 +1470,8 @@ var tcIndex,
 			}
 
 			this.Shape = group;
-			LAYER.add(group);
+
+			LAYER.add(this.Shape);
 			group.moveToBottom();
 		},
 		areaHeal: function(healRadius){
@@ -2031,7 +2052,7 @@ var tcIndex,
 		if(!GOD_MODE) return;
 
 		var mousePos = STAGE.getMousePosition();
-		var tempObjectReference = [Tank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
+		var tempObjectReference = [SmallTank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
 			//tempObjectReference = [FighterJet]; // Use this to build just one kind of tank... for debugging really...
 
 		// Random Team
@@ -2046,7 +2067,7 @@ var tcIndex,
 	function pause() {$('#togglePlay').trigger('click');}
 	$('#togglePlay').click(function(e){
 		if(ANIM != null) {
-			var pausedDiv = $('<div/>').text('Paused...(P to continue)').css({'font-size':20,'color':'red','height':100,'width':200,'margin':'0 auto'}).addClass('pausedDiv');
+			var pausedDiv = $('<div/>').text('Paused...(P to continue)').addClass('pausedDiv');
 			if(IsAnimating) {
 				ANIM.stop();
 				$('.bannerContent').append(pausedDiv);
