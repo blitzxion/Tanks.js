@@ -237,22 +237,24 @@ var tcIndex,
 
 			var rand = Math.floor(Math.random() * TOTAL_PROB);
 			var unitToMake = null;
+
 			for(var i=0;i<UnitObjectReference.length;i++) {
 				if(rand < UnitObjectReference[i].probability){ unitToMake = UnitObjectReference[i]; break; }
 				else rand -= UnitObjectReference[i].probability;
 			}
+
 			if(unitToMake == null) return;
 
 			// Too many builders/bases?
 			if(unitToMake.isA("Builder")) {
-				this.numBases++;
 				if(this.numBases > MAX_BASE_UNITS) return;
+				this.numBases++;
 			}
 
 			// Too many defenses?
 			if(unitToMake.isA("Turret")) {
-				this.numTurrets++;
 				if(this.numTurrets > MAX_BASE_DEFENSES) return;
+				this.numTurrets++;
 			}
 
 			this.units.add(new unitToMake(x,y,this.color,this.thisTeam));
@@ -264,8 +266,7 @@ var tcIndex,
 			this.units.add(new BaseUnit(x,y,this.color,this.thisTeam));
 			this.numBases++;
 		},
-		placeFlag: function(x,y,color)
-		{
+		placeFlag: function(x,y,color) {
 			var avatar = this.name.substring(0,1); // First char (also, the letter "N" in Wingdings is a skull & cross bones)
 			var g = new Kinetic.Group();
 			var t = new Kinetic.Text({x:7,y:3,text:avatar,fontFamily:"Wingdings",fontSize:12,textFill:"black"});
@@ -308,16 +309,11 @@ var tcIndex,
 						this.units.remove(u.obj);
 					}
 				}
-
-
 				u = u.nextLinked;
 			}
 
-			u = null; // GC?
-
 			// Update the team's visual score
 			$('#' + this.name).text("{0} : {1}".format(this.name,this.taken));
-
 		},
 		reset: function(){
 			this.score = this.totalScore = this.taken = this.given = this.usedTickets = this.numBases = this.numTurrets = 0;
@@ -359,7 +355,7 @@ var tcIndex,
 		}
 	});
 
-// Tanks (the base one, create extended copies for newer ones)
+// Tanks (the base one, create extended copies for newer ones, don't use the base one)
 	var Tank = gamecore.Base.extend('Tank',{ /* Static (this is inherited as well) */ probability: 120 },
 	{
 		// Vars
@@ -627,25 +623,25 @@ var tcIndex,
 				this.hpbar = new Kinetic.Group({x:this.X-22, y:this.Y-22});
 				var Shell = new Kinetic.Rect({width:42,height:4,fill:"rgb(0,0,0)",stroke:"black",strokeWidth:1});
 				var Bar = new Kinetic.Rect({x:0.5,y:0.5,width:41,height:3,fill:"green"});
-				//var text = new Kinetic.Text({x:0,y:-15,text:"{0}/{1}".format(this.hp,this.maxHp),fontSize:8,fontFamily:"Calibri",textFill:"red"});
+				var text = new Kinetic.Text({x:0,y:-15,text:"{0}/{1}".format(this.hp,this.maxHp),fontSize:8,fontFamily:"Calibri",textFill:"red"});
 
 				this.hpbar.add(Shell);
 				this.hpbar.add(Bar);
-				//this.hpbar.add(text); // index 2
+				this.hpbar.add(text); // index 2
 
 				LAYER.add(this.hpbar);
 
-				this.hpbar.hide();
-				this.hpbarVis = false;
+				//this.hpbar.hide();
+				//this.hpbarVis = false;
 			}
 			else
 			{
-				if(!DRAW_HPBAR)
-				{
-					this.hpbar.hide();
-					this.hpbarVis = false;
-					return;
-				}
+				// if(!DRAW_HPBAR)
+				// {
+				// 	this.hpbar.hide();
+				// 	this.hpbarVis = false;
+				// 	return;
+				// }
 
 				this.hpbar.setPosition(this.X-22,this.Y-22);
 
@@ -661,11 +657,11 @@ var tcIndex,
 					else if((this.hp/this.maxHp) <= 0.25) c[1].setFill("red");
 					else c[1].setFill("green");
 
-					//c[2].setText("{0}/{1}".format(this.hp,this.maxHp));
+					c[2].setText("{0}/{1}".format(this.hp,this.maxHp));
 				}
 				else if(this.hpbarVis) {
-					this.hpbar.hide();
-					this.hpbarVis = false;
+					//this.hpbar.hide();
+					//this.hpbarVis = false;
 				}
 			}
 		},
@@ -858,15 +854,13 @@ var tcIndex,
 				}
 			}
 		},
-		die: function ()
-		{
+		die: function () {
 			this.isDead = true; // This is so this tank can be removed from the list of "used" objects...
 			var exps = (IS_MOBILE) ? 2 : Math.floor(Math.random() * 4 + 4);
 			for(var i = 0; i <= exps; i++)
 				Explosion.create(this.X + Math.random() * 14 - 7, this.Y + Math.random() * 14 - 7, i * 2, 12 + Math.random() * 10);
 		},
-		takeDamage: function(damage,shooter)
-		{
+		takeDamage: function(damage,shooter) {
 			this.hp -= damage;
 			this.myTeam.taken += damage; // increase our failure!
 			if(this.hp <= 0) {
@@ -893,8 +887,7 @@ var tcIndex,
 			}
 			if(this.hp > this.maxHp) this.hp = this.maxHp; // Just in case they go over the max ammount
 		},
-		setTargetTurretAngle: function()
-		{
+		setTargetTurretAngle: function() {
 			//if(this.target != null && !this.target.isDead){
 				var Tx = this.target.X,
 					Ty = this.target.Y,
@@ -936,8 +929,7 @@ var tcIndex,
 				if (dy > h2) y -= HEIGHT;
 				return (this.X - x) * (this.X - x) + (this.Y - y) * (this.Y - y);
 		},
-		getAngleFromPoint: function(x1,y1)
-		{
+		getAngleFromPoint: function(x1,y1) {
 			var dx = x1 - this.X,
 				dy = y1 - this.Y,
 				w2 = WIDTH * 0.5,
@@ -1056,6 +1048,11 @@ var tcIndex,
 				this.debug.fov = null;
 			}
 		}
+	});
+
+	var SmallTank = Tank.extend("SmallTank",{},{
+		moveSpeed:1.4, turnSpeed:0.18, turretTurnSpeed:0.19, hp: 30, minRange:10, attackRange: 125, attackDistance:100, turretSize:5, barrelLength:10,
+		bulletTime: 32, bulletDamage: 3,maxCooldown:30
 	});
 
 	var MediumTank = Tank.extend("MediumTank",{},{
@@ -1470,7 +1467,7 @@ var tcIndex,
 	});
 
 	// This is to help determine probability ratings... does not create new instances, etc
-	var UnitObjectReference = [Tank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder,DefenseTurret,AATurret,HealerTank,MammothTank];
+	var UnitObjectReference = [SmallTank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder,DefenseTurret,AATurret,HealerTank,MammothTank];
 	//UnitObjectReference = [AATurret]; // Use this to build just one kind of tank... for debugging really...
 
 // Bullets
