@@ -98,10 +98,9 @@ window.onload = function() {
 	STAGE.add(SMOKELAYER);
 	STAGE.add(EXPLOSIONLAYER);
 
-	ANIM = new Kinetic.Animation({
-		func: function(){ draw(); },
-		node: LAYER
-	});
+	ANIM = new Kinetic.Animation(function(frame){
+		draw();
+	},LAYER);
 
 	SetupGame();
 	RestartGame();
@@ -1678,9 +1677,9 @@ var tcIndex,
 			this.vis = false;
 			this.Shape = new Kinetic.Circle({
 				radius:10,
-				fill:{	start: {x:0,y:0,radius:0},
-						end: {x:0,y:0,radius:7},
-						colorStops: [0,'yellow',1,'red']},
+				fillRadialGradientStartPoint: 0, fillRadialGradientStartRadius: 0,
+				fillRadialGradientEndPoint: 0, fillRadialGradientEndRadius: 7,
+				fillRadialGradientColorStops: [0,'yellow',1,'red'],
 				visible:false
 			});
 			EXPLOSIONLAYER.add(this.Shape);
