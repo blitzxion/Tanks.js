@@ -125,6 +125,9 @@ window.onresize = function(){
 		}
 		n = n.nextLinked;
 	}
+
+	two.height = HEIGHT;
+	two.width = WIDTH;
 };
 
 // Color Class
