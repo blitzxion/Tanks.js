@@ -8,14 +8,12 @@ var WIDTH = window.innerWidth,
 	FPS_TOO_LOW = 45;
 
 // Canvas Related
-var STAGE = null,
-	LAYER = null,
-	ANIM = null,
-	IsAnimating = false,
-	EXPLOSIONLAYER = null,
-	SMOKELAYER = null,
-	BULLETLAYER = null,
-	MISCLAYER = null;
+var elem = document.getElementById('container')
+	two = null;
+
+var background = null, // Should be bases and turrens, (any stationary units/objects)
+	middleground = null, // Should mobile units
+	foreground = null; // Bullets and explosions (in that order?)
 
 var IS_IPAD = navigator.platform === 'iPad',
 	IS_IPHONE = navigator.platform === 'iPhone',
@@ -25,7 +23,7 @@ var IS_IPAD = navigator.platform === 'iPad',
 
 // Sigh, vars... vars everywhere
 var ROUND = 0, // func RESET() increases this on new rounds.
-	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 4, // This is the max amount on the playing field.
+	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 2, // This is the max amount on the playing field.
 	MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 50, // down from 80... that was killing the browser
 	MAX_UNITS_PER_FACTION_ON_MAP = 0,
 	MAX_BASE_UNITS = 0,
@@ -75,52 +73,42 @@ window.onload = function() {
 	stats.domElement.style.top = HEIGHT - 30 + "px";
 	document.body.appendChild(stats.domElement);
 
-	STAGE = new Kinetic.Stage({ container: "container", width: WIDTH, height: HEIGHT});
-	document.getElementById("container").style.height = HEIGHT + "px"; // So the bottom banner can freaking appear
+	elem.style.height = HEIGHT + "px"; // So the bottom banner can freaking appear
 
-	/*
-	 * setting the listening property to false will improve
-	 * drawing performance because the rectangles won't have to be
-	 * drawn onto the buffer context
-	 */
-	LAYER = new Kinetic.Layer({
-		listening: false,
+	//STAGE = new Kinetic.Stage({ container: "container", width: WIDTH, height: HEIGHT});
+	two = new Two({
+		type: Two.Types.canvas, // svg, canvas, webgl (good, better, best?)
+		width:WIDTH,
+		height:HEIGHT,
+		fullscreen:false, // Since we're using banners, this should always be false. ALSO: if false, .bind('resize',func) will NOT FIRE!
+		autostart:false, // This can be true later to automatically start the game
+	}).appendTo(elem);
+
+	background = two.makeGroup();
+	middleground = two.makeGroup();
+	foreground = two.makeGroup();
+
+	_.defer(function(){
+		two
+		.bind('update',function(frameCount){ // Primary Animation Routine!!!
+			draw();
+		})
+		.play(); // This starts the game (manually)
 	});
-
-	MISCLAYER = new Kinetic.Layer({listening:true});
-	BULLETLAYER = new Kinetic.Layer();
-	EXPLOSIONLAYER = new Kinetic.Layer();
-	SMOKELAYER = new Kinetic.Layer();
-
-	STAGE.add(MISCLAYER);
-	STAGE.add(LAYER);
-	STAGE.add(BULLETLAYER);
-	STAGE.add(SMOKELAYER);
-	STAGE.add(EXPLOSIONLAYER);
-
-	ANIM = new Kinetic.Animation(function(frame){
-		draw();
-	},LAYER);
 
 	SetupGame();
 	RestartGame();
-	ANIM.start();
 	IsAnimating = true;
 };
 
-window.onresize = function(event) {
-	ANIM.stop();
-	IsAnimating = false;
-
+window.onresize = function(){
 	WIDTHPREV = WIDTH;
 	HEIGHTPREV = HEIGHT;
 	WIDTH = window.innerWidth; /* big bag of WTF on iOS with orientation changes */
 	HEIGHT = window.innerHeight - 40; /* stable on iOS */
-	document.getElementById("container").style.height = HEIGHT + "px";
+	elem.style.height = HEIGHT + "px";
 	if(stats !== null)
 		stats.domElement.style.top = HEIGHT - 30 + "px";
-
-	STAGE.setSize(WIDTH,HEIGHT); // w x h
 
 	// Move Items
 	var xRatio = WIDTH / WIDTHPREV, yRatio = HEIGHT / HEIGHTPREV; //shapes = LAYER.getChildren();
@@ -132,17 +120,12 @@ window.onresize = function(event) {
 			u.obj.Y = u.obj.Y * yRatio;
 
 			var unit = u.obj.Shape;
-			unit.setX(unit.getX() * xRatio);
-			unit.setY(unit.getY() * yRatio);
+			unit.translation.set(unit.translation.x * xRatio,unit.translation.y * yRatio);
 			u = u.nextLinked;
 		}
 		n = n.nextLinked;
 	}
-
-	ANIM.start();
-	IsAnimating = true;
 };
-
 
 // Color Class
 function Color (r, g, b){
@@ -267,17 +250,17 @@ var tcIndex,
 			this.numBases++;
 		},
 		placeFlag: function(x,y,color) {
-			var avatar = this.name.substring(0,1); // First char (also, the letter "N" in Wingdings is a skull & cross bones)
-			var g = new Kinetic.Group();
-			var t = new Kinetic.Text({x:7,y:3,text:avatar,fontFamily:"Wingdings",fontSize:12,textFill:"black"});
-			var f = new Kinetic.Rect({x:0,y:1,width:25,height:15,fill:this.color.getString(),stroke:"gray",strokeWidth:1});
-			var l = new Kinetic.Line({points:[0,0,0,30],stroke:"silver",lineCap:"round",strokeWidth:2});
-			var c = new Kinetic.Ellipse({x:0,y:30,radius:{x:10,y:5},fill:color.getString()});
-			g.add(c);g.add(f);g.add(l);g.add(t);
-			g.move(x,y);
-			g.rotate(-0.2);
-			g.setScale(1.5);
-			MISCLAYER.add(g);
+			// var avatar = this.name.substring(0,1); // First char (also, the letter "N" in Wingdings is a skull & cross bones)
+			// var g = new Kinetic.Group();
+			// var t = new Kinetic.Text({x:7,y:3,text:avatar,fontFamily:"Wingdings",fontSize:12,textFill:"black"});
+			// var f = new Kinetic.Rect({x:0,y:1,width:25,height:15,fill:this.color.getString(),stroke:"gray",strokeWidth:1});
+			// var l = new Kinetic.Line({points:[0,0,0,30],stroke:"silver",lineCap:"round",strokeWidth:2});
+			// var c = new Kinetic.Ellipse({x:0,y:30,radius:{x:10,y:5},fill:color.getString()});
+			// g.add(c);g.add(f);g.add(l);g.add(t);
+			// g.move(x,y);
+			// g.rotate(-0.2);
+			// g.setScale(1.5);
+			// MISCLAYER.add(g);
 		},
 		work: function(){
 			// If there are units abound, make them do stuff...
@@ -592,86 +575,88 @@ var tcIndex,
 			this.draw();
 		},
 		buildShape : function(){
-			var group = new Kinetic.Group({ x: this.X, y: this.Y });
-			var tGroup = new Kinetic.Group();
-			group.add(new Kinetic.Rect({
-				x: 0, y: 0, width: 28, height: 16,
-				//fill: this.color.getStringAlpha(.3),
-				stroke: this.color.getString(),
-				strokeWidth: 1, rotation: 0, offset: [14, 8]
-			}));
 
+			this.Shape = two.makeGroup();
+			this.Shape.translation.set(this.X, this.Y);
+			this.Shape.rotation = 2 * Math.PI * Math.random();
+
+			var unitBody = two.makeRectangle(0,0,28,16);
+			unitBody.stroke = this.color.getString();
+			unitBody.fill = this.color.getStringAlpha(.3);
 			if(this.hasTurret)
 			{
-				tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
-				if(this.doubleBarrel)
-					tGroup.add(new Kinetic.Line({ points: [0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+				this.TankTurretShape = two.makeGroup();
+				var t1 = two.makeLine(0,this.barrelSeparation,this.barrelLength,this.barrelSeparation);
+				t1.stroke = this.color.getString();
+				this.TankTurretShape.add(t1);
+				if(this.doubleBarrel) {
+					var t2 = two.makeLine(0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation);
+					t2.stroke = this.color.getString();
+					this.TankTurretShape.add(t2);
+				}
+				var pod = two.makeCircle(0,0,this.turretSize);
+				pod.fill = this.color.getString();
+				pod.noStroke();
+				this.TankTurretShape.add(pod);
 
-				tGroup.add(new Kinetic.Circle({ radius: this.turretSize, fill: this.color.getString(), strokeWidth: 0 }));
-				group.add(tGroup);
+				this.Shape.add(this.TankTurretShape)
 			}
 
-			this.Shape = group;
-			this.Shape.setPosition(this.X, this.Y);
-			this.Shape.rotate(2 * Math.PI * Math.random());
-			this.TankTurretShape = this.Shape.getChildren()[1]; // Will always be this...
-
-
-
-			LAYER.add(this.Shape); // Important!
+			this.Shape.add(unitBody);
+			middleground.add(this.Shape);
 		},
 		drawHPBar: function(){
 
-			var text;
+			// var text;
 
-			if(this.isDead || this.hpbar == null && !DRAW_HPBAR) return; // If the bar is null and we're not wanting them...
+			// if(this.isDead || this.hpbar == null && !DRAW_HPBAR) return; // If the bar is null and we're not wanting them...
 
-			if(this.hpbar == null && DRAW_HPBAR) // Only create new ones if DRAW_HPBAR is enabled
-			{
-				this.hpbar = new Kinetic.Group({x:this.X-22, y:this.Y-22});
-				var Shell = new Kinetic.Rect({width:42,height:4,fill:"rgb(0,0,0)",stroke:"black",strokeWidth:1});
-				var Bar = new Kinetic.Rect({x:0.5,y:0.5,width:41,height:3,fill:"green"});
-				if(DRAW_HPBAR_TEXT) text = new Kinetic.Text({x:0,y:-15,text:"{0}/{1}".format(this.hp,this.maxHp),fontSize:8,fontFamily:"Calibri",textFill:"red"});
+			// if(this.hpbar == null && DRAW_HPBAR) // Only create new ones if DRAW_HPBAR is enabled
+			// {
+			// 	this.hpbar = new Kinetic.Group({x:this.X-22, y:this.Y-22});
+			// 	var Shell = new Kinetic.Rect({width:42,height:4,fill:"rgb(0,0,0)",stroke:"black",strokeWidth:1});
+			// 	var Bar = new Kinetic.Rect({x:0.5,y:0.5,width:41,height:3,fill:"green"});
+			// 	if(DRAW_HPBAR_TEXT) text = new Kinetic.Text({x:0,y:-15,text:"{0}/{1}".format(this.hp,this.maxHp),fontSize:8,fontFamily:"Calibri",textFill:"red"});
 
-				this.hpbar.add(Shell);
-				this.hpbar.add(Bar);
-				if(DRAW_HPBAR_TEXT) this.hpbar.add(text); // index 2
+			// 	this.hpbar.add(Shell);
+			// 	this.hpbar.add(Bar);
+			// 	if(DRAW_HPBAR_TEXT) this.hpbar.add(text); // index 2
 
-				LAYER.add(this.hpbar);
+			// 	LAYER.add(this.hpbar);
 
-				this.hpbar.hide();
-				this.hpbarVis = false;
-			}
-			else
-			{
-				if(!DRAW_HPBAR)
-				{
-					this.hpbar.hide();
-					this.hpbarVis = false;
-					return;
-				}
+			// 	this.hpbar.hide();
+			// 	this.hpbarVis = false;
+			// }
+			// else
+			// {
+			// 	if(!DRAW_HPBAR)
+			// 	{
+			// 		this.hpbar.hide();
+			// 		this.hpbarVis = false;
+			// 		return;
+			// 	}
 
-				this.hpbar.setPosition(this.X-22,this.Y-22);
+			// 	this.hpbar.setPosition(this.X-22,this.Y-22);
 
-				if(this.hp < this.maxHp && this.hp != 0)
-				{
-					if(!this.hpbarVis) {this.hpbar.show(); this.hpbarVis = true;}
+			// 	if(this.hp < this.maxHp && this.hp != 0)
+			// 	{
+			// 		if(!this.hpbarVis) {this.hpbar.show(); this.hpbarVis = true;}
 
-					var c = this.hpbar.getChildren();
+			// 		var c = this.hpbar.getChildren();
 
-					c[1].setWidth(41*(this.hp/this.maxHp));
+			// 		c[1].setWidth(41*(this.hp/this.maxHp));
 
-					if((this.hp/this.maxHp) <= 0.50 && (this.hp/this.maxHp) >= 0.26) c[1].setFill("yellow");
-					else if((this.hp/this.maxHp) <= 0.25) c[1].setFill("red");
-					else c[1].setFill("green");
+			// 		if((this.hp/this.maxHp) <= 0.50 && (this.hp/this.maxHp) >= 0.26) c[1].setFill("yellow");
+			// 		else if((this.hp/this.maxHp) <= 0.25) c[1].setFill("red");
+			// 		else c[1].setFill("green");
 
-					if(DRAW_HPBAR_TEXT) c[2].setText("{0}/{1}".format(this.hp,this.maxHp));
-				}
-				else if(this.hpbarVis) {
-					this.hpbar.hide();
-					this.hpbarVis = false;
-				}
-			}
+			// 		if(DRAW_HPBAR_TEXT) c[2].setText("{0}/{1}".format(this.hp,this.maxHp));
+			// 	}
+			// 	else if(this.hpbarVis) {
+			// 		this.hpbar.hide();
+			// 		this.hpbarVis = false;
+			// 	}
+			// }
 		},
 		draw: function () {  // Will create/update the position of the unit
 
@@ -679,17 +664,20 @@ var tcIndex,
 
 			// Prevents the drawing method from constantly needing to be updated (not sure if really needed)
 			//if (this.X != this.prevX && this.Y != this.prevY) {
-				this.Shape.setPosition(this.X, this.Y);
-				this.Shape.setRotation(this.baseAngle);
+				// this.Shape.setPosition(this.X, this.Y);
+				// this.Shape.setRotation(this.baseAngle);
+				if(this.Shape == null) return;
+				this.Shape.translation.set(this.X,this.Y);
+				this.Shape.rotation = this.baseAngle;
 				this.prevX = this.X;
 				this.prevY = this.Y;
 			//}
 
 			if (this.hasTurret)
-				this.TankTurretShape.setRotation(this.getAngleDiff(this.baseAngle, this.turretAngle));
+				this.TankTurretShape.rotation = this.getAngleDiff(this.baseAngle, this.turretAngle);
 
-			this.drawDebug();
-			this.drawHPBar();
+			// this.drawDebug();
+			// this.drawHPBar();
 		},
 		move: function () {
 			while (this.targetBaseAngle > Math.PI) this.targetBaseAngle -= 2 * Math.PI;
@@ -972,89 +960,89 @@ var tcIndex,
 			//	//this.debug.centerLine.setRotation(this.turretAngle);
 			// }
 
-			if(DRAW_TARGET_LINE)
-			{
-				if(this.debug.targetLine != null && this.target == null){
-					this.debug.targetLine.hide();
-					//LAYER.remove(this.debug.targetLine);
-					this.debug.targetLine = null;
-					return;
-				}
-				else if(this.target == null)
-					return;
+			// if(DRAW_TARGET_LINE)
+			// {
+			// 	if(this.debug.targetLine != null && this.target == null){
+			// 		this.debug.targetLine.hide();
+			// 		//LAYER.remove(this.debug.targetLine);
+			// 		this.debug.targetLine = null;
+			// 		return;
+			// 	}
+			// 	else if(this.target == null)
+			// 		return;
 
-				var mX = this.X, mY = this.Y,
-					x = this.target.X, y = this.target.Y,
-					dx = x - this.X,
-					dy = y - this.Y,
-					w2 = WIDTH * 0.5,
-					h2 = HEIGHT * 0.5,
-					x2 = x, y2 = y;
+			// 	var mX = this.X, mY = this.Y,
+			// 		x = this.target.X, y = this.target.Y,
+			// 		dx = x - this.X,
+			// 		dy = y - this.Y,
+			// 		w2 = WIDTH * 0.5,
+			// 		h2 = HEIGHT * 0.5,
+			// 		x2 = x, y2 = y;
 
-				if (dx < -w2) x2 = x + WIDTH;
-				if (dx > w2)  x2 = x - WIDTH;
-				if (dy < -h2) y2 = y + HEIGHT;
-				if (dy > h2)  y2 = y - HEIGHT;
+			// 	if (dx < -w2) x2 = x + WIDTH;
+			// 	if (dx > w2)  x2 = x - WIDTH;
+			// 	if (dy < -h2) y2 = y + HEIGHT;
+			// 	if (dy > h2)  y2 = y - HEIGHT;
 
-				// Line's basics:
-				if(this.debug.targetLine == null || this.debug.targetLine == undefined){
-					this.debug.targetLine = new Kinetic.Line({
-						stroke : this.color.getString(),
-						strokeWidth : 1
-					});
+			// 	// Line's basics:
+			// 	if(this.debug.targetLine == null || this.debug.targetLine == undefined){
+			// 		this.debug.targetLine = new Kinetic.Line({
+			// 			stroke : this.color.getString(),
+			// 			strokeWidth : 1
+			// 		});
 
-					LAYER.add(this.debug.targetLine);
-				}
-				else if(this.target.isDead)
-				{
-					this.debug.targetLine.hide();
-					return;
-				}
+			// 		LAYER.add(this.debug.targetLine);
+			// 	}
+			// 	else if(this.target.isDead)
+			// 	{
+			// 		this.debug.targetLine.hide();
+			// 		return;
+			// 	}
 
-				// I know this is breaking the two line thing, just haven't gotten to it yet...
-				/* if line cuts through edge of world we need to draw two lines on each side of screen to simulate
-				*  target wrapping.  law of sines to figure out what the lines will be (creating triangles) */
-				var iX = (x == x2) ? x : x2;
-				var iY = (y == y2) ? y : y2;
-				var iPoints = [mX,mY,iX,iY];
+			// 	// I know this is breaking the two line thing, just haven't gotten to it yet...
+			// 	/* if line cuts through edge of world we need to draw two lines on each side of screen to simulate
+			// 	*  target wrapping.  law of sines to figure out what the lines will be (creating triangles) */
+			// 	var iX = (x == x2) ? x : x2;
+			// 	var iY = (y == y2) ? y : y2;
+			// 	var iPoints = [mX,mY,iX,iY];
 
-				//if(!this.debug.targetLine.getPoints().compare(iPoints)) // Prevents the line from constantly being repositioned if the two are the same!
-					this.debug.targetLine.setPoints(iPoints);
-			}
-			else if(!DRAW_TARGET_LINE && this.debug.targetLine != null && !this.isDead){
-				this.debug.targetLine.remove(); //LAYER.remove(this.debug.targetLine);
-				this.debug.targetLine = null;
-			}
+			// 	//if(!this.debug.targetLine.getPoints().compare(iPoints)) // Prevents the line from constantly being repositioned if the two are the same!
+			// 		this.debug.targetLine.setPoints(iPoints);
+			// }
+			// else if(!DRAW_TARGET_LINE && this.debug.targetLine != null && !this.isDead){
+			// 	this.debug.targetLine.remove(); //LAYER.remove(this.debug.targetLine);
+			// 	this.debug.targetLine = null;
+			// }
 
-			// Draw FOV
-			//var DRAW_FOV = false;
-			if(DRAW_FOV)
-			{
-				if(this.Class.isA("BaseUnit") || this.Class.isA("BasePlane")) return;
-				var useThisAngle = this.turretAngle;
-				var useAttackAngle = this.turretAttackAngle;
+			// // Draw FOV
+			// //var DRAW_FOV = false;
+			// if(DRAW_FOV)
+			// {
+			// 	if(this.Class.isA("BaseUnit") || this.Class.isA("BasePlane")) return;
+			// 	var useThisAngle = this.turretAngle;
+			// 	var useAttackAngle = this.turretAttackAngle;
 
-				// if(!this.attackingUnit){
-				//	useThisAngle = this.baseAngle;
-				//	useAttackAngle = 45;
-				// }
+			// 	// if(!this.attackingUnit){
+			// 	//	useThisAngle = this.baseAngle;
+			// 	//	useAttackAngle = 45;
+			// 	// }
 
-				if(this.debug.fov == null || this.debug.fov == undefined){
-					var bObj = this;
-					this.debug.fov = new Kinetic.RegularPolygon({
-						x: this.X, y: this.Y, sides: 3, radius: 70, stroke: this.color.getString(), strokeWidth: 1,
-						offset:[0,-70]
-					});
-					LAYER.add(this.debug.fov);
-				} else {
-					this.debug.fov.setPosition(this.X,this.Y);
-					this.debug.fov.setRotation(this.turretAngle);
-				}
-			}
-			else if(!DRAW_FOV && this.debug.fov != null && !this.isDead){
-				this.debug.fov.remove(); //LAYER.remove(this.debug.fov);
-				this.debug.fov = null;
-			}
+			// 	if(this.debug.fov == null || this.debug.fov == undefined){
+			// 		var bObj = this;
+			// 		this.debug.fov = new Kinetic.RegularPolygon({
+			// 			x: this.X, y: this.Y, sides: 3, radius: 70, stroke: this.color.getString(), strokeWidth: 1,
+			// 			offset:[0,-70]
+			// 		});
+			// 		LAYER.add(this.debug.fov);
+			// 	} else {
+			// 		this.debug.fov.setPosition(this.X,this.Y);
+			// 		this.debug.fov.setRotation(this.turretAngle);
+			// 	}
+			// }
+			// else if(!DRAW_FOV && this.debug.fov != null && !this.isDead){
+			// 	this.debug.fov.remove(); //LAYER.remove(this.debug.fov);
+			// 	this.debug.fov = null;
+			// }
 		}
 	});
 
@@ -1082,97 +1070,95 @@ var tcIndex,
 		moveSpeed:1.0, turnSpeed:0.07, turretTurnSpeed:0.13, hp: 35, minRange:25, attackRange: 155, attackDistance:130, turretSize:0, barrelLength:5,
 		doubleBarrel: true, barrelSeparation:2.5, bulletType: ShotTypeEnum.MISSLE, bulletTime: 40, bulletDamage: 8, maxCooldown:70
 	});
-	var MammothTank = Tank.extend("MammothTank",{probability:20},{
-		special:true, moveSpeed:1.29,turnSpeed:0.09,turretTurnSpeed:0.19,hp:350,maxCooldown:70,minRange:15,attackDistance:130,attackRange:135,sightDistance:300,
-		turretSize:9,barrelLength:20,doubleBarrel:true,barrelSeparation:3.5, antiAircraft:true, bulletTime: 43, bulletDamage: 10,
-		buildShape : function(){
-			var group = new Kinetic.Group({ x: this.X, y: this.Y });
-			var tGroup = new Kinetic.Group();
-			group.add(new Kinetic.Polygon({
-				points : [0,0, 23,0, 23,5, 28,5, 28,0, 38,0, 38,10, 33,10, 33,15, 38,15, 38,25, 28,25, 28,20, 23,20, 23,25, 0,25, 0,17, 12,17, 12,8, 0,8],
-				stroke: this.color.getString(),
-				strokeWidth: 1, offset: [19,12.5] // /sigh, Y: 12.5
-			}));
+	// var MammothTank = Tank.extend("MammothTank",{probability:20},{
+	// 	special:true, moveSpeed:1.29,turnSpeed:0.09,turretTurnSpeed:0.19,hp:350,maxCooldown:70,minRange:15,attackDistance:130,attackRange:135,sightDistance:300,
+	// 	turretSize:9,barrelLength:20,doubleBarrel:true,barrelSeparation:3.5, antiAircraft:true, bulletTime: 43, bulletDamage: 10,
+	// 	buildShape : function(){
+	// 		var group = new Kinetic.Group({ x: this.X, y: this.Y });
+	// 		var tGroup = new Kinetic.Group();
+	// 		group.add(new Kinetic.Polygon({
+	// 			points : [0,0, 23,0, 23,5, 28,5, 28,0, 38,0, 38,10, 33,10, 33,15, 38,15, 38,25, 28,25, 28,20, 23,20, 23,25, 0,25, 0,17, 12,17, 12,8, 0,8],
+	// 			stroke: this.color.getString(),
+	// 			strokeWidth: 1, offset: [19,12.5] // /sigh, Y: 12.5
+	// 		}));
 
-			tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
-			if(this.doubleBarrel)
-				tGroup.add(new Kinetic.Line({ points: [0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+	// 		tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+	// 		if(this.doubleBarrel)
+	// 			tGroup.add(new Kinetic.Line({ points: [0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
 
-			tGroup.add(new Kinetic.Circle({ radius: this.turretSize, fill: this.color.getString(), strokeWidth: 0 }));
-			group.add(tGroup);
-			this.Shape = group;
-			this.Shape.setPosition(this.X, this.Y);
-			this.Shape.rotate(2 * Math.PI * Math.random());
-			this.TankTurretShape = this.Shape.getChildren()[1]; // Will always be this...
+	// 		tGroup.add(new Kinetic.Circle({ radius: this.turretSize, fill: this.color.getString(), strokeWidth: 0 }));
+	// 		group.add(tGroup);
+	// 		this.Shape = group;
+	// 		this.Shape.setPosition(this.X, this.Y);
+	// 		this.Shape.rotate(2 * Math.PI * Math.random());
+	// 		this.TankTurretShape = this.Shape.getChildren()[1]; // Will always be this...
 
+	// 		LAYER.add(this.Shape); // Important!
+	// 	}
+	// });
+	// var HealerTank = Tank.extend("HealerTank",{probability:30},{
+	// 	special: true, attackingUnit:false, moveSpeed:1.05, turnSpeed:0.13, turretTurnSpeed:0, hp:100, maxCooldown:250, minRange:40, attackDistance:50,
+	// 	attackRange:50, sightDistance:200, bulletType:ShotTypeEnum.NONE, hasTurret:false,
+	// 	work:function()
+	// 	{
+	// 		if(this.healCooldown > 0)
+	// 			this.healCooldown--;
+	// 		else {
+	// 			this.areaHeal(this.attackRange * this.attackRange);
+	// 			this.healCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
+	// 		}
+	// 		this._super(); // Awesome, pickup the inherited work...
+	// 	},
+	// 	areaHeal: function(healRadius){
+	// 		// Just loop thru myTeam
+	// 		var u = this.myTeam.units.first;
+	// 		while(u) {
+	// 			if(!u.obj.Class.isA("BaseUnit") && !u.obj.Class.isA("HealerTank")) // Skip bases and healing tanks (this includes myself!)
+	// 				if(u.obj.getDistanceSquaredFromPoint(this.X,this.Y) < healRadius)
+	// 					u.obj.recoverHitPoints(null);
 
+	// 			u = u.nextLinked;
+	// 		}
+	// 	},
+	// 	buildShape : function(){
+	// 		var group = new Kinetic.Group({ x: this.X, y: this.Y, offset:[8,8] });
 
-			LAYER.add(this.Shape); // Important!
-		}
-	});
-	var HealerTank = Tank.extend("HealerTank",{probability:30},{
-		special: true, attackingUnit:false, moveSpeed:1.05, turnSpeed:0.13, turretTurnSpeed:0, hp:100, maxCooldown:250, minRange:40, attackDistance:50,
-		attackRange:50, sightDistance:200, bulletType:ShotTypeEnum.NONE, hasTurret:false,
-		work:function()
-		{
-			if(this.healCooldown > 0)
-				this.healCooldown--;
-			else {
-				this.areaHeal(this.attackRange * this.attackRange);
-				this.healCooldown = (Math.floor(Math.random()*2)+ 1) * HEALTH_COOLDOWN;
-			}
-			this._super(); // Awesome, pickup the inherited work...
-		},
-		areaHeal: function(healRadius){
-			// Just loop thru myTeam
-			var u = this.myTeam.units.first;
-			while(u) {
-				if(!u.obj.Class.isA("BaseUnit") && !u.obj.Class.isA("HealerTank")) // Skip bases and healing tanks (this includes myself!)
-					if(u.obj.getDistanceSquaredFromPoint(this.X,this.Y) < healRadius)
-						u.obj.recoverHitPoints(null);
+	// 		group.add(new Kinetic.Circle({x:0,y:0,radius:this.attackRange,fill:this.color.getStringAlpha(0.1),offset:[-8,-8]})); // Healing Circle
+	// 		group.add(new Kinetic.Rect({x:0,y:0,width:28,height:16,stroke:this.color.getString(),strokeWidth:1,rotation:0})); // Body
+	// 		group.add(new Kinetic.Rect({x:0,y:0,width:16,height:16,stroke:this.color.getString(),strokeWidth:1})); // Roof
+	// 		group.add(new Kinetic.Line({points:[16,5,28,4,28,12,16,11],stroke:this.color.getString(),strokeWidth:1})); // Hood
+	// 		group.add(new Kinetic.Star({x:8,y:8,numPoints:4,innerRadius:0,outerRadius:8,fill:"white",stroke:"white",strokeWidth:4})); // lol +
 
-				u = u.nextLinked;
-			}
-		},
-		buildShape : function(){
-			var group = new Kinetic.Group({ x: this.X, y: this.Y, offset:[8,8] });
-
-			group.add(new Kinetic.Circle({x:0,y:0,radius:this.attackRange,fill:this.color.getStringAlpha(0.1),offset:[-8,-8]})); // Healing Circle
-			group.add(new Kinetic.Rect({x:0,y:0,width:28,height:16,stroke:this.color.getString(),strokeWidth:1,rotation:0})); // Body
-			group.add(new Kinetic.Rect({x:0,y:0,width:16,height:16,stroke:this.color.getString(),strokeWidth:1})); // Roof
-			group.add(new Kinetic.Line({points:[16,5,28,4,28,12,16,11],stroke:this.color.getString(),strokeWidth:1})); // Hood
-			group.add(new Kinetic.Star({x:8,y:8,numPoints:4,innerRadius:0,outerRadius:8,fill:"white",stroke:"white",strokeWidth:4})); // lol +
-
-			this.Shape = group;
-			this.Shape.setPosition(this.X, this.Y);
-			this.Shape.rotate(2 * Math.PI * Math.random());
+	// 		this.Shape = group;
+	// 		this.Shape.setPosition(this.X, this.Y);
+	// 		this.Shape.rotate(2 * Math.PI * Math.random());
 
 
 
-			LAYER.add(this.Shape); // Important!
-		},
-		findTarget: function(){
-			// just awesome...
-			// The healer tank should only look for his buddies and track them down
-			var n = this.myTeam.units.first;
-			while(n) {
-				if(n.obj != this.This && // Don't worry about me
-				   n.obj.getDistanceSquaredFromPoint(this.X,this.Y) < this.sightDistance * this.sightDistance && // Can I even reach them?
-				   !n.obj.Class.isA("HealerTank") &&  // Don't heal other healer tanks
-				   !n.obj.Class.isA("BasePlane") &&  // Don't heal planes
-				   !n.obj.Class.isA("BaseUnit") &&  // Don't heal bases
-				   !n.obj.Class.isA("Turret") // Don't heal turrets
-				){
-					// If i don't have a target, but no one around me, pick someone (typically the first found) and stick with them...
-					if(this.target === null || n.obj.hp < this.target.hp) {
-						this.target = n.obj;
-						this.state = (this.state != TankStateEnum.CRASH_AND_BURN) ? TankStateEnum.TARGET_AQUIRED : this.state;
-					}
-				}
-				n = n.nextLinked;
-			}
-		}
-	});
+	// 		LAYER.add(this.Shape); // Important!
+	// 	},
+	// 	findTarget: function(){
+	// 		// just awesome...
+	// 		// The healer tank should only look for his buddies and track them down
+	// 		var n = this.myTeam.units.first;
+	// 		while(n) {
+	// 			if(n.obj != this.This && // Don't worry about me
+	// 			   n.obj.getDistanceSquaredFromPoint(this.X,this.Y) < this.sightDistance * this.sightDistance && // Can I even reach them?
+	// 			   !n.obj.Class.isA("HealerTank") &&  // Don't heal other healer tanks
+	// 			   !n.obj.Class.isA("BasePlane") &&  // Don't heal planes
+	// 			   !n.obj.Class.isA("BaseUnit") &&  // Don't heal bases
+	// 			   !n.obj.Class.isA("Turret") // Don't heal turrets
+	// 			){
+	// 				// If i don't have a target, but no one around me, pick someone (typically the first found) and stick with them...
+	// 				if(this.target === null || n.obj.hp < this.target.hp) {
+	// 					this.target = n.obj;
+	// 					this.state = (this.state != TankStateEnum.CRASH_AND_BURN) ? TankStateEnum.TARGET_AQUIRED : this.state;
+	// 				}
+	// 			}
+	// 			n = n.nextLinked;
+	// 		}
+	// 	}
+	// });
 	var Builder = Tank.extend("Builder",{probability:15},{
 		turretSize:0, barrelLength:0,bulletType: ShotTypeEnum.NONE,special:true, cooldown:250,
 		moveSpeed:1.05, turnSpeed: 0.13, hp: 100, hasTurret: false,
@@ -1276,24 +1262,31 @@ var tcIndex,
 			this.draw();
 		},
 		buildShape: function(){
-			var group = new Kinetic.Group({ x: this.X, y: this.Y }),
-				tGroup = new Kinetic.Group();
+			this.Shape = two.makeGroup();
 
-			tGroup.add(new Kinetic.Line({ points: [0,this.barrelSeparation,this.barrelLength,this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1,offset:[0,0]}));
-			if(this.doubleBarrel)
-				tGroup.add(new Kinetic.Line({ points: [0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation],stroke:this.color.getString(),strokeWidth:1}));
+			this.TankTurretShape = null;
+			var tGroup = two.makeGroup();
+			var t1 = two.makeLine(0,this.barrelSeparation,this.barrelLength,this.barrelSeparation);
+			t1.stroke = this.color.getString();
+			tGroup.add(t1);
+			if(this.doubleBarrel) {
+				var t2 = two.makeLine(0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation);
+				t2.stroke = this.color.getString();
+				tGroup.add(t2);
+			}
+			var pod = two.makeCircle(0,0,this.turretSize);
+			pod.fill = this.color.getString();
+			pod.noStroke();
+			tGroup.add(pod);
 
-			tGroup.add(new Kinetic.Circle({ radius: this.turretSize, fill: this.color.getString(), strokeWidth: 0 }));
-			group.add(tGroup);
+			this.TankTurretShape = tGroup;
+			this.Shape.add(tGroup)
 
-			this.Shape = group;
-			this.Shape.setPosition(this.X, this.Y);
-			this.Shape.rotate(2 * Math.PI * Math.random());
-			this.TankTurretShape = this.Shape.getChildren()[0]; // Will always be this...
+			this.Shape.translation.set(this.X, this.Y);
+			this.Shape.rotation = 2 * Math.PI * Math.random();
 
+			background.add(this.Shape);
 
-
-			LAYER.add(this.Shape); // Important!
 		}
 	});
 	var DefenseTurret = BaseTurret.extend("DefenseTurret",{probability:40},{ hp:200 });
@@ -1301,137 +1294,137 @@ var tcIndex,
 		doubleBarrel:true, turretSize:4, barrelLength:6, barrelSeparation:4, antiAircraft:true
 	});
 
-	// Planes
-	var BasePlane = Tank.extend("BasePlane",{},{
-		attackingUnit:true,hasTurret:false,
-		findTarget:function(){return;},// don't want this doing anything for the plane at the moment
-		work : function(){
-			switch(this.state)
-			{
-				case TankStateEnum.MOVE:
-					this.move();
-					if(Math.random() < MOVE_PROB) this.targetBaseAngle = 2 * Math.PI * Math.random();
-					this.turnTurret();
-					this.findTarget();
-					break;
-				case TankStateEnum.TARGET_AQUIRED:
-					this.move();
-					this.turretAngle = this.baseAngle;
-					this.setTargetTurretAngle(this.target);
+// Planes
+	// var BasePlane = Tank.extend("BasePlane",{},{
+	// 	attackingUnit:true,hasTurret:false,
+	// 	findTarget:function(){return;},// don't want this doing anything for the plane at the moment
+	// 	work : function(){
+	// 		switch(this.state)
+	// 		{
+	// 			case TankStateEnum.MOVE:
+	// 				this.move();
+	// 				if(Math.random() < MOVE_PROB) this.targetBaseAngle = 2 * Math.PI * Math.random();
+	// 				this.turnTurret();
+	// 				this.findTarget();
+	// 				break;
+	// 			case TankStateEnum.TARGET_AQUIRED:
+	// 				this.move();
+	// 				this.turretAngle = this.baseAngle;
+	// 				this.setTargetTurretAngle(this.target);
 
-					if(Math.abs(this.targetTurretAngle - this.turretAngle) < this.turretTurnSpeed)
-						this.targetTurretAngle = this.turretAngle;
+	// 				if(Math.abs(this.targetTurretAngle - this.turretAngle) < this.turretTurnSpeed)
+	// 					this.targetTurretAngle = this.turretAngle;
 
-					if(this.target === null || this.target.isDead) {
-						this.state = TankStateEnum.MOVE;
-						this.target = null;
-					} else {
-						var tds = this.target.getDistanceSquaredFromPoint(this.X,this.Y);
-						if(tds > this.minRange * this.minRange && tds <= this.attackDistance * this.attackDistance){
-							var angle = Math.atan2(this.target.Y - this.Y, this.target.X - this.X);
-							if(Math.cos(this.baseAngle - angle) > 0)
-								this.targetBaseAngle = angle;
+	// 				if(this.target === null || this.target.isDead) {
+	// 					this.state = TankStateEnum.MOVE;
+	// 					this.target = null;
+	// 				} else {
+	// 					var tds = this.target.getDistanceSquaredFromPoint(this.X,this.Y);
+	// 					if(tds > this.minRange * this.minRange && tds <= this.attackDistance * this.attackDistance){
+	// 						var angle = Math.atan2(this.target.Y - this.Y, this.target.X - this.X);
+	// 						if(Math.cos(this.baseAngle - angle) > 0)
+	// 							this.targetBaseAngle = angle;
 
-							this.attack();
-						} else {
-							// Looking for a better target, again, costly operation!
-							var TQF = function(tgt){
-								var angle = Math.atan2(tgt.Y - this.Y,tgt.X - this.X);
-								var distance = Math.sqrt(tgt.getDistanceSquaredFromPoint(this.X,this.Y));
-								return Math.cos(this.baseAngle - angle) * (this.sightDistance-Math.abs((this.attackDistance+this.minRange) / 2 - distance));
-							};
-							var targetQuality = TQF(this.target);
-							var t = TeamPool.first;
-							while(t) {
-								if(t.obj != this.myTeam){ // Skip my team
-									var n = t.obj.units.first;
-									while(n) { // Loop thru their units
-										if(n.obj.getDistanceSquaredFromPoint(this.X,this.Y) < this.sightDistance * this.sightDistance && (this.antiAircraft || !n.obj.Class.isA("BasePlane"))) {
-											var quality = TQF(n.obj);
-											if(quality > targetQuality) {
-												targetQuality = quality;
-												this.target = n.obj;
-											}
-										}
-										n = n.nextLinked;
-									}
-								}
-								t = t.nextLinked;
-							}
+	// 						this.attack();
+	// 					} else {
+	// 						// Looking for a better target, again, costly operation!
+	// 						var TQF = function(tgt){
+	// 							var angle = Math.atan2(tgt.Y - this.Y,tgt.X - this.X);
+	// 							var distance = Math.sqrt(tgt.getDistanceSquaredFromPoint(this.X,this.Y));
+	// 							return Math.cos(this.baseAngle - angle) * (this.sightDistance-Math.abs((this.attackDistance+this.minRange) / 2 - distance));
+	// 						};
+	// 						var targetQuality = TQF(this.target);
+	// 						var t = TeamPool.first;
+	// 						while(t) {
+	// 							if(t.obj != this.myTeam){ // Skip my team
+	// 								var n = t.obj.units.first;
+	// 								while(n) { // Loop thru their units
+	// 									if(n.obj.getDistanceSquaredFromPoint(this.X,this.Y) < this.sightDistance * this.sightDistance && (this.antiAircraft || !n.obj.Class.isA("BasePlane"))) {
+	// 										var quality = TQF(n.obj);
+	// 										if(quality > targetQuality) {
+	// 											targetQuality = quality;
+	// 											this.target = n.obj;
+	// 										}
+	// 									}
+	// 									n = n.nextLinked;
+	// 								}
+	// 							}
+	// 							t = t.nextLinked;
+	// 						}
 
-							if(tds > this.minRange * this.minRange)
-								this.targetBaseAngle = Math.atan2(this.target.Y - this.Y, this.target.X - this.X);
-						}
-					}
+	// 						if(tds > this.minRange * this.minRange)
+	// 							this.targetBaseAngle = Math.atan2(this.target.Y - this.Y, this.target.X - this.X);
+	// 					}
+	// 				}
 
-					break;
-				case TankStateEnum.CRASH_AND_BURN:
-					if(this.Time-- > 0) {
-						if(this.target !== null && !this.target.isDead) this.targetBaseAngle = Math.atan2(this.target.Y - this.Y, this.target.X - this.X);
-						this.move();
-					} else {
-						AreaDamage(this.X,this.Y,100,400,null);
-						this.die();
-					}
-					break;
-				default:
-					this.state = TankStateEnum.MOVE;
-					break;
-			}
-			this.draw();
-		},
-		buildShape : function(){
-			var plane = new Kinetic.Polygon({
-				points : [0,16, 3,14, 3,8, 6,8, 8,14, 13,14, 13,0, 16,2, 16,14, 23,14, 26,16, 28,16, 26,16, 23,18, 16,18, 16,30, 13,32, 13,18, 8,18, 6,24, 3,24, 3,18 ],
-				stroke: this.color.getString(),
-				strokeWidth: 1,
-				offset: [13,16],
-				scale: 0.5 // I'm lazy, this helps reduce the size of the plane so it makes sense!
-			});
+	// 				break;
+	// 			case TankStateEnum.CRASH_AND_BURN:
+	// 				if(this.Time-- > 0) {
+	// 					if(this.target !== null && !this.target.isDead) this.targetBaseAngle = Math.atan2(this.target.Y - this.Y, this.target.X - this.X);
+	// 					this.move();
+	// 				} else {
+	// 					AreaDamage(this.X,this.Y,100,400,null);
+	// 					this.die();
+	// 				}
+	// 				break;
+	// 			default:
+	// 				this.state = TankStateEnum.MOVE;
+	// 				break;
+	// 		}
+	// 		this.draw();
+	// 	},
+	// 	buildShape : function(){
+	// 		var plane = new Kinetic.Polygon({
+	// 			points : [0,16, 3,14, 3,8, 6,8, 8,14, 13,14, 13,0, 16,2, 16,14, 23,14, 26,16, 28,16, 26,16, 23,18, 16,18, 16,30, 13,32, 13,18, 8,18, 6,24, 3,24, 3,18 ],
+	// 			stroke: this.color.getString(),
+	// 			strokeWidth: 1,
+	// 			offset: [13,16],
+	// 			scale: 0.5 // I'm lazy, this helps reduce the size of the plane so it makes sense!
+	// 		});
 
-			this.Shape = plane;
-			this.Shape.setPosition(this.X, this.Y);
-			this.Shape.rotate(2 * Math.PI * Math.random());
+	// 		this.Shape = plane;
+	// 		this.Shape.setPosition(this.X, this.Y);
+	// 		this.Shape.rotate(2 * Math.PI * Math.random());
 
-			LAYER.add(this.Shape); // Important!
-		}
-	});
-	var FighterJet = BasePlane.extend("FighterJet",{probability:15},{
-		moveSpeed:3.5,turnSpeed:0.14,turretTurnSpeed:0.15,turretAttackAngle:67,hp:160,maxCooldown:50,minRange:10,attackDistance:350,attackRange:350,sightDistance:500,
-		bulletType: ShotTypeEnum.MISSLE, bulletTime:60, bulletSpeed:10, bulletDamage:8, doubleBarrel:true, barrelSeparation:4,antiAircraft:true,radius:12,
-		buildShape : function(){
-			var plane = new Kinetic.Polygon({
-				points : [0,16, 3,14, 3,8, 6,8, 8,14, 13,14, 13,0, 16,2, 16,14, 23,14, 26,16, 28,16, 26,16, 23,18, 16,18, 16,30, 13,32, 13,18, 8,18, 6,24, 3,24, 3,18 ],
-				stroke: this.color.getString(),
-				strokeWidth: 1,
-				offset: [13,16]
-			});
-
-			this.Shape = plane;
-			this.Shape.setPosition(this.X, this.Y);
-			this.Shape.rotate(2 * Math.PI * Math.random());
-
-			LAYER.add(this.Shape); // Important!
-		}
-	});
-
-	// var BomberPlane = BasePlane.extend("BomberPlane",{probability:15},{
-	//	buildShape : function(){
-	//		var plane = new Kinetic.Polygon({
-	//			points : [0,16, 3,14, 3,8, 6,8, 8,14, 13,14, 13,0, 16,2, 16,14, 23,14, 26,16, 28,16, 26,16, 23,18, 16,18, 16,30, 13,32, 13,18, 8,18, 6,24, 3,24, 3,18 ],
-	//			stroke: this.color.getString(),
-	//			strokeWidth: 1,
-	//			offset: [13,16]
-	//		}));
-
-	//		this.Shape = plane;
-	//		this.Shape.setPosition(this.X, this.Y);
-	//		this.Shape.rotate(2 * Math.PI * Math.random());
-	//
-	//		LAYER.add(this.Shape); // Important!
-	//	}
+	// 		LAYER.add(this.Shape); // Important!
+	// 	}
 	// });
-	//var UAVScout = BasePlane.extend("UAVScout",{probability:5 },{ /* Override in here! */ });
+	// var FighterJet = BasePlane.extend("FighterJet",{probability:15},{
+	// 	moveSpeed:3.5,turnSpeed:0.14,turretTurnSpeed:0.15,turretAttackAngle:67,hp:160,maxCooldown:50,minRange:10,attackDistance:350,attackRange:350,sightDistance:500,
+	// 	bulletType: ShotTypeEnum.MISSLE, bulletTime:60, bulletSpeed:10, bulletDamage:8, doubleBarrel:true, barrelSeparation:4,antiAircraft:true,radius:12,
+	// 	buildShape : function(){
+	// 		var plane = new Kinetic.Polygon({
+	// 			points : [0,16, 3,14, 3,8, 6,8, 8,14, 13,14, 13,0, 16,2, 16,14, 23,14, 26,16, 28,16, 26,16, 23,18, 16,18, 16,30, 13,32, 13,18, 8,18, 6,24, 3,24, 3,18 ],
+	// 			stroke: this.color.getString(),
+	// 			strokeWidth: 1,
+	// 			offset: [13,16]
+	// 		});
+
+	// 		this.Shape = plane;
+	// 		this.Shape.setPosition(this.X, this.Y);
+	// 		this.Shape.rotate(2 * Math.PI * Math.random());
+
+	// 		LAYER.add(this.Shape); // Important!
+	// 	}
+	// });
+
+	// // var BomberPlane = BasePlane.extend("BomberPlane",{probability:15},{
+	// //	buildShape : function(){
+	// //		var plane = new Kinetic.Polygon({
+	// //			points : [0,16, 3,14, 3,8, 6,8, 8,14, 13,14, 13,0, 16,2, 16,14, 23,14, 26,16, 28,16, 26,16, 23,18, 16,18, 16,30, 13,32, 13,18, 8,18, 6,24, 3,24, 3,18 ],
+	// //			stroke: this.color.getString(),
+	// //			strokeWidth: 1,
+	// //			offset: [13,16]
+	// //		}));
+
+	// //		this.Shape = plane;
+	// //		this.Shape.setPosition(this.X, this.Y);
+	// //		this.Shape.rotate(2 * Math.PI * Math.random());
+	// //
+	// //		LAYER.add(this.Shape); // Important!
+	// //	}
+	// // });
+	// //var UAVScout = BasePlane.extend("UAVScout",{probability:5 },{ /* Override in here! */ });
 
 	// Base
 	var BaseUnit = Tank.extend("BaseUnit",{probability:20},{
@@ -1456,22 +1449,37 @@ var tcIndex,
 			this.draw();
 		},
 		buildShape: function(){
-			var group = new Kinetic.Group({x:this.X,y:this.Y});
-			var base = new Kinetic.Rect({ x: 0, y: 0, width: 20, height: 20, strokeWidth: 1, offset : [10,10] });
-			base.setFill(this.color.getString());
-			group.add(base);
-			group.add(new Kinetic.Circle({x:0,y:0,radius:BASE_HEAL_RADIUS,fill:this.color.getStringAlpha(0.2)}));
+			// var group = new Kinetic.Group({x:this.X,y:this.Y});
+			// var base = new Kinetic.Rect({ x: 0, y: 0, width: 20, height: 20, strokeWidth: 1, offset : [10,10] });
+			// base.setFill(this.color.getString());
+			// group.add(base);
+			// group.add(new Kinetic.Circle({x:0,y:0,radius:BASE_HEAL_RADIUS,fill:this.color.getStringAlpha(0.2)}));
 
-			if(this.myTeam.invincible){
-				var l = new Kinetic.Star({x:0,y:0,numPoints:5,innerRadius:5,outerRadius:15,fill:"black"});
-				l.setScale(0.6);
-				group.add(l);
-			}
+			// if(this.myTeam.invincible){
+			// 	var l = new Kinetic.Star({x:0,y:0,numPoints:5,innerRadius:5,outerRadius:15,fill:"black"});
+			// 	l.setScale(0.6);
+			// 	group.add(l);
+			// }
+
+			// this.Shape = group;
+
+			// LAYER.add(this.Shape);
+			// group.moveToBottom();
+
+			var group = two.makeGroup();
+			var base = two.makeRectangle(0,0,20,20);
+				base.fill = this.color.getString();
+				base.noStroke();
+			var baseCircle = two.makeCircle(0,0,BASE_HEAL_RADIUS);
+				baseCircle.fill = this.color.getStringAlpha(0.2);
+				baseCircle.noStroke();
+
+			group.add(base,baseCircle);
+			group.translation.set(this.X,this.Y);
 
 			this.Shape = group;
+			background.add(this.Shape);
 
-			LAYER.add(this.Shape);
-			group.moveToBottom();
 		},
 		areaHeal: function(healRadius){
 			// Just loop thru myTeam
@@ -1487,7 +1495,7 @@ var tcIndex,
 	});
 
 	// This is to help determine probability ratings... does not create new instances, etc
-	var UnitObjectReference = [SmallTank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder,DefenseTurret,AATurret,HealerTank,MammothTank];
+	var UnitObjectReference = [SmallTank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder,DefenseTurret,AATurret,/*HealerTank,*//*MammothTank*/];
 	//UnitObjectReference = [AATurret]; // Use this to build just one kind of tank... for debugging really...
 
 // Bullets
@@ -1518,9 +1526,11 @@ var tcIndex,
 		Target:null,ShotType:null,Team:null,Damage:0,Shooter:null,AirAttack:false,LastAngle:0,LastX:0,LastY:0,
 		vis:false,
 		init: function(){
-			this.vis = false;
-			this.Shape = new Kinetic.Rect({ x:0,y:0,width:1.5,height:1.5,fill:"yellow",visible:false });
-			BULLETLAYER.add(this.Shape);
+			this.Shape = two.makeRectangle(this.X,this.Y,1.5,1.5);
+			this.hide();
+			this.Shape.fill = "yellow";
+			this.Shape.noStroke();
+			foreground.add(this.Shape);
 		},
 		use : function(){
 			if(this.Exploded) return false;
@@ -1611,13 +1621,13 @@ var tcIndex,
 		},
 		draw : function(){
 			if(this.Exploded) return;
-			if(!this.vis) this.Shape.show();
-			this.Shape.setPosition(this.X,this.Y);
+			this.Shape.translation.set(this.X,this.Y);
+			if(!this.Shape.visible) this.Shape.visible = true;
 		},
 		explode : function(explosionRadius){
 			if(!this.Exploded){
 				this.Exploded = true;
-				this.Shape.hide();
+				this.hide();
 				explosionRadius = (!explosionRadius) ? 6 + Math.random() * 3 : explosionRadius;
 
 				if(this.ShotType == ShotTypeEnum.SHELL){
@@ -1643,6 +1653,12 @@ var tcIndex,
 			if (dy > h2) y1 -= HEIGHT;
 
 			return Math.atan2(y1 - this.Y, x1 - this.X);
+		},
+		hide:function()
+		{
+			if(this.Shape == null) return;
+			this.Shape.visible = false;
+			this.Shape.translation.set(-100,-100); // Offscreen!
 		}
 	});
 
@@ -1652,8 +1668,7 @@ var tcIndex,
 		INITIAL_POOL_SIZE : 50,
 		create: function(x,y,preDisplayTime,size){
 
-			if(!DRAW_EXPLOSIONS)
-			{
+			if(!DRAW_EXPLOSIONS) {
 				this.finished = true;
 				return null;
 			}
@@ -1666,23 +1681,20 @@ var tcIndex,
 			ne.GrowMode = true;
 			ne.Size = 0;
 			ne.finished = false;
-			ne.vis = false;
-			ne.Shape.setPosition(x,y);
+			ne.Shape.visible = false;
+			ne.Shape.translation.set(x,y);
 			return ne;
 		}
 	},
 	{
 		X:0,Y:0,PreDisplayTime:0,TargetSize:0,Size:0,GrowMode:false,Shape:null,finished:false,vis:false,
 		init: function(){
-			this.vis = false;
-			this.Shape = new Kinetic.Circle({
-				radius:10,
-				fillRadialGradientStartPoint: 0, fillRadialGradientStartRadius: 0,
-				fillRadialGradientEndPoint: 0, fillRadialGradientEndRadius: 7,
-				fillRadialGradientColorStops: [0,'yellow',1,'red'],
-				visible:false
-			});
-			EXPLOSIONLAYER.add(this.Shape);
+			this.Shape = two.makeCircle(this.X,this.Y,10);
+			this.hide();
+			this.Shape.fill = "OrangeRed";
+			this.Shape.noStroke();
+			foreground.add(this.Shape);
+
 		},
 		use: function(){
 			if(this.finished) return;
@@ -1701,16 +1713,22 @@ var tcIndex,
 		},
 		draw: function(){
 			if(this.finished) return;
-			if(!this.vis) {this.Shape.show(); this.vis = true;}
+			if(!this.Shape.visible) this.Shape.visible = true;
 			if(this.PreDisplayTime <= 0 && this.Size > 0) {
-				this.Shape.setScale(this.Size/20);
+				this.Shape.scale = this.Size/20;
 			}
 		},
 		poof: function(){
 			if(!this.finished){
 				this.finished = true;
-				if(this.Shape != null && this.vis) { this.Shape.hide(); this.vis = false }
+				if(this.Shape != null && this.Shape.visible) this.hide();
 			}
+		},
+		hide:function()
+		{
+			if(this.Shape == null) return;
+			this.Shape.visible = false;
+			this.Shape.translation.set(-100,-100);
 		}
 	});
 
@@ -1725,7 +1743,7 @@ var tcIndex,
 			sb.StartSize = StartSize;
 			sb.EndSize = EndSize;
 			sb.TotalTime = Time;
-			sb.Shape.setPosition(X,Y);
+			sb.Shape.translation.set(X,Y);
 			sb.finished = false;
 			sb.Time = 0;
 			sb.vis = false;
@@ -1736,11 +1754,13 @@ var tcIndex,
 		X:0,Y:0,StartSize:0,EndSize:0,TotalTime:0,Redness:0,Time:0,Shape:null,finished:false,vis:false,
 		init: function(){
 			this.finished = false; this.Time = 0; this.vis = false; // Defaults
-			this.Shape = new Kinetic.Circle({
-				radius:1,
-				visible:false
-			});
-			SMOKELAYER.add(this.Shape);
+			// this.Shape = new Kinetic.Circle({
+			// 	radius:1,
+			// 	visible:false
+			// });
+			// SMOKELAYER.add(this.Shape);
+			this.Shape = two.makeCircle(0,0,1);
+
 		},
 		use: function(){
 			if(this.finished) return;
@@ -1754,7 +1774,7 @@ var tcIndex,
 		},
 		draw: function(){
 			if(this.finished) return;
-			if(!this.vis) { this.vis = true; this.Shape.show(); }
+			if(!this.vis) { this.vis = true; /*this.Shape.show();*/ }
 
 			var TimeRatio = this.Time / this.TotalTime,
 				Color = Math.floor(25 + 75 * TimeRatio),
@@ -1763,16 +1783,17 @@ var tcIndex,
 			if(Red < 0) Red = 0;
 			if(Red + Color > 255) Red = 255 - Color;
 
-			this.Shape.setFill("rgb({0},{1},{1})".format((Red+Color),Color));
-			this.Shape.setScale(this.StartSize + (this.EndSize - this.StartSize) * this.Time / this.TotalTime);
-			//this.Shape.setRadius(this.StartSize + (this.EndSize - this.StartSize) * this.Time / this.TotalTime);
+			// this.Shape.setFill("rgb({0},{1},{1})".format((Red+Color),Color));
+			// this.Shape.setScale(this.StartSize + (this.EndSize - this.StartSize) * this.Time / this.TotalTime);
+			this.Shape.fill = "rgb({0},{1},{1})".format((Red+Color),Color);
+			this.Shape.scale = this.StartSize + (this.EndSize - this.StartSize) * this.Time / this.TotalTime;
 
 		},
 		poof: function(){
 			if(!this.finished)
 			{
 				this.finished = true;
-				if(this.Shape != null && this.vis){ this.Shape.hide(); this.vis = false; }
+				if(this.Shape != null && this.vis){ /*this.Shape.hide();*/ this.vis = false; }
 			}
 		}
 	});
@@ -1827,11 +1848,13 @@ var tcIndex,
 
 		//UpdateScores();
 
-		LAYER.draw();
-		BULLETLAYER.draw();
-		EXPLOSIONLAYER.draw();
-		SMOKELAYER.draw();
-		MISCLAYER.draw();
+		// KINETIC
+		// LAYER.draw();
+		// BULLETLAYER.draw();
+		// EXPLOSIONLAYER.draw();
+		// SMOKELAYER.draw();
+		// MISCLAYER.draw();
+
 		stats.end();
 	}
 
@@ -1868,7 +1891,10 @@ var tcIndex,
 	function RestartGame()
 	{
 		RESTARTING = false;
-		MISCLAYER.removeChildren(); // Clears anything not tracked...
+
+		// KINETIC
+		//MISCLAYER.removeChildren(); // Clears anything not tracked...
+
 		ChangeTerrain();
 		GetTotalProbability();
 
@@ -2046,35 +2072,35 @@ var tcIndex,
 	});
 
 	//An outside click event to add random units to the playing field. This uses a different array of allowable units.
-	$('#container').click(function(){
+	// $('#container').click(function(){
 
-		if(!GOD_MODE) return;
+	// 	if(!GOD_MODE) return;
 
-		var mousePos = STAGE.getMousePosition();
-		var tempObjectReference = [SmallTank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
-			//tempObjectReference = [FighterJet]; // Use this to build just one kind of tank... for debugging really...
+	// 	var mousePos = STAGE.getMousePosition();
+	// 	var tempObjectReference = [SmallTank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
+	// 		//tempObjectReference = [FighterJet]; // Use this to build just one kind of tank... for debugging really...
 
-		// Random Team
-		var t = TeamPool.objToNodeMap.entries()[Math.random()*TeamPool.objToNodeMap.size()|0][1]; // Get their class only (not their name)
-		var u = tempObjectReference[Math.random()*tempObjectReference.length|0];
-		if(u == null) return;
+	// 	// Random Team
+	// 	var t = TeamPool.objToNodeMap.entries()[Math.random()*TeamPool.objToNodeMap.size()|0][1]; // Get their class only (not their name)
+	// 	var u = tempObjectReference[Math.random()*tempObjectReference.length|0];
+	// 	if(u == null) return;
 
-		t.obj.units.add(new u(mousePos.x,mousePos.y,t.obj.color,t.obj.thisTeam));
-	});
+	// 	t.obj.units.add(new u(mousePos.x,mousePos.y,t.obj.color,t.obj.thisTeam));
+	// });
 
-	// Pause feature! Helpful for unit-for-unit debugging.
+	//Pause feature! Helpful for unit-for-unit debugging.
 	function pause() {$('#togglePlay').trigger('click');}
 	$('#togglePlay').click(function(e){
-		if(ANIM != null) {
-			var pausedDiv = $('<div/>').text('Paused...(P to continue)').addClass('pausedDiv');
-			if(IsAnimating) {
-				ANIM.stop();
-				$('.bannerContent').append(pausedDiv);
-			} else {
-				ANIM.start(); $('.pausedDiv').remove();
-			}
-			IsAnimating = !IsAnimating;
-		}
+		// if(ANIM != null) {
+		// 	var pausedDiv = $('<div/>').text('Paused...(P to continue)').addClass('pausedDiv');
+		// 	if(IsAnimating) {
+		// 		ANIM.stop();
+		// 		$('.bannerContent').append(pausedDiv);
+		// 	} else {
+		// 		ANIM.start(); $('.pausedDiv').remove();
+		// 	}
+		// 	IsAnimating = !IsAnimating;
+		// }
 	});
 
 	$('#toggleTargetLine').click(function(e){DRAW_TARGET_LINE = !DRAW_TARGET_LINE;});
