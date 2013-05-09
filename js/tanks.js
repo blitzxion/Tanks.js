@@ -23,7 +23,7 @@ var IS_IPAD = navigator.platform === 'iPad',
 
 // Sigh, vars... vars everywhere
 var ROUND = 0, // func RESET() increases this on new rounds.
-	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 2, // This is the max amount on the playing field.
+	NUM_TEAMS = IS_MOBILE ? 2 : IS_IPAD ? 3 : 7, // This is the max amount on the playing field.
 	MAX_UNITS_ON_SCREEN = IS_MOBILE ? 10 : 50, // down from 80... that was killing the browser
 	MAX_UNITS_PER_FACTION_ON_MAP = 0,
 	MAX_BASE_UNITS = 0,
@@ -586,6 +586,8 @@ var tcIndex,
 			var unitBody = two.makeRectangle(0,0,28,16);
 			unitBody.stroke = this.color.getString();
 			unitBody.fill = this.color.getStringAlpha(.3);
+			this.Shape.add(unitBody);
+
 			if(this.hasTurret)
 			{
 				this.TankTurretShape = two.makeGroup();
@@ -605,7 +607,6 @@ var tcIndex,
 				this.Shape.add(this.TankTurretShape)
 			}
 
-			this.Shape.add(unitBody);
 			middleground.add(this.Shape);
 		},
 		drawHPBar: function(){
