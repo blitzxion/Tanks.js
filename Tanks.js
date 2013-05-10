@@ -299,6 +299,7 @@ var tcIndex,
 			}
 
 			// Update the team's visual score
+			document.querySelector('#'+this.name).textContent = "{0} : {1}".format(this.name,this.taken);
 			//$('#' + this.name).text("{0} : {1}".format(this.name,this.taken));
 		},
 		reset: function(){
@@ -1883,11 +1884,19 @@ var tcIndex,
 		{
 			var teamName = getName(4,7,null,null);
 			var teamColor = TeamColors[colorIndex];
+
 			//var teamDiv = $('<div/>').text('{0} : 0'.format(teamName)).css({color:teamColor.getString()}).addClass('teamDiv').attr("id",teamName);
+			var teamDiv = document.createElement('div');
+				teamDiv.textContent = '{0} : 0'.format(teamName);
+				teamDiv.style.color = teamColor.getString();
+				teamDiv.className = 'teamDiv';
+				teamDiv.setAttribute('id',teamName);
 
 			var theTeam = new Team(TeamColors[colorIndex],teamName);
 			//if(Math.random() < .2 && !teamMadeInvincible) theTeam.invincible = teamMadeInvincible = true;
 			TeamPool.add(theTeam);
+
+			document.querySelector('.bannerContent').appendChild(teamDiv);
 			//$(".bannerContent").first().append(teamDiv);
 		}
 	}
@@ -2041,7 +2050,7 @@ var tcIndex,
 	window.onerror = function(errorMsg, url, lineNumber)
 	{
 		log("Unhandled Exception Catched.\nMessage:{0}\nURL:{1}\nLine:{2}".format(errorMsg.toString(), url.toString(), lineNumber.toString()));
-		pause();
+		//pause();
 		return false;
 	};
 
