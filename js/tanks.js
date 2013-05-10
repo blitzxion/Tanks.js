@@ -299,7 +299,7 @@ var tcIndex,
 			}
 
 			// Update the team's visual score
-			$('#' + this.name).text("{0} : {1}".format(this.name,this.taken));
+			//$('#' + this.name).text("{0} : {1}".format(this.name,this.taken));
 		},
 		reset: function(){
 			this.score = this.totalScore = this.taken = this.given = this.usedTickets = this.numBases = this.numTurrets = 0;
@@ -1883,12 +1883,12 @@ var tcIndex,
 		{
 			var teamName = getName(4,7,null,null);
 			var teamColor = TeamColors[colorIndex];
-			var teamDiv = $('<div/>').text('{0} : 0'.format(teamName)).css({color:teamColor.getString()}).addClass('teamDiv').attr("id",teamName);
+			//var teamDiv = $('<div/>').text('{0} : 0'.format(teamName)).css({color:teamColor.getString()}).addClass('teamDiv').attr("id",teamName);
 
 			var theTeam = new Team(TeamColors[colorIndex],teamName);
 			//if(Math.random() < .2 && !teamMadeInvincible) theTeam.invincible = teamMadeInvincible = true;
 			TeamPool.add(theTeam);
-			$(".bannerContent").first().append(teamDiv);
+			//$(".bannerContent").first().append(teamDiv);
 		}
 	}
 
@@ -2045,35 +2045,35 @@ var tcIndex,
 		return false;
 	};
 
-	$('body').keypress(function(e){
-		switch(e.which)
-		{
-			case 116: case 84: // T
-				DRAW_TARGET_LINE = !DRAW_TARGET_LINE;
-				break;
-			case 102: case 70: // F
-				DRAW_FOV = !DRAW_FOV;
-				break;
-			case 112: case 80: case 32: // P / Space : Pause
-				pause();
-				break;
-			case 104: case 72: // H :
-				DRAW_HPBAR = !DRAW_HPBAR;
-				break;
-			case 120: case 88: // X : Reset the entire game (kills all units, etc)
-				RestartGame();
-				break;
-			case 69: case 101: // E : Toggle Explosions
-				DRAW_EXPLOSIONS = !DRAW_EXPLOSIONS;
-				break;
-			case 71: case 103: // G : God Mode
-				GOD_MODE = !GOD_MODE;
-				break;
-			// case 76: case 108: // L : Toggles event listening (FPS killer)
-			//	LAYER.setListening(!LAYER.getListening());
-			//	break;
-		}
-	});
+	// $('body').keypress(function(e){
+	// 	switch(e.which)
+	// 	{
+	// 		case 116: case 84: // T
+	// 			DRAW_TARGET_LINE = !DRAW_TARGET_LINE;
+	// 			break;
+	// 		case 102: case 70: // F
+	// 			DRAW_FOV = !DRAW_FOV;
+	// 			break;
+	// 		case 112: case 80: case 32: // P / Space : Pause
+	// 			pause();
+	// 			break;
+	// 		case 104: case 72: // H :
+	// 			DRAW_HPBAR = !DRAW_HPBAR;
+	// 			break;
+	// 		case 120: case 88: // X : Reset the entire game (kills all units, etc)
+	// 			RestartGame();
+	// 			break;
+	// 		case 69: case 101: // E : Toggle Explosions
+	// 			DRAW_EXPLOSIONS = !DRAW_EXPLOSIONS;
+	// 			break;
+	// 		case 71: case 103: // G : God Mode
+	// 			GOD_MODE = !GOD_MODE;
+	// 			break;
+	// 		// case 76: case 108: // L : Toggles event listening (FPS killer)
+	// 		//	LAYER.setListening(!LAYER.getListening());
+	// 		//	break;
+	// 	}
+	// });
 
 	//An outside click event to add random units to the playing field. This uses a different array of allowable units.
 	// $('#container').click(function(){
@@ -2093,20 +2093,20 @@ var tcIndex,
 	// });
 
 	//Pause feature! Helpful for unit-for-unit debugging.
-	function pause() {$('#togglePlay').trigger('click');}
-	$('#togglePlay').click(function(e){
-		// if(ANIM != null) {
-		// 	var pausedDiv = $('<div/>').text('Paused...(P to continue)').addClass('pausedDiv');
-		// 	if(IsAnimating) {
-		// 		ANIM.stop();
-		// 		$('.bannerContent').append(pausedDiv);
-		// 	} else {
-		// 		ANIM.start(); $('.pausedDiv').remove();
-		// 	}
-		// 	IsAnimating = !IsAnimating;
-		// }
-	});
+	// function pause() {$('#togglePlay').trigger('click');}
+	// $('#togglePlay').click(function(e){
+	// 	// if(ANIM != null) {
+	// 	// 	var pausedDiv = $('<div/>').text('Paused...(P to continue)').addClass('pausedDiv');
+	// 	// 	if(IsAnimating) {
+	// 	// 		ANIM.stop();
+	// 	// 		$('.bannerContent').append(pausedDiv);
+	// 	// 	} else {
+	// 	// 		ANIM.start(); $('.pausedDiv').remove();
+	// 	// 	}
+	// 	// 	IsAnimating = !IsAnimating;
+	// 	// }
+	// });
 
-	$('#toggleTargetLine').click(function(e){DRAW_TARGET_LINE = !DRAW_TARGET_LINE;});
-	$('#toggleFOV').click(function(e){DRAW_FOV = !DRAW_FOV;});
-	$('#toggleGODModel').click(function(e){GOD_MODE = !GOD_MODE;});
+	// $('#toggleTargetLine').click(function(e){DRAW_TARGET_LINE = !DRAW_TARGET_LINE;});
+	// $('#toggleFOV').click(function(e){DRAW_FOV = !DRAW_FOV;});
+	// $('#toggleGODModel').click(function(e){GOD_MODE = !GOD_MODE;});
