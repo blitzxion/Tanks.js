@@ -1,4 +1,3 @@
-var stats = new Stats();
 
 var WIDTH = window.innerWidth,
 	HEIGHT = window.innerHeight - 40, // Bottom banner height
@@ -6,6 +5,15 @@ var WIDTH = window.innerWidth,
 	MOVE_PROB = 0.01,
 	ANIMATION_ID = null,
 	FPS_TOO_LOW = 45;
+
+// var stats = new Stats();
+var fpsStats = new FPSMeter({
+	left:WIDTH-125+'px',
+	top: HEIGHT - 25 + 'px', // bottom doesn't work -,-
+	theme:'transparent',
+	graph:true,
+	heat:true,
+});
 
 // Canvas Related
 var elem = document.getElementById('container')
@@ -66,13 +74,6 @@ var TeamPool = new gamecore.LinkedList(); // List of Teams
 
 window.onload = function() {
 
-	// Stats
-	stats.setMode(0);
-	stats.domElement.style.position = "absolute";
-	stats.domElement.style.left = "0px";
-	stats.domElement.style.top = HEIGHT - 30 + "px";
-	document.body.appendChild(stats.domElement);
-
 	elem.style.height = HEIGHT + "px"; // So the bottom banner can freaking appear
 
 	//STAGE = new Kinetic.Stage({ container: "container", width: WIDTH, height: HEIGHT});
@@ -88,13 +89,8 @@ window.onload = function() {
 	middleground = two.makeGroup();
 	foreground = two.makeGroup();
 
-	_.defer(function(){
-		two
-		.bind('update',function(frameCount){ // Primary Animation Routine!!!
-			draw();
-		})
-		.play(); // This starts the game (manually)
-	});
+	this.drawFunc = (function(frameCount){ draw(); });
+	_.defer(function(){two.bind('update',this.drawFunc).play();});
 
 	SetupGame();
 	RestartGame();
@@ -107,8 +103,10 @@ window.onresize = function(){
 	WIDTH = window.innerWidth; /* big bag of WTF on iOS with orientation changes */
 	HEIGHT = window.innerHeight - 40; /* stable on iOS */
 	elem.style.height = HEIGHT + "px";
-	if(stats !== null)
-		stats.domElement.style.top = HEIGHT - 30 + "px";
+	if(fpsStats !== null){
+	 	fpsStats.set('top',HEIGHT-25 +'px');
+	 	fpsStats.set('left',WIDTH-125+'px');
+	}
 
 	// Move Items
 	var xRatio = WIDTH / WIDTHPREV, yRatio = HEIGHT / HEIGHTPREV; //shapes = LAYER.getChildren();
@@ -300,7 +298,6 @@ var tcIndex,
 
 			// Update the team's visual score
 			document.querySelector('#'+this.name).textContent = "{0} : {1}".format(this.name,this.taken);
-			//$('#' + this.name).text("{0} : {1}".format(this.name,this.taken));
 		},
 		reset: function(){
 			this.score = this.totalScore = this.taken = this.given = this.usedTickets = this.numBases = this.numTurrets = 0;
@@ -1673,6 +1670,9 @@ var tcIndex,
 		INITIAL_POOL_SIZE : 50,
 		create: function(x,y,preDisplayTime,size){
 
+			this.finished = true;
+			return null;
+
 			if(!DRAW_EXPLOSIONS) {
 				this.finished = true;
 				return null;
@@ -1805,7 +1805,8 @@ var tcIndex,
 
 // Typical Work
 	function draw() {
-		stats.begin();
+		//stats.begin();
+		fpsStats.tickStart(); // This allows the measurement of time it takes for the below operations to occur.
 
 		var TeamsAlive = NUM_TEAMS;
 		if(TeamPool != null){
@@ -1853,14 +1854,8 @@ var tcIndex,
 
 		//UpdateScores();
 
-		// KINETIC
-		// LAYER.draw();
-		// BULLETLAYER.draw();
-		// EXPLOSIONLAYER.draw();
-		// SMOKELAYER.draw();
-		// MISCLAYER.draw();
-
-		stats.end();
+		//stats.end();
+		fpsStats.tick(); // Must be at the end of all operations
 	}
 
 	function SetupGame()
@@ -2046,11 +2041,9 @@ var tcIndex,
 	};
 
 	// DOM related
-
 	window.onerror = function(errorMsg, url, lineNumber)
 	{
 		log("Unhandled Exception Catched.\nMessage:{0}\nURL:{1}\nLine:{2}".format(errorMsg.toString(), url.toString(), lineNumber.toString()));
-		//pause();
 		return false;
 	};
 
