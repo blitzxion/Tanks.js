@@ -581,32 +581,35 @@ var tcIndex,
 		},
 		buildShape : function(){
 
-			this.Shape = two.makeGroup();
+			this.Shape = two.makeGroup().hide();
 			this.Shape.translation.set(this.X, this.Y);
 			this.Shape.rotation = 2 * Math.PI * Math.random();
 
-			var unitBody = two.makeRectangle(0,0,28,16);
+			var unitBody = two.makeRectangle(0,0,28,16).hide();
 			unitBody.stroke = this.color.getString();
 			unitBody.fill = this.color.getStringAlpha(.3);
 
 			if(this.hasTurret) {
-				this.TankTurretShape = two.makeGroup();
-				var t1 = two.makeLine(0,this.barrelSeparation,this.barrelLength,this.barrelSeparation);
+				this.TankTurretShape = two.makeGroup().hide();
+				var t1 = two.makeLine(0,this.barrelSeparation,this.barrelLength,this.barrelSeparation).hide();
 				t1.stroke = this.color.getString();
 				this.TankTurretShape.add(t1);
 				if(this.doubleBarrel) {
-					var t2 = two.makeLine(0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation);
+					var t2 = two.makeLine(0,-this.barrelSeparation,this.barrelLength,-this.barrelSeparation).hide();
 					t2.stroke = this.color.getString();
 					this.TankTurretShape.add(t2);
 				}
-				var pod = two.makeCircle(0,0,this.turretSize);
+				var pod = two.makeCircle(0,0,this.turretSize).hide();
 				pod.fill = this.color.getString();
 				pod.noStroke();
 				this.TankTurretShape.add(pod);
 			}
 
-			this.Shape.add(unitBody, this.TankTurretShape);
+			this.Shape.add(unitBody);
+			if(this.TankTurretShape != null)
+				this.Shape.add(this.TankTurretShape);
 
+			this.Shape.show();
 			middleground.add(this.Shape);
 		},
 		drawHPBar: function(){
@@ -666,16 +669,11 @@ var tcIndex,
 
 			if (this.isDead) return;
 
-			// Prevents the drawing method from constantly needing to be updated (not sure if really needed)
-			//if (this.X != this.prevX && this.Y != this.prevY) {
-				// this.Shape.setPosition(this.X, this.Y);
-				// this.Shape.setRotation(this.baseAngle);
-				if(this.Shape == null) return;
-				this.Shape.translation.set(this.X,this.Y);
-				this.Shape.rotation = this.baseAngle;
-				this.prevX = this.X;
-				this.prevY = this.Y;
-			//}
+			if(this.Shape == null) return;
+			this.Shape.translation.set(this.X,this.Y);
+			this.Shape.rotation = this.baseAngle;
+			this.prevX = this.X;
+			this.prevY = this.Y;
 
 			if (this.hasTurret)
 				this.TankTurretShape.rotation = this.getAngleDiff(this.baseAngle, this.turretAngle);
@@ -1894,16 +1892,12 @@ var tcIndex,
 			TeamPool.add(theTeam);
 
 			document.querySelector('.bannerContent').appendChild(teamDiv);
-			//$(".bannerContent").first().append(teamDiv);
 		}
 	}
 
 	function RestartGame()
 	{
 		RESTARTING = false;
-
-		// KINETIC
-		//MISCLAYER.removeChildren(); // Clears anything not tracked...
 
 		ChangeTerrain();
 		GetTotalProbability();
@@ -2036,6 +2030,24 @@ var tcIndex,
 			TOTAL_PROB += UnitObjectReference[n].probability;
 	}
 
+	function pause() {
+		if(two != undefined)
+		{
+			var pauseDivElem = document.querySelector('.pausedDiv');
+			if(two.playing)
+			{
+				two.pause();
+				var pausedDiv = document.createElement('div');
+					pausedDiv.textContent = 'Paused...(P to continue)';
+					pausedDiv.className = 'pausedDiv';
+				document.querySelector('.bannerContent').appendChild(pausedDiv);
+			} else {
+				pauseDivElem.parentNode.removeChild(pauseDivElem);
+				two.play();
+			}
+		}
+	}
+
 	function log(str) { console.log(str); }
 	String.prototype.format = function() {
 		var args = arguments;
@@ -2046,71 +2058,60 @@ var tcIndex,
 	window.onerror = function(errorMsg, url, lineNumber)
 	{
 		log("Unhandled Exception Catched.\nMessage:{0}\nURL:{1}\nLine:{2}".format(errorMsg.toString(), url.toString(), lineNumber.toString()));
+		pause();
 		return false;
 	};
 
-	// $('body').keypress(function(e){
-	// 	switch(e.which)
-	// 	{
-	// 		case 116: case 84: // T
-	// 			DRAW_TARGET_LINE = !DRAW_TARGET_LINE;
-	// 			break;
-	// 		case 102: case 70: // F
-	// 			DRAW_FOV = !DRAW_FOV;
-	// 			break;
-	// 		case 112: case 80: case 32: // P / Space : Pause
-	// 			pause();
-	// 			break;
-	// 		case 104: case 72: // H :
-	// 			DRAW_HPBAR = !DRAW_HPBAR;
-	// 			break;
-	// 		case 120: case 88: // X : Reset the entire game (kills all units, etc)
-	// 			RestartGame();
-	// 			break;
-	// 		case 69: case 101: // E : Toggle Explosions
-	// 			DRAW_EXPLOSIONS = !DRAW_EXPLOSIONS;
-	// 			break;
-	// 		case 71: case 103: // G : God Mode
-	// 			GOD_MODE = !GOD_MODE;
-	// 			break;
-	// 		// case 76: case 108: // L : Toggles event listening (FPS killer)
-	// 		//	LAYER.setListening(!LAYER.getListening());
-	// 		//	break;
-	// 	}
-	// });
+	document.querySelector('body').addEventListener('keypress',function(e){
+		switch(e.which) {
+			case 116: case 84: // T
+				DRAW_TARGET_LINE = !DRAW_TARGET_LINE;
+				break;
+			case 102: case 70: // F
+				DRAW_FOV = !DRAW_FOV;
+				break;
+			case 112: case 80: case 32: // P / Space : Pause
+				pause();
+				break;
+			case 104: case 72: // H :
+				DRAW_HPBAR = !DRAW_HPBAR;
+				break;
+			case 120: case 88: // X : Reset the entire game (kills all units, etc)
+				RestartGame();
+				break;
+			case 69: case 101: // E : Toggle Explosions
+				DRAW_EXPLOSIONS = !DRAW_EXPLOSIONS;
+				break;
+			case 71: case 103: // G : God Mode
+				GOD_MODE = !GOD_MODE;
+				break;
+			// case 76: case 108: // L : Toggles event listening (FPS killer)
+			//	LAYER.setListening(!LAYER.getListening());
+			//	break;
+		}
+	});
 
 	//An outside click event to add random units to the playing field. This uses a different array of allowable units.
-	// $('#container').click(function(){
+	document.querySelector('#container').addEventListener('click',function(e){
+		if(!GOD_MODE) return;
+		var tempObjectReference = [SmallTank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
+		// Random Team
+		for(var h = 0; h <= 10; h++)
+		{
+			var t = TeamPool.objToNodeMap.entries()[Math.random()*TeamPool.objToNodeMap.size()|0][1]; // Get their class only (not their name)
+			var u = tempObjectReference[Math.random()*tempObjectReference.length|0];
+			if(u == null) return;
+			t.obj.units.add(new u(
+				e.clientX + (Math.random()*100|50),
+				e.clientY - (Math.random()*100|50),
+				t.obj.color,
+				t.obj.thisTeam
+			));
+		}
 
-	// 	if(!GOD_MODE) return;
+	});
 
-	// 	var mousePos = STAGE.getMousePosition();
-	// 	var tempObjectReference = [SmallTank,MediumTank,LargeTank,ArtilleryTank,DoubleTank,MissileTank,Builder, DefenseTurret, AATurret];
-	// 		//tempObjectReference = [FighterJet]; // Use this to build just one kind of tank... for debugging really...
-
-	// 	// Random Team
-	// 	var t = TeamPool.objToNodeMap.entries()[Math.random()*TeamPool.objToNodeMap.size()|0][1]; // Get their class only (not their name)
-	// 	var u = tempObjectReference[Math.random()*tempObjectReference.length|0];
-	// 	if(u == null) return;
-
-	// 	t.obj.units.add(new u(mousePos.x,mousePos.y,t.obj.color,t.obj.thisTeam));
-	// });
-
-	//Pause feature! Helpful for unit-for-unit debugging.
-	// function pause() {$('#togglePlay').trigger('click');}
-	// $('#togglePlay').click(function(e){
-	// 	// if(ANIM != null) {
-	// 	// 	var pausedDiv = $('<div/>').text('Paused...(P to continue)').addClass('pausedDiv');
-	// 	// 	if(IsAnimating) {
-	// 	// 		ANIM.stop();
-	// 	// 		$('.bannerContent').append(pausedDiv);
-	// 	// 	} else {
-	// 	// 		ANIM.start(); $('.pausedDiv').remove();
-	// 	// 	}
-	// 	// 	IsAnimating = !IsAnimating;
-	// 	// }
-	// });
-
-	// $('#toggleTargetLine').click(function(e){DRAW_TARGET_LINE = !DRAW_TARGET_LINE;});
-	// $('#toggleFOV').click(function(e){DRAW_FOV = !DRAW_FOV;});
-	// $('#toggleGODModel').click(function(e){GOD_MODE = !GOD_MODE;});
+	document.querySelector('#togglePlay').addEventListener('click',function(){ pause(); });
+	document.querySelector('#toggleTargetLine').addEventListener('click',function(){DRAW_TARGET_LINE = !DRAW_TARGET_LINE;});
+	document.querySelector('#toggleFOV').addEventListener('click',function(){DRAW_FOV = !DRAW_FOV;});
+	document.querySelector('#toggleGODMode').addEventListener('click',function(){GOD_MODE = !GOD_MODE});
