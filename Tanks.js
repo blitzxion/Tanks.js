@@ -416,6 +416,10 @@ var tcIndex,
 			this.color = color;
 			this.buildShape(); // This must be called!
 			this.debug = {};
+
+			this.moveSpeed *= 1.5; // 1.5x speed increase
+			//this.moveSpeed *= 5.0; // 5x speed increase (from base speed! awesome!)
+
 			this.This = this;
 		},
 		work: function () {
@@ -584,10 +588,8 @@ var tcIndex,
 			var unitBody = two.makeRectangle(0,0,28,16);
 			unitBody.stroke = this.color.getString();
 			unitBody.fill = this.color.getStringAlpha(.3);
-			this.Shape.add(unitBody);
 
-			if(this.hasTurret)
-			{
+			if(this.hasTurret) {
 				this.TankTurretShape = two.makeGroup();
 				var t1 = two.makeLine(0,this.barrelSeparation,this.barrelLength,this.barrelSeparation);
 				t1.stroke = this.color.getString();
@@ -601,9 +603,9 @@ var tcIndex,
 				pod.fill = this.color.getString();
 				pod.noStroke();
 				this.TankTurretShape.add(pod);
-
-				this.Shape.add(this.TankTurretShape)
 			}
+
+			this.Shape.add(unitBody, this.TankTurretShape);
 
 			middleground.add(this.Shape);
 		},
