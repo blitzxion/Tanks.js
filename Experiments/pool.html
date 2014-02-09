@@ -1,0 +1,360 @@
+<div>
+
+	<canvas id="canvas"></canvas>
+	<hr/>
+	<div id="poolCount"></div>
+	<div id="activeCount"></div>
+	<div id="FPS"></div>
+
+</div>
+
+<script>
+
+var pDiv = document.getElementById('poolCount'),
+	aDiv = document.getElementById('activeCount'),
+	lDiv = document.getElementById('loopCount'),
+	fpsDiv = document.getElementById('FPS'),
+	lCount = 0,
+	fCount = 0,
+	eCount = 0;
+
+// Just incase you use a crappy browser
+if (!Array.prototype.indexOf) {
+	Array.prototype.indexOf = function (searchElement, fromIndex) {
+		if ( this === undefined || this === null )
+			throw new TypeError( '"this" is null or not defined' );
+		var length = this.length >>> 0; // Hack to convert object.length to a UInt32
+		fromIndex = +fromIndex || 0;
+		if (Math.abs(fromIndex) === Infinity) fromIndex = 0;
+		if (fromIndex < 0) {
+			fromIndex += length;
+			if (fromIndex < 0) fromIndex = 0;
+		}
+		for (;fromIndex < length; fromIndex++)
+			if (this[fromIndex] === searchElement)
+				return fromIndex;
+		return -1;
+	};
+}
+
+(function(){
+
+	var m_canvas = document.getElementById("canvas"),
+		m_ctx = canvas.getContext("2d"),
+		WIDTH = window.innerWidth,
+		HEIGHT = window.innerHeight,
+		ANIMATION_ID = null;
+
+	// FPS Related Vars
+	var filterStrength = 20,
+		frameTime = 0, lastLoop = new Date, thisLoop,
+		roundStartTime;
+
+	(function() {
+		var lastTime = 0,
+			vendors = ['ms', 'moz', 'webkit', 'o'];
+		for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+			window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+			window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+									   || window[vendors[x]+'CancelRequestAnimationFrame'];
+		}
+
+		if (!window.requestAnimationFrame) {
+			console.log('hurp');
+			window.requestAnimationFrame = function(callback, element) {
+				var currTime = new Date().getTime();
+				var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+				var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+				  timeToCall);
+				lastTime = currTime + timeToCall;
+				return id;
+			};
+		}
+
+		if (!window.cancelAnimationFrame)
+			window.cancelAnimationFrame = function(id) {
+				clearTimeout(id);
+			};
+	}());
+
+	// === OBJECT POOL SYSTEM ==
+	var ObjectPool = function(Klass){
+		var active = [] ;
+		var pool = [];
+		var poolSize = 10; // This should grow if demand needs it
+		var Class = Klass;
+
+		// Internal init
+		for(var i = 1; i <= poolSize; i++) pool.push(new Class());
+
+		this.GetActives = function(){ return active; } // Access to active list
+		this.Count = function(){ return active.length; } // Count of actives
+		this.Length = function(){ return poolSize; } // Length of pool
+		this.Clear = function(){ active.length = 0; }  // Clear active list
+
+		// increases the pool size of the pool
+		this.ResizePool = function(size) {
+
+			console.log('Resizing by '+size+' from '+poolSize);
+
+			poolSize += size;
+			for(var i = 1; i <= size; i++) pool.push(new Class());
+		}
+
+		// Gets the next available object, or creates a new one for the pool, returning it
+		this.Get = function (){
+			var obj = null;
+
+			// Check if we have any available, if not expand first, then pop
+			if(pool.length <= 0)
+				this.ResizePool(Math.round(poolSize*1.2)+1); // 20%
+
+			obj = pool.pop();
+
+			active.push(obj);
+
+			return obj;
+		}
+
+		// Gives back the used object to the pool for use later
+		// It is suggested that before you release an object, that you clear it's properties
+		this.Release = function (object){
+			active.splice(active.indexOf(object),1);
+			pool.push(object);
+		}
+
+		// Automatically run an action against all active items
+		// You'll have access to the item and active listing during the loop
+		this.Act = function(fn) {
+			if(!active.length || fn == null) return; // Need items/fn to work on
+			for(var b in active) fn(active[b],this);
+		}
+	}
+
+	// == BULLET Class ==
+	var Bullet = function(){
+		var X,Y,Dx,Dy,Time;
+		var isBulletLoaded = false; // new bullets are not ready to fire!
+
+		this.isReady = function() { return isBulletLoaded; }
+
+		this.Init = function(x,y,dx,dy,time) {
+			X=x; Y=y; Dx=dx; Dy=dy; Time=time;
+			isBulletLoaded = true;
+		}
+
+		this.DoWork = function(){
+			X += Dx;
+			Y += Dy;
+			Time--;
+			if(Time <= 0) Completed();
+			Draw();
+		}
+
+		function Completed() {
+			// Bullets explode (for this simple case)
+			// X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, SHELL_DAMAGE_RADIUS
+
+			var exp = ExplosionPool.Get();
+			exp.Init(X,Y,0,30);
+
+			isBulletLoaded = false;
+			X=Y=Dx=Dy=Time=0; // Reset
+		}
+
+		function Draw() {
+			// Draw to offscreen canvas
+			var bSize = 2;
+			var tmpCanvas = document.createElement('canvas');
+			tmpCanvas.width = tmpCanvas.height = bSize;
+			ctx = tmpCanvas.getContext('2d');
+			ctx.beginPath();
+			ctx.fillStyle = "yellow";
+			ctx.fillRect (0,0,bSize,bSize);
+			ctx.fill();
+			m_ctx.drawImage(tmpCanvas,X,Y);
+		}
+	};
+
+	// == EXPLOSION Class ==
+	var Explosion = function(){
+		var X, Y, Time, TargetSize, Size, Growing;
+		var isExplosionReady = false; // we're not ready, we need to be init'd
+
+		this.isReady = function() { return isExplosionReady; }
+
+		this.Init = function(x,y,time,size) {
+			X=x, Y=y, Time=time, TargetSize=size, Size=0, Growing=true;
+			isExplosionReady = true;
+		};
+
+		this.DoWork = function(){
+
+			Draw(); // Explosion system is odd, draw then move....
+
+			//if(Time > 0 && Size < 0) return; // If we have more time to do something, or our size is still over 0, then we're not done yet...
+
+			// Figure out our state
+			if(Time > 0) {
+				Time--;
+			} else if(Growing) {
+				if(Size < TargetSize)
+					Size++;
+				else
+					Growing = false;
+			} else if(Size > 0) {
+				Size--;
+			} else {
+				Completed();
+			}
+
+		};
+
+		function Completed() {
+			isExplosionReady = false;
+			X=0, Y=0, Time=0, TargetSize=0, Size=0, Growing=true; // Reset
+		}
+
+		function Draw()
+		{
+			var tmpCanvas, ctx, grad;
+			try
+			{
+				tmpCanvas = document.createElement('canvas');
+				tmpCanvas.width = tmpCanvas.height = TargetSize;
+				ctx = tmpCanvas.getContext('2d');
+
+				grad = ctx.createRadialGradient(TargetSize/2,TargetSize/2,0,TargetSize/2,TargetSize/2,Size/2);
+				grad.addColorStop(0,"yellow");
+				grad.addColorStop(1,"red");
+
+				ctx.beginPath();
+				ctx.fillStyle = grad;
+				ctx.arc(TargetSize/2,TargetSize/2,Size/2,0,2 * Math.PI, false);
+				ctx.fill();
+
+				m_ctx.drawImage(tmpCanvas,X,Y);
+			} catch(err) {
+				console.log(err);
+				PauseAnimation();
+			}
+		}
+	}
+
+	// Draw Work
+	function Animate()
+	{
+		// This will allow the browser to loop this method
+		// at a FPS its capable of doing (like 60fps)
+		ANIMATION_ID = requestAnimationFrame(Animate);
+		Draw();
+	}
+
+	function PauseAnimation()
+	{
+		console.log('Ended');
+		if (ANIMATION_ID) cancelAnimationFrame(ANIMATION_ID);
+		console.timeStamp('RTS: Animation Stoped');
+	}
+
+	function Draw()
+	{
+
+		// === CANVAS PREWORK ===
+		m_ctx.fillStyle = "#000";
+		m_ctx.fillRect (0, 0, WIDTH, HEIGHT);
+
+
+		// === !!! NEW !!! ===
+
+		// This will instruct the pool to grab a spare bullet and add it to the active
+		// list of bullets. The newly moved bullet isn't doing anything
+		// but is waiting to be "acted" upon!
+		// If there are not spare bullets, magically, a new one is created
+		// and the pool size is increased by one
+
+		// MOCK : This system mocks the randomness of a tanks.js when they find a target to fire upon
+		if(rnd(0,1) < .8) {
+			var b = BulletPool.Get(); // Typically a tank will ask the system to fire a bullet (the draw system will not have that!)
+			b.Init(rnd(10,75),rnd(10,75),rnd(1,7),rnd(1,7),rnd(1,80));
+		}
+
+		// ==== BULLETS ===
+		BulletPool.Act(function(Blt, p){
+			try {
+				Blt.DoWork(); // Asks the bullet what it needs to do
+				if(!Blt.isReady()) p.Release(Blt); // If we exploded, give back to pool
+			} catch(err) {
+				console.log(err);
+				PauseAnimation();
+			}
+		});
+
+		// === Explosions ==
+		ExplosionPool.Act(function(Exp, p){
+			try {
+				Exp.DoWork();
+				if(!Exp.isReady()) p.Release(Exp);
+			} catch(err) {
+				console.log(err);
+				PauseAnimation();
+			}
+		});
+
+		// === CANVAS ===
+
+
+		// After all canvas operations are done... (these likely affect performance!)
+
+		pDiv.textContent = "Pool Sizes: BULLET => " + BulletPool.Length() + " EXPLOSION => " + ExplosionPool.Length();
+		aDiv.textContent = "Active Pool Size: BULLET => " + BulletPool.Count() + " EXPLOSION => " + ExplosionPool.Count();
+
+		// Update FPS
+		fpsDiv.textContent = "FPS: " + GetFPS();
+
+		// Setup for the FPS counter
+		var thisFrameTime = (thisLoop=new Date) - lastLoop;
+		frameTime+= (thisFrameTime - frameTime) / filterStrength;
+		lastLoop = thisLoop;
+	}
+
+	// Setup
+	var BulletPool = new ObjectPool(Bullet);
+	var ExplosionPool = new ObjectPool(Explosion);
+
+	AdjustWindow();
+
+	console.clear();
+	console.timeStamp('RTS: Animation Started');
+
+	// Uncomment this line to start work
+	Animate();
+
+
+	// Utils
+	function rnd(min, max) { return Math.random() * (max - min) + min; }
+	function GetFPS(){ return (1000/frameTime).toFixed(1); }
+	function AdjustWindow()
+	{
+		WIDTH = window.innerWidth / 1.5;
+		HEIGHT = window.innerHeight / 2;
+		if (window.devicePixelRatio && window.devicePixelRatio > 1)
+		{
+			m_canvas.style.width = WIDTH +"px";
+			m_canvas.style.height = HEIGHT+"px";
+			m_canvas.width =  WIDTH * window.devicePixelRatio;
+			m_canvas.height = HEIGHT * window.devicePixelRatio;
+			m_ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+		}
+		else
+		{
+			m_canvas.style.width = WIDTH +"px";
+			m_canvas.style.height = HEIGHT+"px";
+			m_canvas.width = WIDTH;
+			m_canvas.height = HEIGHT;
+		}
+	}
+
+})();
+
+</script>
