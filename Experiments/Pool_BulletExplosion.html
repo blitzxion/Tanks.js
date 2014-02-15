@@ -8,6 +8,7 @@
 
 </div>
 
+<script type="text/javascript" src="jshashtable-3.0.js"></script>
 <script>
 
 var pDiv = document.getElementById('poolCount'),
@@ -79,13 +80,14 @@ if (!Array.prototype.indexOf) {
 
 	// === OBJECT POOL SYSTEM ==
 	var ObjectPool = function(Klass){
-		var active = [] ;
+		var active = [];
 		var pool = [];
 		var poolSize = 10; // This should grow if demand needs it
 		var Class = Klass;
 
 		// Internal init
-		for(var i = 1; i <= poolSize; i++) pool.push(new Class());
+		for(var i = 1; i <= poolSize; i++)
+			pool.push(new Class());
 
 		this.GetActives = function(){ return active; } // Access to active list
 		this.Count = function(){ return active.length; } // Count of actives
@@ -156,7 +158,7 @@ if (!Array.prototype.indexOf) {
 			// X + Math.random() * 2 - 1, Y + Math.random() * 2 - 1, 0, SHELL_DAMAGE_RADIUS
 
 			var exp = ExplosionPool.Get();
-			exp.Init(X,Y,0,30);
+			exp.Init(X,Y,0,10);
 
 			isBulletLoaded = false;
 			X=Y=Dx=Dy=Time=0; // Reset
