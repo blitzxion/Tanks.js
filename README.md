@@ -3,9 +3,9 @@ Tanks.js
 
 Using Javascript and HTML5, watch the AI build up their army and battle each other!  Planes, tanks, bases and medics make for an interesting battle every time.  Units will retreat and get repaired, jets dogfight, and mammoth tanks rule the ground.
 
-##[View the latest demo Here!](http://tanks.richardshaw.us)
+##[View the latest demo Here!](http://tinyurl.com/richardtanks)
 
-![Game Screenshot](http://src.richardshaw.us/img/tanks.jsv2.jpg)
+![Game Screenshot](http://dl.dropbox.com/u/3183640/tanks.jsv2.jpg)
 
 The mobile version of this app exists, but is not stable on any device other than an iPhone 4S.  We are working towards 30FPS+ battles on mobile.  Desktop machines are tweaked for 60FPS+.
 

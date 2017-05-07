@@ -1355,7 +1355,7 @@ var Backbone = Backbone || {};
         right: 0,
         bottom: 0,
         position: 'fixed'
-      });
+      })
       dom.bind(window, 'resize', fitted);
       fitted();
 
@@ -1523,7 +1523,7 @@ var Backbone = Backbone || {};
             var tag = n.localName.toLowerCase();
 
             if ((tag in Two.Utils.read)) {
-              n = Two.Utils.read[tag].call(this, n);
+              var n = Two.Utils.read[tag].call(this, n);
               group.add(n);
             }
 
@@ -1581,10 +1581,8 @@ var Backbone = Backbone || {};
               var type = command[0];
               var lower = type.toLowerCase();
 
-              coords = command.slice(1).trim().split(/[\s,]+|(?=[+\-])/);
+              coords = command.slice(1).trim().split(/[\s,]+|(?=[+-])/);
               relative = type === lower;
-
-              var x1, y1, x2, y2, x3, y3, x4, y4, reflection;
 
               switch(lower) {
 
@@ -1627,6 +1625,8 @@ var Backbone = Backbone || {};
                 case 's':
                 case 'c':
 
+                  var x1, y1, x2, y2, x3, y3, x4, y4;
+
                   x1 = coord.x, y1 = coord.y;
 
                   if (lower === 'c') {
@@ -1640,7 +1640,7 @@ var Backbone = Backbone || {};
                     // Calculate reflection control point for proper x2, y2
                     // inclusion.
 
-                    reflection = new Two.Vector().copy(coord).subSelf(control);
+                    var reflection = new Two.Vector().copy(coord).subSelf(control);
 
                     x2 = parseFloat(reflection.x), y2 = parseFloat(reflection.y);
                     x3 = parseFloat(coords[0]), y3 = parseFloat(coords[1]);
@@ -1662,6 +1662,8 @@ var Backbone = Backbone || {};
                 case 't':
                 case 'q':
 
+                  var x1, y1, x2, y2, x3, y3, x4, y4;
+
                   x1 = coord.x, y1 = coord.y;
                   if (control.isZero()) {
                     x2 = x1, y2 = y1;
@@ -1676,7 +1678,7 @@ var Backbone = Backbone || {};
 
                   } else {
 
-                    reflection = new Two.Vector().copy(coord).subSelf(control);
+                    var reflection = new Two.Vector().copy(coord).subSelf(control);
 
                     x3 = parseFloat(reflection.x), y3 = parseFloat(reflection.y);
                     x4 = parseFloat(coords[0]), y4 = parseFloat(coords[1]);
@@ -1696,6 +1698,8 @@ var Backbone = Backbone || {};
 
                 case 'a':
                   throw new Two.Utils.Error('not yet able to interpret Elliptical Arcs.');
+                  break;
+
               }
 
               return result;
@@ -1830,10 +1834,9 @@ var Backbone = Backbone || {};
         var epsilon = Two.Utils.Curve.CollinearityEpsilon,
           limit = Two.Utils.Curve.RecursionLimit,
           cuspLimit = Two.Utils.Curve.CuspLimit,
-          tolerance = Two.Utils.Curve.Tolerance,
-          da1, da2;
+          tolerance = Two.Utils.Curve.Tolerance;
 
-        level = level || 0;
+        var level = level || 0;
 
         if (level > limit) {
           return [];
@@ -1852,15 +1855,16 @@ var Backbone = Backbone || {};
             x1234 = (x123 + x234) / 2,
             y1234 = (y123 + y234) / 2;
 
-
-        // Try to approximate the full cubic curve by a single straight line.
-        var dx = x4 - x1;
-        var dy = y4 - y1;
-
-        var d2 = abs(((x2 - x4) * dy - (y2 - y4) * dx));
-        var d3 = abs(((x3 - x4) * dy - (y3 - y4) * dx));
-
         if (level > 0) {
+
+          // Try to approximate the full cubic curve by a single straight line.
+          var dx = x4 - x1;
+          var dy = y4 - y1;
+
+          var d2 = abs(((x2 - x4) * dy - (y2 - y4) * dx));
+          var d3 = abs(((x3 - x4) * dy - (y3 - y4) * dx));
+
+          var da1, da2;
 
           if (d2 > epsilon && d3 > epsilon) {
 
@@ -2153,15 +2157,7 @@ var Backbone = Backbone || {};
      */
     update: function() {
 
-      var animated = !!this._lastFrame;
-      var now = getNow();
-
       this.frameCount++;
-
-      if (animated) {
-        this.timeDelta = parseFloat((now - this._lastFrame).toFixed(3));
-      }
-      this._lastFrame = now;
 
       var width = this.width;
       var height = this.height;
@@ -2172,7 +2168,7 @@ var Backbone = Backbone || {};
         renderer.setSize(width, height);
       }
 
-      this.trigger(Two.Events.update, this.frameCount, this.timeDelta);
+      this.trigger(Two.Events.update, this.frameCount);
 
       return this.render();
 
@@ -2391,11 +2387,6 @@ var Backbone = Backbone || {};
 
   }
 
-  function getNow() {
-    return ((window.performance && window.performance.now)
-      ? window.performance : Date).now();
-  }
-
   // Request Animation Frame
 
   (function() {
@@ -2417,8 +2408,8 @@ var Backbone = Backbone || {};
 
   var Vector = Two.Vector = function(x, y) {
 
-    x = x || 0;
-    y = y || 0;
+    var x = x || 0;
+    var y = y || 0;
 
     Object.defineProperty(this, 'x', {
       get: function() {
@@ -2426,7 +2417,7 @@ var Backbone = Backbone || {};
       },
       set: function(v) {
         x = v;
-        this.trigger(Two.Events.change, 'x');
+        this.trigger('change', 'x');
       }
     });
 
@@ -2436,7 +2427,7 @@ var Backbone = Backbone || {};
       },
       set: function(v) {
         y = v;
-        this.trigger(Two.Events.change, 'y');
+        this.trigger('change', 'y');
       }
     });
 
@@ -2625,9 +2616,9 @@ var Backbone = Backbone || {};
         // Go down rows first
         // a, d, g, b, e, h, c, f, i
 
-        x = e[0] * a + e[1] * b + e[2] * c;
-        y = e[3] * a + e[4] * b + e[5] * c;
-        z = e[6] * a + e[7] * b + e[8] * c;
+        var x = e[0] * a + e[1] * b + e[2] * c;
+        var y = e[3] * a + e[4] * b + e[5] * c;
+        var z = e[6] * a + e[7] * b + e[8] * c;
 
         return { x: x, y: y, z: z };
 
@@ -2656,7 +2647,7 @@ var Backbone = Backbone || {};
 
   });
 
-  _.extend(Matrix.prototype, Backbone.Events, {
+  _.extend(Matrix.prototype, {
 
     /**
      * Takes an array of elements or the arguments list itself to
@@ -2676,7 +2667,7 @@ var Backbone = Backbone || {};
         }
       }, this);
 
-      return this.trigger(Two.Events.change);
+      return this;
 
     },
 
@@ -2706,22 +2697,22 @@ var Backbone = Backbone || {};
           this.elements[i] = v * a;
         }, this);
 
-        return this.trigger(Two.Events.change);
+        return this;
 
       }
 
       if (l <= 3) { // Multiply Vector
 
         var x, y, z;
-        a = a || 0, b = b || 0, c = c || 0;
-        e = this.elements;
+        var a = a || 0, b = b || 0, c = c || 0;
+        var e = this.elements;
 
         // Go down rows first
         // a, d, g, b, e, h, c, f, i
 
-        x = e[0] * a + e[1] * b + e[2] * c;
-        y = e[3] * a + e[4] * b + e[5] * c;
-        z = e[6] * a + e[7] * b + e[8] * c;
+        var x = e[0] * a + e[1] * b + e[2] * c;
+        var y = e[3] * a + e[4] * b + e[5] * c;
+        var z = e[6] * a + e[7] * b + e[8] * c;
 
         return { x: x, y: y, z: z };
 
@@ -2752,7 +2743,7 @@ var Backbone = Backbone || {};
       this.elements[7] = A6 * B1 + A7 * B4 + A8 * B7;
       this.elements[8] = A6 * B2 + A7 * B5 + A8 * B8;
 
-      return this.trigger(Two.Events.change);
+      return this;
 
     },
 
@@ -2979,8 +2970,8 @@ var Backbone = Backbone || {};
         if (i <= 0) {
           command = 'M ' + x + ' ' + y;
         } else {
-          command = 'C ' + 
-            vx + ' ' + vy + ' ' + ux + ' ' + uy + ' ' + x + ' ' + y;
+          command = 'C '
+            + vx + ' ' + vy + ' ' + ux + ' ' + uy + ' ' + x + ' ' + y;
         }
 
         // Add a final point and close it off
@@ -3619,7 +3610,6 @@ var Backbone = Backbone || {};
             elem.removeChild(elements[j]);
             this.elements[j] = null;
           }, this);
-          break;
         default:
           constructor.setStyles.call(this, elem, property, value, closed, curved, strokeChanged);
       }
@@ -4137,8 +4127,9 @@ var Backbone = Backbone || {};
         var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
         if (!linked) {
           error = gl.getProgramInfoLog(program);
-          gl.deleteProgram(program);
           throw new Two.Utils.Error('unable to link program: ' + error);
+          gl.deleteProgram(program);
+          return null;
         }
 
         return program;
@@ -4158,8 +4149,9 @@ var Backbone = Backbone || {};
         var compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
         if (!compiled) {
           var error = gl.getShaderInfoLog(shader);
-          gl.deleteShader(shader);
           throw new Two.Utils.Error('unable to compile shader ' + shader + ': ' + error);
+          gl.deleteShader(shader);
+          return null;
         }
 
         return shader;
@@ -4227,8 +4219,8 @@ var Backbone = Backbone || {};
       preserveDrawingBuffer: false
     });
 
-    var gl = this.ctx = this.domElement.getContext('webgl', params) || 
-      this.domElement.getContext('experimental-webgl', params);
+    var gl = this.ctx = this.domElement.getContext('webgl', params)
+      || this.domElement.getContext('experimental-webgl', params);
 
     if (!this.ctx) {
       throw new Two.Utils.Error(
@@ -4411,7 +4403,7 @@ var Backbone = Backbone || {};
     }
 
     if (textureNeedsUpdate) {
-      elem.updateTexture(this.ctx);
+      elem.updateTexture(this.ctx)
     }
 
   }
@@ -4431,12 +4423,11 @@ var Backbone = Backbone || {};
         .identity()
         .translate(this.translation.x, this.translation.y)
         .scale(this.scale)
-        .rotate(this.rotation)
-        .multiply.apply(this._matrix, this.matrix.elements);
+        .rotate(this.rotation);
       this.trigger(Two.Events.change, this.id, 'matrix', transform, this.scale);
     }, this), 0);
 
-    this._rotation = 0;
+    this._rotation = 'rotation';
 
     Object.defineProperty(this, 'rotation', {
       get: function() {
@@ -4465,11 +4456,6 @@ var Backbone = Backbone || {};
     this.scale = 1.0;
 
     this.translation.bind(Two.Events.change, updateMatrix);
-
-    // Add a public matrix for advanced transformations.
-    // Only edit this if you're a *boss*
-    this.matrix = new Two.Matrix();
-    this.matrix.bind(Two.Events.change, updateMatrix);
 
     if (!!limited) {
       return this;
@@ -4538,12 +4524,12 @@ var Backbone = Backbone || {};
     },
 
     noFill: function() {
-      this.fill = 'transparent';
+      this.fill = 'rgba(0,0,0,0)';
       return this;
     },
 
     noStroke: function() {
-      this.stroke = 'transparent';
+      this.stroke = 'rgba(0,0,0,0)';
       return this;
     },
 
@@ -4619,7 +4605,7 @@ var Backbone = Backbone || {};
      */
     clone: function(parent) {
 
-      parent = parent || this.parent;
+      var parent = parent || this.parent;
 
       var children = _.map(this.children, function(child) {
         return child.clone(parent);
@@ -4837,9 +4823,8 @@ var Backbone = Backbone || {};
 
     // Add additional logic for watching the vertices.
 
-    closed = !!closed;
-    curved = !!curved;
-    
+    var closed = !!closed;
+    var curved = !!curved;
     var beginning = 0.0;
     var ending = 1.0;
     var strokeChanged = false;
@@ -4928,6 +4913,10 @@ var Backbone = Backbone || {};
     updateVertices();
 
   };
+
+  _.extend(Polygon, {
+
+  });
 
   _.extend(Polygon.prototype, Two.Shape.prototype, {
 
