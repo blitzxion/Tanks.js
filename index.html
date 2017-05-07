@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head> <!-- help from : http://matt.might.net/articles/how-to-native-iphone-ipad-apps-in-javascript/ !-->
+	<style>body{margin:0; overflow:hidden;};</style>
+	<link rel="apple-touch-icon-precomposed" href="https://github.com/blitzxion/Tanks.js/raw/master/tankicon.png" />
+	<meta name="apple-mobile-web-app-capable"  content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<!--<meta name="viewport" content="width=device-width, initial-scale=0.5, user-scalable=no"/>
+	<style type="text/css">canvas { -webkit-transform: scale3d(2, 2, 0) translate3d(200px, 100px, 0); }</style>-->
+	<!--[if lt IE 9]><script type="text/javascript" src="ie/flashcanvas.js"></script><![endif]-->
+	<script>
+	 function BlockMove(event) {
+	  // Tell Safari not to move the window.
+	  event.preventDefault() ;
+	 }
+	</script>
+</head>
+<body ontouchmove="BlockMove(event);">
+	<canvas id="canvas"  style="width:100%;height:100%" moz-opaque="true">Tanks.js requires a browser that supports Canvas, such as Google Chrome, Mozilla Firefox, or Apple Safari.</canvas>
+</body>
+<script src="Tanks.js" type="text/javascript"></script>
+</html>
