@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head> <!-- help from : http://matt.might.net/articles/how-to-native-iphone-ipad-apps-in-javascript/ !-->
+    <meta charset="UTF-8">
+    <style>body{margin:0; overflow:hidden;};</style>
+    <link rel="apple-touch-icon-precomposed" href="https://github.com/blitzxion/Tanks.js/raw/master/tankicon.png" />
+    <meta name="apple-mobile-web-app-capable"  content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!--<meta name="viewport" content="width=device-width, initial-scale=0.5, user-scalable=no"/>
+    <style type="text/css">canvas { -webkit-transform: scale3d(2, 2, 0) translate3d(200px, 100px, 0); }</style>-->
+    <!--[if lt IE 9]><script type="text/javascript" src="ie/flashcanvas.js"></script><![endif]-->
+    <script>
+        function BlockMove(event) {
+            // Tell Safari not to move the window.
+            event.preventDefault() ;
+        }
+    </script>
+</head>
+<body ontouchmove="BlockMove(event);">
+    <canvas id="canvas" style="width:100%;height:100%" moz-opaque="true">Tanks.js requires a browser that supports Canvas, such as Google Chrome, Mozilla Firefox, or Apple Safari.</canvas>
+    <div style="position:absolute; top:25px; right: 25px;">
+        <div><span id="FPS">0</span> FPS</div>
+        <div><span id="TANKS">0</span> TANKS</div>
+    </div>
+</body>
+<script>
+    (function() {
+
+        //////////////////
+        // Constants
+        //////////////////
+
+        var WIDTH = window.innerWidth,
+            HEIGHT = window.innerHeight,
+            WIDTHPREV = 0,
+            HEIGHTPREV = 0,
+            ANIMATION_ID = 0;
+
+        // Get access to elements
+        var canvas = document.getElementById("canvas"),
+            ctx = canvas.getContext("2d");
+
+        // FPS Related Vars
+        var filterStrength = 20,
+            frameTime = 0,
+            lastLoop = new Date,
+            thisLoop;
+
+
+
+        //////////////////
+        // Classes
+        //////////////////
+
+        // EXPERIMENTAL
+        var Tank = function(x, y) {
+            var self = this;
+
+            this.Color = {
+                body: "black"
+            };
+
+            this.Pos = {
+                X: x || 25,
+                Y: y || 25,
+                Angle: 0
+            };
+
+            this.Target = {
+                X: x || 25,
+                Y: y || 25
+            };
+
+            this.Size = {
+                W: 28,
+                H: 16
+            };
+
+            this.Engine = new VehicleMotor(5, self.Size.W);
+
+            this.draw = function(context) {
+                context.save();
+
+                context.translate(self.Pos.X, self.Pos.Y); // Sets center to out POS
+                context.rotate(self.Pos.Angle);
+                context.beginPath();
+                context.strokeStyle = self.Color.body;
+                context.rect(-self.Size.W / 2, -self.Size.H / 2, self.Size.W, self.Size.H);
+
+                context.closePath();
+                context.stroke();
+                context.restore();
+            };
+
+            this.update = function() {
+                // Start moving
+
+                // using new Engine\Motor to move
+                var newPos = self.Engine.MoveTo(self.Pos, self.Target, self.Pos.Angle);
+
+                // Check if we are at our target, and if we are, randomly choose a new location
+                if (self.Pos.X === newPos.X && self.Pos.Y === newPos.Y) {
+                    self.Target.X = getRandomInt(25, WIDTH - 25);
+                    self.Target.Y = getRandomInt(25, HEIGHT - 25);
+                }
+
+                // Check if i'm turning
+                if (newPos.Angle !== self.Pos.Angle) {
+                    self.Pos.Angle = newPos.Angle;
+                    return; // I'm turning in place, don't drive.
+                }
+
+                // I'm facing my target, drive towards it
+                self.Pos.X = newPos.X;
+                self.Pos.Y = newPos.Y;
+
+                //console.log(self.Pos, self.Target);
+
+            };
+        };
+
+        // EXPERIMENTAL
+        var VehicleMotor = function(speed, stoppingPoint) {
+
+            // Motor based off destination X/Y, translated to vectors.
+            // Can be swapped out to just use angles instead.
+
+            var self = this;
+
+            this.Speed = speed || 10;
+            this.TurnSpeed = self.Speed * .03;
+            this.StoppingPoint = stoppingPoint || 10;
+
+            this.MoveTo = function(start, destination, currentAngle) {
+
+                // Get the distance vector
+                var tx = destination.X - start.X,
+                    ty = destination.Y - start.Y;
+
+                // Normalize (find the magnitude for our vector)
+                var dist = Math.sqrt(tx * tx + ty * ty);
+
+                // Calculate the velocity for our object
+                // Divide the target X and Y by the Distance and multiply it by the speed
+                // This gives a constant movement speed.
+                var velX = (tx / dist) * self.Speed;
+                var velY = (ty / dist) * self.Speed;
+
+                // Temp holding
+                var newX = start.X,
+                    newY = start.Y;
+
+                // Determine if we need to rotate towards target, and if so, don't move until we are
+                var newAngle = self.RotateTo(-ty, -tx, currentAngle);
+
+                // Stop the movement if we reached the destination within our stopping limit.
+                // This needs tweaking
+                if (dist > self.StoppingPoint) {
+                    newX += velX;
+                    newY += velY;
+                }
+
+                return {
+                    X: newX,
+                    Y: newY,
+                    Angle: newAngle
+                }
+
+            };
+
+            this.RotateTo = function(x, y, currentAngle) {
+
+                var targetAngle = Math.atan2(x, y); // For instant turning, just set our angle to this, but don't.
+
+                // Normalize target angle
+                while (targetAngle > Math.PI) targetAngle -= 2 * Math.PI;
+                while (targetAngle < -Math.PI) targetAngle += 2 * Math.PI;
+
+                // Turn towards heading
+                var angleDiff = targetAngle - currentAngle;
+
+                if (Math.abs(angleDiff) > Math.PI) {
+                    if (angleDiff > 0) currentAngle -= self.TurnSpeed;
+                    else currentAngle += self.TurnSpeed;
+                } else if (Math.abs(angleDiff) > self.TurnSpeed) {
+                    if (angleDiff > 0) currentAngle += self.TurnSpeed;
+                    else currentAngle -= self.TurnSpeed;
+                } else {
+                    currentAngle = targetAngle;
+                }
+
+                // Normalize our angle
+                if (currentAngle > Math.PI) currentAngle -= 2 * Math.PI;
+                if (currentAngle < -Math.PI) currentAngle += 2 * Math.PI;
+
+                return currentAngle;
+            };
+
+        };
+
+
+
+        //////////////////
+        // Functions
+        //////////////////
+
+        // NON-EXPERIMENTAL
+        function setupWindowAnimationShim() {
+
+            /* shim to allow us to use request animation frame intelligently for max FPS and no painting when tab isn't active...
+             * http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+             * https://gist.github.com/1579671
+             */
+
+            var lastTime = 0,
+                vendors = ['ms', 'moz', 'webkit', 'o'];
+            for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+                window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+                window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
+            }
+
+            if (!window.requestAnimationFrame)
+                window.requestAnimationFrame = function(callback, element) {
+                    var currTime = new Date().getTime();
+                    var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+                    var id = window.setTimeout(function() {
+                            callback(currTime + timeToCall);
+                        },
+                        timeToCall);
+                    lastTime = currTime + timeToCall;
+                    return id;
+                };
+
+            if (!window.cancelAnimationFrame)
+                window.cancelAnimationFrame = function(id) {
+                    clearTimeout(id);
+                };
+        }
+
+        // NON-EXPERIMENTAL
+        function scaleCanvas() {
+
+            WIDTH = window.innerWidth;
+            HEIGHT = window.innerHeight;
+
+            if (window.devicePixelRatio && window.devicePixelRatio > 1) {
+                canvas.style.width = WIDTH + "px";
+                canvas.style.height = HEIGHT + "px";
+                canvas.width = WIDTH * window.devicePixelRatio;
+                canvas.height = HEIGHT * window.devicePixelRatio;
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            } else {
+                canvas.style.width = WIDTH + "px";
+                canvas.style.height = HEIGHT + "px";
+                canvas.width = WIDTH;
+                canvas.height = HEIGHT;
+            }
+        }
+
+        // NON-EXPERIMENTAL
+        function animate() {
+            ANIMATION_ID = requestAnimationFrame(animate);
+            draw();
+        }
+
+        // NON-EXPERIMENTAL
+        function pauseAnimation() {
+            if (ANIMATION_ID)
+                cancelAnimationFrame(ANIMATION_ID);
+        }
+
+        // NON-EXPERIMENTAL
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // NON-EXPERIMENTAL
+        function draw() {
+
+            document.getElementById("FPS").innerText = getFPS();
+            document.getElementById("TANKS").innerText = tanks.length;
+
+            // Set background color
+            ctx.fillStyle = "green";
+
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            tanks.forEach(function(tank) {
+                tank.update();
+                tank.draw(ctx);
+            });
+
+            // Setup for the FPS counter
+            var thisFrameTime = (thisLoop = new Date) - lastLoop;
+            frameTime += (thisFrameTime - frameTime) / filterStrength;
+            lastLoop = thisLoop;
+
+        }
+
+        function getFPS() {
+            return (1000 / frameTime).toFixed(1);
+        }
+
+        //////////////////
+        // Events
+        //////////////////
+
+        window.onload = function() {
+
+            scaleCanvas();
+
+            /* scale X Y points of each unit to the new location based on the resize */
+            window.onresize = function(event) {
+
+                pauseAnimation();
+
+                WIDTHPREV = WIDTH;
+                HEIGHTPREV = HEIGHT;
+
+                scaleCanvas();
+
+                var xRatio = WIDTH / WIDTHPREV,
+                    yRatio = HEIGHT / HEIGHTPREV;
+
+                animate();
+            };
+
+            //Start:
+            animate();
+        };
+
+        window.addEventListener('click', function(evt) {
+            var rndX = getRandomInt(25, WIDTH - 25);
+            var rndY = getRandomInt(25, HEIGHT - 25);
+            tanks.push(new Tank(rndX, rndY));
+        });
+
+
+        // Startup
+
+        var tanks = [];
+        for (var i = 0; i < 10; i++) {
+
+            var rndX = getRandomInt(25, WIDTH - 25);
+            var rndY = getRandomInt(25, HEIGHT - 25);
+            tanks.push(new Tank(rndX, rndY));
+        }
+
+        setupWindowAnimationShim();
+
+    })();
+</script>
+</html>
